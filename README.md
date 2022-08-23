@@ -1,2 +1,2 @@
-# genome_skimming_pipeline
+# genomes kimming pipeline
 Collection of bash scripts to assemble organelle genomes from genome skimming data. 
