@@ -109,7 +109,7 @@ bash 07_blobtools_summmary.sh
 bash 08_split_fasta.sh
 
 # annotate assemblies
-09_annotation.sh
+sbatch 09_annotation.sh
 
 ```
 
