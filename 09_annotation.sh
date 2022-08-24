@@ -5,7 +5,9 @@
 #SBATCH --time=1:00:00
 #SBATCH --mem-per-cpu=1G
 #SBATCH --cpus-per-task=1
-#SBATCH --array=1-26
+#SBATCH --array=1-26%1
+
+# chloe ape can only run one at a time
 
 export PATH=/home/oliw/software/miniconda3/bin/:$PATH
 source activate mitos
