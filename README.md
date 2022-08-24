@@ -1,11 +1,9 @@
 
-Set up input data
+Git clone
 ```
-# get data
-cp -r /workspaces/groups/clarkgroup/oliw/genome_skimming_simulations_2/simulation_benchmark/data .
-
-# mv metadata to current dir
-mv data/data_metadata.txt .
+# get scripts and test data
+git clone https://github.com/o-william-white/genome_skimming_pipeline
+cd cd genome_skimming_pipeline/
 ```
 
 Set up conda env
