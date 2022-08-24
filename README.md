@@ -92,7 +92,24 @@ sbatch 02_get_annotated_regions_from_gb.sh
 grep -e "^>" -c organelle_search_download/*/annotated_regions/gene/gene.fasta
 
 # fastp
-sbatch 03_fastp.sh
+sbatch sbatch 03_fastp.sh
+
+# get organelle
+sbatch 04_get_organelle.sh
+
+# select first assembly option
+bash 05_selected_assemblies.sh
+
+# check for contamination with blobtools
+sbatch 06_blobtools.sh
+bash 07_blobtools_summmary.sh
+
+# split assemblies containing multiple contigs
+bash 08_split_fasta.sh
+
+# annotate assemblies
+09_annotation.sh
+
 ```
 
 
