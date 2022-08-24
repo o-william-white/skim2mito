@@ -1,3 +1,6 @@
+## Genome skimming pipeline
+
+Collection of bash scripts and example data for a pipeline to assemble organelle genomes.
 
 Git clone
 ```
