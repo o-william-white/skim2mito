@@ -21,6 +21,9 @@ conda install -c conda-forge biopython
 # getorganelle
 conda install -c bioconda getorganelle
 
+# mafft
+conda install -c bioconda mafft
+
 # blobtools
 conda install -c bioconda blast
 conda install -c bioconda minimap2
@@ -74,6 +77,8 @@ conda install requests
 conda install pandas
 conda deactivate
 ```
+
+
 
 Main code
 ```
