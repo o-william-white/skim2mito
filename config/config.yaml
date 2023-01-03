@@ -5,17 +5,17 @@ samples: config/samples.csv
 output_dir: results
 
 # path to blast db
-blast_db: /workspaces/groups/database/nt-2022-06-22_blastdb/nt
+blast_db: </path/to/blastdb>
 
 # path to new_taxdump
-taxdump: taxdump
+taxdump: </path/to/new_taxdump/>
 
 # path to mitos refseq
-mitos_refseq: /home/oliw/software/mitos_reference_data/refseq89m
+mitos_refseq: </path/to/mitos/refseq>
 
 # mito code
-mitos_code: 5
+mitos_code: <code>
 
 # number of threads to use
-threads: 5
+threads: <threads>
 
