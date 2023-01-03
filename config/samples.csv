@@ -1,0 +1,6 @@
+ID,forward,reverse,organelle_type,seed,gene
+Arc_AOLE_QLD_5,data/Arc_AOLE_QLD_5_1.fq.gz,data/Arc_AOLE_QLD_5_2.fq.gz,animal_mt,../solariellid_mitogenomes_old2/entrez_direct/seed/seed_with_additional_data.fasta,../solariellid_mitogenomes_old2/entrez_direct/gene/gene/gene/gene.fasta
+Bath_M299691,data/Bath_M299691_1.fq.gz,data/Bath_M299691_2.fq.gz,animal_mt,../solariellid_mitogenomes_old2/entrez_direct/seed/seed_with_additional_data.fasta,../solariellid_mitogenomes_old2/entrez_direct/gene/gene/gene/gene.fasta
+Zet_ZALP_103187,data/Zet_ZALP_103187_1.fq.gz,data/Zet_ZALP_103187_2.fq.gz,animal_mt,../solariellid_mitogenomes_old2/entrez_direct/seed/seed_with_additional_data.fasta,../solariellid_mitogenomes_old2/entrez_direct/gene/gene/gene/gene.fasta
+Zet_ZKP_1315332,data/Zet_ZKP_1315332_1.fq.gz,data/Zet_ZKP_1315332_2.fq.gz,animal_mt,../solariellid_mitogenomes_old2/entrez_direct/seed/seed_with_additional_data.fasta,../solariellid_mitogenomes_old2/entrez_direct/gene/gene/gene/gene.fasta
+Zet_ZTX_M035478,data/Zet_ZTX_M035478_1.fq.gz,data/Zet_ZTX_M035478_2.fq.gz,animal_mt,../solariellid_mitogenomes_old2/entrez_direct/seed/seed_with_additional_data.fasta,../solariellid_mitogenomes_old2/entrez_direct/gene/gene/gene/gene.fasta

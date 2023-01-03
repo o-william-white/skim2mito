@@ -1,0 +1,21 @@
+# path to sample sheet csv with columns for ID,forward,reverse
+samples: config/samples.csv
+
+# name of output directory
+output_dir: results
+
+# path to blast db
+blast_db: /workspaces/groups/database/nt-2022-06-22_blastdb/nt
+
+# path to new_taxdump
+taxdump: taxdump
+
+# path to mitos refseq
+mitos_refseq: /home/oliw/software/mitos_reference_data/refseq89m
+
+# mito code
+mitos_code: 5
+
+# number of threads to use
+threads: 5
+

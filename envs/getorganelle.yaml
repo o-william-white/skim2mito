@@ -1,0 +1,4 @@
+channels:
+  - bioconda
+dependencies:
+  - getorganelle =1.7.6.1
