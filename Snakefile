@@ -33,8 +33,14 @@ def get_gene(wildcards):
 # one rule to rule them all :)
 rule all:
     input:
-        output_dir+"/summary/table.txt"
-
+        output_dir+"/summary/summary_sample.txt",
+        output_dir+"/summary/summary_contig.txt",
+        expand(output_dir+"/seqkit/{sample}.ok", sample=sample_data["ID"].tolist()),
+        output_dir+"/snakemake.ok"        
+#"aggregated.txt"
+        #get_mafft_input
+        #directory(output_dir+"/protein_coding_genes/")
+       
 # convert fastq to fasta
 rule fastp:
     input:
@@ -252,56 +258,114 @@ rule mitos:
         touch {output.ok}
         """
 
-rule extract_protein_coding_genes:
-    input:
-        output_dir+"/mitos/{sample}/{sample}.ok"
-    output:
-        ok = output_dir+"/protein_coding_genes/{sample}.ok"
-    log:
-        output_dir+"/logs/protein_coding_genes/{sample}.log"
-    conda:
-        "envs/seqkit.yaml"
-    shell:
-        """
-        # find selected path(s) fasta
-        FAS=$(find {output_dir}/mitos/{wildcards.sample}/ -name *result.fas)
-        BED=$(find {output_dir}/mitos/{wildcards.sample}/ -name *result.bed)
-        # z option: true if length if string is zero.
-        if [[ -z $FAS ]]; then
-           echo No annotated genes produced for {wildcards.sample} > {log}
-        else
-            # extract annotated protein coding genes in fasta format
-            cat $FAS | sed -e 's/ //g' > results/protein_coding_genes/tmp_{wildcards.sample}.fasta
-            grep -e "^>" results/protein_coding_genes/tmp_{wildcards.sample}.fasta | grep -e ";OH" -e ";OL" -e ";trn" -v | sed -e 's/>//g' > results/protein_coding_genes/tmp_{wildcards.sample}.txt
-            if [[ $(cat results/protein_coding_genes/tmp_{wildcards.sample}.txt | wc -l) -eq 0 ]]; then
-                echo No annotated protein coding genes produced for {wildcards.sample} > {log}
-            else
-                echo {wildcards.sample} genes
-                seqkit grep -f results/protein_coding_genes/tmp_{wildcards.sample}.txt \
-                    results/protein_coding_genes/tmp_{wildcards.sample}.fasta \
-                    -o results/protein_coding_genes/{wildcards.sample}.fasta &> {log}
-            fi
-            rm results/protein_coding_genes/tmp_{wildcards.sample}.fasta
-            rm results/protein_coding_genes/tmp_{wildcards.sample}.txt
-            # extract annotated protein coding genes in bed format
-            cat $BED | grep -P "\t[O|t]" -v > results/protein_coding_genes/{wildcards.sample}.bed
-        fi
-        touch {output.ok}
-        """
-
 rule summarise:
     input: 
         expand(output_dir+"/blobtools/{sample}/{sample}.ok", sample=sample_data["ID"].tolist()),
         expand(output_dir+"/mitos/{sample}/{sample}.ok", sample=sample_data["ID"].tolist())    
     output:
-        table = output_dir+"/summary/table.txt"
+        table_sample = output_dir+"/summary/summary_sample.txt",
+        table_contig = output_dir+"/summary/summary_contig.txt"
     log:
         output_dir+"/logs/summarise/summarise.log"
     conda:
         "envs/r_env.yaml"
     shell:
-        """ 
-        Rscript scripts/summarise.R results/ {output.table} &> {log}
+        """
+        # cat seqkit output for each sample
+        echo -e "sample format type num_seqs sum_len min_len avg_len max_len" > {output_dir}/summary/tmp_summary_sample.txt
+        cat {output_dir}/seqkit/*.txt | grep file -v >> {output_dir}/summary/tmp_summary_sample.txt
+        column -t {output_dir}/summary/tmp_summary_sample.txt > {output.table_sample}
+        rm {output_dir}/summary/tmp_summary_sample.txt
+        
+        # join blobtools with mitos annotations for each contig 
+        Rscript scripts/summarise.R {output_dir}/ {output.table_contig} &> {log}
+        """
+
+checkpoint extract_protein_coding_genes:
+    input: 
+        expand(output_dir+"/mitos/{sample}/{sample}.ok", sample=sample_data["ID"].tolist())
+    output:
+        directory(output_dir+"/protein_coding_genes/")
+    log:
+        output_dir+"/logs/protein_coding_genes/protein_coding_genes.log"
+    shell:
+        """
+        python scripts/mitos_alignments.py {output_dir}/mitos/ {output_dir}/protein_coding_genes &> {log}
+        """
+
+rule mafft:
+    input:
+        output_dir+"/protein_coding_genes/{dataset}.fasta"
+    output:
+        output_dir+"/mafft/{dataset}.fasta"
+    log:
+        output_dir+"/logs/mafft/{dataset}.log"
+    conda:
+        "envs/mafft.yaml"
+    shell:
+        """
+        mafft \
+            --maxiterate 1000 \
+            --localpair \
+            --adjustdirection \
+            {input} 1> {output} 2> {log}
+        """
+
+rule clipkit:
+    input:
+        output_dir+"/mafft/{dataset}.fasta"
+    output:
+        output_dir+"/clipkit/{dataset}.fasta"
+    log:
+        output_dir+"/logs/clipkit/{dataset}.log"
+    conda:
+        "envs/clipkit.yaml"
+    shell:
+        """
+        clipkit {input} -o {output} &> {log}
+        """
+
+rule iqtree:
+    input:
+        output_dir+"/clipkit/{dataset}.fasta"
+    output:
+        output_dir+"/iqtree/{dataset}.contree"
+    log:
+        output_dir+"/logs/iqtree/{dataset}.log"
+    conda:
+        "envs/iqtree.yaml"
+    shell:
+        """
+        iqtree -s {input} -B 1000 --prefix {output_dir}/iqtree/{wildcards.dataset} &> {log}
+        """
+
+rule plot_tree:
+    input:
+        output_dir+"/iqtree/{dataset}.contree"
+    output:
+        output_dir+"/plot_tree/{dataset}.png"
+    log:
+        output_dir+"/logs/plot_tree/{dataset}.log"
+    conda:
+        "envs/r_env.yaml"
+    shell:
+        """
+        Rscript scripts/plot_tree.R {input} {output} &> {log}
+        """
+
+def get_plot_tree_output(wildcards):
+    checkpoint_output = checkpoints.extract_protein_coding_genes.get(**wildcards).output[0]
+    return expand(output_dir+"/plot_tree/{i}.png", i=glob_wildcards(os.path.join(checkpoint_output, "{i}.fasta")).i)
+
+# create final log when complete 
+rule aggregate:
+    input:
+        get_plot_tree_output
+    output:
+        output_dir+"/snakemake.ok"
+    shell:
+        """
+        touch {output}
         """
 
 
