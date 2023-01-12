@@ -12,33 +12,33 @@ Entrez.email = "o.william.white@gmail.com"
 # argparse
 
 argparse_description = '''
-Python script to count or download organelle assemblies from NCBI using using Biopython.
+Python script to count or download organelle assemblies or ribrosomal sequences from NCBI using using Biopython.
 '''
 
 argparse_usage = '''
 
 # print counts of chloroplast assemblies for NCBI taxonomic id 3702
-python organelle_search_ncbi.py --taxonomy 3702 --organelle chloroplast --email o.william.white@gmail.com --action count
+python target_search_ncbi.py --taxonomy 3702 --target chloroplast --email o.william.white@gmail.com --action count
 
 # print counts of chloroplast assemblies for scientific name id "Arabidopsis thaliana"
-python organelle_search_ncbi.py --taxonomy "Arabidopsis thaliana" --organelle chloroplast --email o.william.white@gmail.com --action count
+python target_search_ncbi.py --taxonomy "Arabidopsis thaliana" --target chloroplast --email o.william.white@gmail.com --action count
 
 # download chloroplast assemblies for "Camelineae" 
-python organelle_search_ncbi.py --taxonomy "Camelineae" --organelle chloroplast --email o.william.white@gmail.com --action download --output test
+python target_search_ncbi.py --taxonomy "Camelineae" --target chloroplast --email o.william.white@gmail.com --action download --output test
 
 # download the first 5 chloroplast assemblies for "Camelineae" and overwrite the original output 
-python organelle_search_ncbi.py --taxonomy "Camelineae" --organelle chloroplast --email o.william.white@gmail.com --action download --max_n 5 --output test --overwrite
+python target_search_ncbi.py --taxonomy "Camelineae" --target chloroplast --email o.william.white@gmail.com --action download --max_n 5 --output test --overwrite
    
 '''
 parser = argparse.ArgumentParser(description=argparse_description, usage=argparse_usage)
-parser.add_argument("--taxonomy", help="Taxonomic name or NCBI ID.", required=True)
-parser.add_argument('--organelle', help="Organelle type.", choices=["chloroplast", "mitochondrion"], required=True)
-parser.add_argument('--email', help="Email for Entrez.", required=True)
-parser.add_argument('--action', help="Count or download organelle assemblies.", choices=["count", "download"], required=True)
-parser.add_argument('--output', help="Output directory. Only required for '--action download'.")
-parser.add_argument('--max_n', help="Maximum number of references to download. Only required for '--action download'.", default=None, type=int)
+parser.add_argument("--taxonomy",  help="Taxonomic name or NCBI ID.", required=True)
+parser.add_argument('--target',    help="Target sequence type.", choices=["chloroplast", "mitochondrion", "ribosomal"], required=True)
+parser.add_argument('--email',     help="Email for Entrez.", required=True)
+parser.add_argument('--action',    help="Count or download sequences.", choices=["count", "download"], required=True)
+parser.add_argument('--output',    help="Output directory. Only required for '--action download'.")
+parser.add_argument('--max_n',     help="Maximum number of sequences to download. Only required for '--action download'.", default=None, type=int)
 parser.add_argument('--overwrite', help="Overwrite output directory. Only required for '--action download'.", action="store_true")
-parser.add_argument('--verbose', help="Print additional information.", action="store_true")
+parser.add_argument('--verbose',   help="Print additional information for error checking", action="store_true")
 args = parser.parse_args()
 
 # argparse checks
@@ -59,14 +59,16 @@ def create_dir(path, overwrite, verbose=False):
         shutil.rmtree(path)
         os.mkdir(path)
         os.mkdir(path + "/fasta")
-        os.mkdir(path + "/genbank")
+        if args.target != "ribosomal":
+            os.mkdir(path + "/genbank")
     # path does not exist
     elif not os.path.exists(path):
         if verbose:
             print("Creating output directory '" + path + "'\n")
         os.mkdir(path)
         os.mkdir(path + "/fasta")
-        os.mkdir(path + "/genbank")
+        if args.target != "ribosomal":
+            os.mkdir(path + "/genbank")
 
 
 # get taxonomic id from scientific name
@@ -101,13 +103,16 @@ def get_lineage(taxonomy_id, taxonomy_name):
     return lineage
 
 
-# esearch for organelle assemblies using taxonomy name
-def organelle_search(rank, organelle):
+# esearch for target sequences using taxonomy name
+def target_search(rank, target):
     # define search term
-    search_term = rank + "[Organism] AND " + organelle + "[Title] AND complete genome[Title]" 
+    if target == "chloroplast" or target == "mitochondrion":
+        search_term = rank + "[Organism] AND " + target + "[Title] AND complete genome[Title]"
+    else:
+        if target == "ribosomal":
+            search_term = rank + "[Organism] AND 28S[Title]"
     if args.verbose:
-        print("Search term used:")
-        print("    " + search_term + "\n")
+        print("Search term = '" + search_term + "'", end = "\t")
     # esearch
     handle = Entrez.esearch(db="Nucleotide", term=search_term)
     record = Entrez.read(handle)
@@ -118,10 +123,10 @@ def organelle_search(rank, organelle):
     return record
 
 
-# write organelle assembly counts across lineage
-def lineage_count(lineage, organelle):
+# write target assembly counts across lineage
+def lineage_count(lineage, target):
     for rank in lineage:
-        record = organelle_search(rank, organelle)
+        record = target_search(rank, target)
         counts = record["Count"]
         # write counts per rank
         print(rank + "\t" + str(counts))
@@ -146,7 +151,7 @@ def efetch_seq(id, format, output_dir, verbose=False):
 if args.verbose:
     print("Searching NCBI for:")
     print("   Taxonomy: " + args.taxonomy)
-    print("   Organelle: " + args.organelle)
+    print("   Organelle: " + args.target)
     print("   Email: " + args.email + "\n")
 
 # create output directory if not present
@@ -178,12 +183,12 @@ if args.verbose:
 
 # action = count
 if args.action == "count":
-    lineage_count(lineage=lineage, organelle=args.organelle)
+    lineage_count(lineage=lineage, target=args.target)
 
 # action = download
 if args.action == "download":
     target_ids = []
-    record = organelle_search(taxonomy_name, args.organelle)
+    record = target_search(taxonomy_name, args.target)
     # iterate through record ids and append record ids to target_ids
     for record_id in record["IdList"]:
         target_ids.append(record_id)
@@ -197,7 +202,8 @@ if args.action == "download":
             print("Downloading " + str(len(target_ids)) + " assemblies for " + taxonomy_name)
     for target_id in target_ids:
         efetch_seq(id=target_id, format="fasta", output_dir=args.output + "/fasta",  verbose=args.verbose)
-        efetch_seq(id=target_id, format="gb",    output_dir=args.output + "/genbank", verbose=args.verbose)
+        if args.target != "ribosomal":
+            efetch_seq(id=target_id, format="gb", output_dir=args.output + "/genbank", verbose=args.verbose)
 
 if args.verbose:
     print("Job complete!")
