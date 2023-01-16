@@ -4,11 +4,13 @@ import pandas as pd
 configfile: "config/config.yaml"
 
 # configfile parameters
+target_type = config["target_type"]
 output_dir = config["output_dir"]
 blast_db = config["blast_db"]
 taxdump = config["taxdump"]
 mitos_refseq = config["mitos_refseq"]
 mitos_code = config["mitos_code"]
+barrnap_kingdom = config["barrnap_kingdom"] 
 threads = config["threads"]
 
 # read sample data
@@ -21,9 +23,6 @@ def get_forward(wildcards):
 def get_reverse(wildcards):
     return sample_data.loc[wildcards.sample, "reverse"]
 
-def get_organelle_type(wildcards):
-    return sample_data.loc[wildcards.sample, "organelle_type"]
-
 def get_seed(wildcards):
     return sample_data.loc[wildcards.sample, "seed"]
 
@@ -35,11 +34,7 @@ rule all:
     input:
         output_dir+"/summary/summary_sample.txt",
         output_dir+"/summary/summary_contig.txt",
-        expand(output_dir+"/seqkit/{sample}.ok", sample=sample_data["ID"].tolist()),
         output_dir+"/snakemake.ok"        
-#"aggregated.txt"
-        #get_mafft_input
-        #directory(output_dir+"/protein_coding_genes/")
        
 # convert fastq to fasta
 rule fastp:
@@ -70,11 +65,9 @@ rule getorganelle:
         fwd = output_dir+"/fastp/{sample}_R1.fq.gz",
         rev = output_dir+"/fastp/{sample}_R2.fq.gz"
     params:
-        org = get_organelle_type,
         seed = get_seed,
         gene = get_gene
     output:
-        #output_dir+"/getorganelle/{sample}/get_org.log.txt"
         ok = output_dir+"/getorganelle/{sample}/getorganelle.ok"
     log:
         output_dir+"/logs/getorganelle/{sample}.log"
@@ -83,15 +76,31 @@ rule getorganelle:
     threads: threads
     shell:
         """
-        get_organelle_from_reads.py \
-            -1 {input.fwd} -2 {input.rev} \
-            -o {output_dir}/getorganelle/{wildcards.sample} \
-            -F {params.org} \
-            -s {params.seed} \
-            --genes {params.gene} \
-            --reduce-reads-for-coverage inf --max-reads inf \
-            -R 20 \
-            --overwrite -t {threads} &> {log}
+        if [[ {target_type} == "animal_mt" || {target_type} == "embplant_cp" ]]; then 
+            get_organelle_from_reads.py \
+                -1 {input.fwd} -2 {input.rev} \
+                -o {output_dir}/getorganelle/{wildcards.sample} \
+                -F {target_type} \
+                -s {params.seed} \
+                --genes {params.gene} \
+                --reduce-reads-for-coverage inf --max-reads inf \
+                -R 20 \
+                --overwrite -t {threads} &> {log}
+        else 
+            if [ {target_type} == "anonym" ]; then
+                get_organelle_from_reads.py \
+                    -1 {input.fwd} -2 {input.rev} \
+                    -o {output_dir}/getorganelle/{wildcards.sample} \
+                    -F {target_type} \
+                    -s {params.seed} \
+                    --genes {params.gene} \
+                    --reduce-reads-for-coverage inf --max-reads inf \
+                    -R 10 \
+                    --max-extending-len 100 \
+                    -P 0 \
+                    --overwrite -t {threads} &> {log}
+            fi
+        fi
         touch {output.ok}
         """
 
@@ -232,26 +241,35 @@ rule blobtools:
         """
 
 # treats all assemblies as circular
-rule mitos:
+rule annotations:
     input:
         output_dir+"/assembled_sequence/{sample}.ok"
     output:
-        ok = output_dir+"/mitos/{sample}/{sample}.ok"
+        ok = output_dir+"/annotations/{sample}/{sample}.ok"
     log:
-        output_dir+"/logs/mitos/{sample}.log"
+        output_dir+"/logs/annotations/{sample}.log"
     conda:
-        "envs/mitos.yaml"
+        "envs/annotations.yaml"
     shell:
         """
         FAS=$(echo {output_dir}/assembled_sequence/{wildcards.sample}.fasta)
         if [ -e $FAS ]; then
-            runmitos.py \
-                --input $FAS \
-                --code {mitos_code} \
-                --outdir {output_dir}/mitos/{wildcards.sample}/ \
-                --refseqver {mitos_refseq} \
-                --refdir . \
-                --noplots &> {log}
+            if [[ {target_type} == "animal_mt" ]]; then
+                runmitos.py \
+                    --input $FAS \
+                    --code {mitos_code} \
+                    --outdir {output_dir}/annotations/{wildcards.sample}/ \
+                    --refseqver {mitos_refseq} \
+                    --refdir . \
+                    --noplots &> {log}    
+            else
+                if [[ {target_type} == "anonym" ]]; then
+                    barrnap \
+                        --kingdom {barrnap_kingdom} \
+                        --outseq {output_dir}/annotations/{wildcards.sample}/result.fas $FAS 1> {output_dir}/annotations/{wildcards.sample}/result.gff 2> {log}
+                fi
+            fi
+
         else
             echo No assembled sequence for {wildcards.sample} > {log}
         fi
@@ -260,8 +278,9 @@ rule mitos:
 
 rule summarise:
     input: 
+        expand(output_dir+"/seqkit/{sample}.ok", sample=sample_data["ID"].tolist()),
         expand(output_dir+"/blobtools/{sample}/{sample}.ok", sample=sample_data["ID"].tolist()),
-        expand(output_dir+"/mitos/{sample}/{sample}.ok", sample=sample_data["ID"].tolist())    
+        expand(output_dir+"/annotations/{sample}/{sample}.ok", sample=sample_data["ID"].tolist())    
     output:
         table_sample = output_dir+"/summary/summary_sample.txt",
         table_contig = output_dir+"/summary/summary_contig.txt"
@@ -277,20 +296,32 @@ rule summarise:
         column -t {output_dir}/summary/tmp_summary_sample.txt > {output.table_sample}
         rm {output_dir}/summary/tmp_summary_sample.txt
         
-        # join blobtools with mitos annotations for each contig 
-        Rscript scripts/summarise.R {output_dir}/ {output.table_contig} &> {log}
+        # join blobtools with mitos annotations for each contig
+        if [[ {target_type} == "animal_mt" ]]; then
+            Rscript scripts/summarise.R {output_dir}/ mitos {output.table_contig} &> {log}
+        else
+            if [[ {target_type} == "anonym" ]]; then
+                Rscript scripts/summarise.R {output_dir}/ barrnap {output.table_contig} &> {log}
+            fi
+        fi
         """
 
 checkpoint extract_protein_coding_genes:
     input: 
-        expand(output_dir+"/mitos/{sample}/{sample}.ok", sample=sample_data["ID"].tolist())
+        expand(output_dir+"/annotations/{sample}/{sample}.ok", sample=sample_data["ID"].tolist())
     output:
         directory(output_dir+"/protein_coding_genes/")
     log:
         output_dir+"/logs/protein_coding_genes/protein_coding_genes.log"
     shell:
         """
-        python scripts/mitos_alignments.py {output_dir}/mitos/ {output_dir}/protein_coding_genes &> {log}
+        if [[ {target_type} == "animal_mt" ]]; then
+            python scripts/mitos_alignments.py {output_dir}/annotations/ {output_dir}/protein_coding_genes &> {log}
+        else
+            if [[ {target_type} == "anonym" ]]; then
+                python scripts/barrnap_alignments.py {output_dir}/annotations/ {output_dir}/protein_coding_genes &> {log}
+            fi
+        fi
         """
 
 rule mafft:
@@ -327,16 +358,21 @@ rule clipkit:
 
 rule iqtree:
     input:
-        output_dir+"/clipkit/{dataset}.fasta"
+        clipkit = output_dir+"/clipkit/{dataset}.fasta"        
     output:
-        output_dir+"/iqtree/{dataset}.contree"
+        output_dir+"/iqtree/{dataset}.contree",
+        renamed = output_dir+"/iqtree/{dataset}.fasta"
     log:
         output_dir+"/logs/iqtree/{dataset}.log"
     conda:
         "envs/iqtree.yaml"
     shell:
         """
-        iqtree -s {input} -B 1000 --prefix {output_dir}/iqtree/{wildcards.dataset} &> {log}
+        # remove special characters from sample names
+        sed -e 's/;/_/g' -e 's/+//g' -e 's/(//g' -e 's/)//g' \
+            {input.clipkit} > {output.renamed}
+        # iqtree
+        iqtree -s {output.renamed} -B 1000 --prefix {output_dir}/iqtree/{wildcards.dataset} &> {log}
         """
 
 rule plot_tree:

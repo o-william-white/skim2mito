@@ -4,8 +4,8 @@ samples: config/samples.csv
 # name of output directory
 output_dir: results
 
-# GetOrganelle organelle type (animal_mt,embplant_cp,anonym)
-organelle_type: <organelle_type>
+# GetOrganelle target sequence type (animal_mt,embplant_cp,anonym)
+target_type: <target_type>
 
 # path to blast db
 blast_db: </path/to/blastdb>
