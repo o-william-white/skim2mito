@@ -342,9 +342,36 @@ rule mafft:
             {input} 1> {output} 2> {log}
         """
 
-rule clipkit:
+rule filter_alignments:
     input:
         output_dir+"/mafft/{dataset}.fasta"
+    output:
+        output_dir+"/mafft_filtered/{dataset}.fasta"
+    log:
+        output_dir+"/logs/mafft_filtered/{dataset}.log"
+    shell:
+        """
+        python scripts/alignments_filter.py  --input {input} --output {output} --threshold 0.75 > {log}
+        """
+
+rule macse:
+    input:
+        output_dir+"/mafft_filtered/{dataset}.fasta"
+    output:
+        nt = output_dir+"/macse/{dataset}_NT.fasta",
+        aa = output_dir+"/macse/{dataset}_AA.fasta"
+    log:
+        output_dir+"/logs/macse/{dataset}.log"
+    conda:
+        "envs/macse.yaml"
+    shell:
+        """
+        macse -prog refineAlignment -align {input} --out_NT {output.nt} --out_AA {output.aa} -optim 2 > {log}
+        """
+
+rule clipkit:
+    input:
+        output_dir+"/macse/{dataset}_NT.fasta"
     output:
         output_dir+"/clipkit/{dataset}.fasta"
     log:
@@ -371,6 +398,11 @@ rule iqtree:
         # remove special characters from sample names
         sed -e 's/;/_/g' -e 's/+//g' -e 's/(//g' -e 's/)//g' \
             {input.clipkit} > {output.renamed}
+
+        # remove ! from alingment
+        # eclamation marks emphasize the frameshifts detected by MACSE, most of which corresponding to programmed frameshift mutations
+        sed -e 's/!/-/g' -i {output.renamed}
+
         # iqtree
         iqtree -s {output.renamed} -B 1000 --prefix {output_dir}/iqtree/{wildcards.dataset} &> {log}
         """
@@ -394,7 +426,7 @@ def get_plot_tree_output(wildcards):
     return expand(output_dir+"/plot_tree/{i}.png", i=glob_wildcards(os.path.join(checkpoint_output, "{i}.fasta")).i)
 
 # create final log when complete 
-rule aggregate:
+rule final_log:
     input:
         get_plot_tree_output
     output:

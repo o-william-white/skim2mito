@@ -1,0 +1,4 @@
+channels:
+  - bioconda
+dependencies:
+  - macse =1.2

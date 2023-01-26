@@ -3,14 +3,13 @@ args = commandArgs(trailingOnly=TRUE)
 
 # get output dir and output_path from arguments
 output_dir <- args[1]
-output_path <- args[2]
+output_type <- args[2] # mitos or barrnap
+output_path <- args[3]
 
 library(tidyverse)
 
-
 # get list of samples
 sample_list <- list.files(path = paste0(output_dir, "/blobtools/"))
-
 
 dat_list <- lapply(sample_list, function(sample) {
   
@@ -43,19 +42,38 @@ dat_list <- lapply(sample_list, function(sample) {
                          length,
                          ends_with("cov"), 
                          lineage)
-    
+
     # one sequence 
     if(nrow(blobtools) == 1) {
-      
-      df <- read.table(paste0(output_dir, "/mitos/", sample, "/result.bed"), 
+
+      if(output_type == "mitos") {
+
+        df <- read.table(paste0(output_dir, "/annotations/", sample, "/result.bed"),
                        col.names = c("identifiers", "start", "stop", "name", "score", "orientation"))
-      
-      df <- filter(df, !str_detect(name, "OH|OL|trn"))
-      
-      df <- arrange(df, name)
-      
-      gene_names <- paste0(df$name, collapse = ",")
-      
+
+        df <- filter(df, !str_detect(name, "OH|OL|trn"))
+
+        df <- arrange(df, name)
+
+        gene_names <- paste0(df$name, collapse = ",")
+
+      } else {
+
+        if(output_type == "barrnap"){
+
+          df <- read.table(paste0(output_dir, "/annotations/", sample, "/result.gff"), 
+                  sep = "\t", col.names = c("sequence", "source", "feature", "start", "end", "score", "strand", "frame", "attribute"))
+
+          df <- arrange(df, attribute)
+
+          df <- mutate(df, gene = gsub("Name=", "", str_split_i(attribute, ";", 1)))
+
+          gene_names <- paste0(df$gene, collapse = ",")
+
+        }
+
+      }
+        
       blobtools$annotations <- gene_names
     
     # more than one sequence
@@ -63,14 +81,33 @@ dat_list <- lapply(sample_list, function(sample) {
     
       list_bed <- sapply(blobtools$index, function(x) {
         
-        df <- read.table(paste0(output_dir, "/mitos/", sample, "/", x, "/result.bed"), 
+        if(output_type == "mitos") {
+
+          df <- read.table(paste0(output_dir, "/annotations/", sample, "/", x, "/result.bed"), 
                          col.names = c("identifiers", "start", "stop", "name", "score", "orientation"))
-        
-        df <- filter(df, !str_detect(name, "OH|OL|trn"))
-        
-        df <- arrange(df, name)
-        
-        gene_names <- paste0(df$name, collapse = ",")
+
+          df <- filter(df, !str_detect(name, "OH|OL|trn"))
+
+          df <- arrange(df, name)
+
+          gene_names <- paste0(df$name, collapse = ",")
+          
+        } else {
+
+          if(output_type == "barrnap"){
+
+            df <- read.table(paste0(output_dir, "/annotations/", sample, "/result.gff"),
+                           sep = "\t", col.names = c("sequence", "source", "feature", "start", "end", "score", "strand", "frame", "attribute"))
+
+            df <- arrange(df, attribute)
+
+            df <- mutate(df, gene = gsub("Name=", "", str_split_i(attribute, ";", 1)))
+
+            gene_names <- paste0(df$gene, collapse = ",")
+
+          }
+
+        }
         
         gene_names
         
