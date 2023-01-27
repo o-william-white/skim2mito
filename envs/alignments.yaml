@@ -1,4 +1,5 @@
 channels:
   - bioconda
 dependencies:
-  - macse =1.2
+  - mafft =7.508
+  - pasta =1.7.8

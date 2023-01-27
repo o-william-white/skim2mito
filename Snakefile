@@ -332,7 +332,7 @@ rule mafft:
     log:
         output_dir+"/logs/mafft/{dataset}.log"
     conda:
-        "envs/mafft.yaml"
+        "envs/alignments.yaml"
     shell:
         """
         mafft \
@@ -354,24 +354,25 @@ rule filter_alignments:
         python scripts/alignments_filter.py  --input {input} --output {output} --threshold 0.75 > {log}
         """
 
-rule macse:
+rule pasta:
     input:
         output_dir+"/mafft_filtered/{dataset}.fasta"
     output:
-        nt = output_dir+"/macse/{dataset}_NT.fasta",
-        aa = output_dir+"/macse/{dataset}_AA.fasta"
+        cp = output_dir+"/pasta/{dataset}.fasta",
+        al = output_dir+"/pasta/{dataset}.marker001.{dataset}.aln"
     log:
-        output_dir+"/logs/macse/{dataset}.log"
+        output_dir+"/logs/pasta/{dataset}.log"
     conda:
-        "envs/macse.yaml"
+        "envs/alignments.yaml"
     shell:
         """
-        macse -prog refineAlignment -align {input} --out_NT {output.nt} --out_AA {output.aa} -optim 2 > {log}
+        cp {input} {output.cp}
+        PASTA_TOOLS_DEVDIR=$CONDA_PREFIX/bin/ run_pasta.py -i {output.cp} -j {wildcards.dataset} &> {log}
         """
 
 rule clipkit:
     input:
-        output_dir+"/macse/{dataset}_NT.fasta"
+        output_dir+"/pasta/{dataset}.marker001.{dataset}.aln"
     output:
         output_dir+"/clipkit/{dataset}.fasta"
     log:
