@@ -370,23 +370,26 @@ rule pasta:
         PASTA_TOOLS_DEVDIR=$CONDA_PREFIX/bin/ run_pasta.py -i {output.cp} -j {wildcards.dataset} &> {log}
         """
 
-rule clipkit:
+rule gblocks:
     input:
         output_dir+"/pasta/{dataset}.marker001.{dataset}.aln"
     output:
-        output_dir+"/clipkit/{dataset}.fasta"
+        cp = output_dir+"/gblocks/{dataset}.fasta",
+        gb = output_dir+"/gblocks/{dataset}.fasta-gb"
     log:
-        output_dir+"/logs/clipkit/{dataset}.log"
+        output_dir+"/logs/gblocks/{dataset}.log"
     conda:
-        "envs/clipkit.yaml"
+        "envs/gblocks.yaml"
     shell:
         """
-        clipkit {input} -o {output} &> {log}
+        cp {input} {output.cp}
+        # gblocks always gives error code of 1. Ignore.
+        Gblocks {output.cp} -t=d &> {log} || true
         """
 
 rule iqtree:
     input:
-        clipkit = output_dir+"/clipkit/{dataset}.fasta"        
+        output_dir+"/gblocks/{dataset}.fasta-gb"        
     output:
         output_dir+"/iqtree/{dataset}.contree",
         renamed = output_dir+"/iqtree/{dataset}.fasta"
@@ -397,12 +400,8 @@ rule iqtree:
     shell:
         """
         # remove special characters from sample names
-        sed -e 's/;/_/g' -e 's/+//g' -e 's/(//g' -e 's/)//g' \
-            {input.clipkit} > {output.renamed}
-
-        # remove ! from alingment
-        # eclamation marks emphasize the frameshifts detected by MACSE, most of which corresponding to programmed frameshift mutations
-        sed -e 's/!/-/g' -i {output.renamed}
+        sed -e 's/;/_/g' -e 's/+//g' -e 's/(//g' -e 's/)//g' -e 's/__/_/g' \
+            {input} > {output.renamed}
 
         # iqtree
         iqtree -s {output.renamed} -B 1000 --prefix {output_dir}/iqtree/{wildcards.dataset} &> {log}
