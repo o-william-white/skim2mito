@@ -46,7 +46,7 @@ for fas in file_paths(mitos_dir, ".fas"):
 # I also removed annotations for OH, OL and trn
 genes = []
 for seq in seq_list:
-    gene = seq[0].split(";")[4]
+    gene = seq[0].split(";")[3]
     gene = gene.split("_")[0].split("-")[0]
     if gene not in genes and not re.search("trn|OH|OL", gene):
         genes.append(gene)

@@ -19,20 +19,23 @@ dat_list <- lapply(sample_list, function(sample) {
   # check blobtools file exists
   if(file.exists(paste0(output_dir, "/blobtools/", sample, "/table.tsv"))) {
     
+    # set column names 
+    column_names <- c("index","identifiers","gc","length","cov","superkingdom","kingdom","phylum","class","order","family","species")
+    
     # read blobtools output 
-    blobtools <- read.table(paste0(output_dir, "/blobtools/", sample, "/table.tsv"), header = T, sep = "\t")
+    blobtools <- read.table(paste0(output_dir, "/blobtools/", sample, "/table.tsv"), header = T, sep = "\t", col.names = column_names)
     
     # add column for sample name
     blobtools <- cbind(sample = sample, blobtools)
     
     # create lineage as comma separated string
-    blobtools <- mutate(blobtools, lineage = paste(bestsumorder_superkingdom,
-                                                   bestsumorder_kingdom,
-                                                   bestsumorder_phylum,
-                                                   bestsumorder_class,
-                                                   bestsumorder_order,
-                                                   bestsumorder_family,
-                                                   bestsumorder_species, sep = ",")) 
+    blobtools <- mutate(blobtools, lineage = paste(superkingdom,
+                                                   kingdom,
+                                                   phylum,
+                                                   class,
+                                                   order,
+                                                   family,
+                                                   species, sep = ",")) 
     
     # select columns 
     blobtools <-  select(blobtools, 
@@ -40,7 +43,7 @@ dat_list <- lapply(sample_list, function(sample) {
                          identifiers,
                          gc,
                          length,
-                         ends_with("cov"), 
+                         cov, 
                          lineage)
 
     # one sequence 

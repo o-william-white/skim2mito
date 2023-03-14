@@ -34,8 +34,8 @@ rule all:
     input:
         output_dir+"/summary/summary_sample.txt",
         output_dir+"/summary/summary_contig.txt",
-        output_dir+"/snakemake.ok"        
-       
+        output_dir+"/snakemake.ok"
+
 # convert fastq to fasta
 rule fastp:
     input:
@@ -57,7 +57,9 @@ rule fastp:
             --out1 {output.fwd} --out2 {output.rev} \
             --html {output.html} --json {output.json} \
             --disable_quality_filtering \
-            --thread {threads} &> {log}
+            --thread {threads} \
+            --adapter_sequence=AGATCGGAAGAGCACACGTCTGAACTCCAGTCA \
+            --adapter_sequence_r2=AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT &> {log}
         """
 
 rule getorganelle:
@@ -123,10 +125,16 @@ rule assembled_sequence:
             FAS1=$(echo $FAS | tr ' ' '\\n' | head -n 1)
             echo More than one assembly produced for {wildcards.sample} > {log}
             echo Selecting the first assembly $FAS1 > {log}
-            sed 's/>/>{wildcards.sample};/g' $FAS1 | awk NF > {output_dir}/assembled_sequence/{wildcards.sample}.fasta
+            python scripts/rename_assembled.py \
+                --input $FAS1 \
+                --sample {wildcards.sample} \
+                --output {output_dir}/assembled_sequence
         elif [ "$(echo $FAS | tr ' ' '\\n' | wc -l)" -eq 1 ]; then
             echo One assembly produced for {wildcards.sample} > {log}
-            sed 's/>/>{wildcards.sample};/g' $FAS  | awk NF > {output_dir}/assembled_sequence/{wildcards.sample}.fasta
+            python scripts/rename_assembled.py \
+                --input $FAS \
+                --sample {wildcards.sample} \
+                --output {output_dir}/assembled_sequence
         fi
         touch {output.ok}
         """
@@ -197,7 +205,9 @@ rule minimap:
         OUT=$(echo {output_dir}/minimap/{wildcards.sample}.bam)
         if [ -e $FAS ]; then
             echo Running minimap for {wildcards.sample} > {log}
-            minimap2 -ax sr $FAS {input.fwd} {input.rev} 2> {log} | samtools sort -O BAM -o $OUT - 2> {log}
+            minimap2 -ax sr $FAS {input.fwd} {input.rev} 2> {log} | samtools sort -O BAM -o $OUT - 2>> {log}
+            samtools index $OUT 2>> {log}
+            samtools index -c $OUT 2>> {log}
         else
             echo No assembled sequence for {wildcards.sample} > {log}
         fi
@@ -232,15 +242,14 @@ rule blobtools:
                 {output_dir}/blobtools/{wildcards.sample} &> {log}
             blobtools filter \
                 --table $OUT \
-                --table-fields gc,length,{wildcards.sample}_cov,{wildcards.sample}_read_cov,bestsumorder_superkingdom,bestsumorder_kingdom,bestsumorder_phylum,bestsumorder_class,bestsumorder_order,bestsumorder_family,bestsumorder_species \
-                {output_dir}/blobtools/{wildcards.sample} &> {log}
+                --table-fields gc,length,{wildcards.sample}_cov,bestsumorder_superkingdom,bestsumorder_kingdom,bestsumorder_phylum,bestsumorder_class,bestsumorder_order,bestsumorder_family,bestsumorder_species \
+                {output_dir}/blobtools/{wildcards.sample} &>> {log}
         else
             echo No assembled sequence for {wildcards.sample} > {log}
         fi
         touch {output.ok}
         """
 
-# treats all assemblies as circular
 rule annotations:
     input:
         output_dir+"/assembled_sequence/{sample}.ok"
@@ -255,13 +264,26 @@ rule annotations:
         FAS=$(echo {output_dir}/assembled_sequence/{wildcards.sample}.fasta)
         if [ -e $FAS ]; then
             if [[ {target_type} == "animal_mt" ]]; then
-                runmitos.py \
-                    --input $FAS \
-                    --code {mitos_code} \
-                    --outdir {output_dir}/annotations/{wildcards.sample}/ \
-                    --refseqver {mitos_refseq} \
-                    --refdir . \
-                    --noplots &> {log}    
+                if [ $(grep circular -c $FAS) -eq 1 ] ; then 
+                    echo Treating mitochondrial seqeunce as circular &> {log}
+                    runmitos.py \
+                        --input $FAS \
+                        --code {mitos_code} \
+                        --outdir {output_dir}/annotations/{wildcards.sample}/ \
+                        --refseqver {mitos_refseq} \
+                        --refdir . \
+                        --noplots &>> {log} 
+                else
+                    echo Treating mitochndrial seqeunce as linear &> {log}
+                    runmitos.py \
+                        --input $FAS \
+                        --code {mitos_code} \
+                        --outdir {output_dir}/annotations/{wildcards.sample}/ \
+                        --refseqver {mitos_refseq} \
+                        --refdir . \
+                        --noplots \
+                        --linear &>> {log}
+                fi
             else
                 if [[ {target_type} == "anonym" ]]; then
                     barrnap \
@@ -276,11 +298,58 @@ rule annotations:
         touch {output.ok}
         """
 
+rule assess_assembly:
+    input:
+        output_dir+"/assembled_sequence/{sample}.ok",
+        output_dir+"/annotations/{sample}/{sample}.ok",
+        output_dir+"/minimap/{sample}.ok"
+    output:
+        ok = output_dir+"/assess_assembly/{sample}.ok"
+    log:
+        output_dir+"/logs/assess_assembly/{sample}.log"
+    conda:
+        "envs/assess_assembly.yaml"
+    shell:
+        """
+        FAS=$(echo {output_dir}/assembled_sequence/{wildcards.sample}.fasta)
+        if [ -e $FAS ]; then
+            if [[ {target_type} == "animal_mt" ]]; then
+                if [ $(grep -e "^>" -c $FAS) -eq 1 ] ; then
+                    echo Single sequence found in fasta > {log}
+                    python scripts/assess_assembly.py \
+                        --fasta {output_dir}/assembled_sequence/{wildcards.sample}.fasta \
+                        --bam {output_dir}/minimap/{wildcards.sample}.bam \
+                        --bed {output_dir}/annotations/{wildcards.sample}/result.bed \
+                        --sample {wildcards.sample} \
+                        --output {output_dir}/assess_assembly/
+                else
+                    echo More than one sequence found in fasta > {log}
+                    # mitos creates subdirectories for each contig
+                    # find bed files and cat
+                    find {output_dir}/annotations/{wildcards.sample}/ -type f -name result.bed | while read line; do  cat $line; done > {output_dir}/assess_assembly/{wildcards.sample}.bed
+
+                    python scripts/assess_assembly.py \
+                        --fasta {output_dir}/assembled_sequence/{wildcards.sample}.fasta \
+                        --bam {output_dir}/minimap/{wildcards.sample}.bam \
+                        --bed {output_dir}/assess_assembly/{wildcards.sample}.bed \
+                        --sample {wildcards.sample} \
+                        --output {output_dir}/assess_assembly/
+                fi
+            else
+                if [[ {target_type} == "anonym" ]]; then
+                    echo TBC > {log}
+                fi
+            fi
+        fi
+        touch {output.ok}
+        """
+
 rule summarise:
     input: 
         expand(output_dir+"/seqkit/{sample}.ok", sample=sample_data["ID"].tolist()),
         expand(output_dir+"/blobtools/{sample}/{sample}.ok", sample=sample_data["ID"].tolist()),
-        expand(output_dir+"/annotations/{sample}/{sample}.ok", sample=sample_data["ID"].tolist())    
+        expand(output_dir+"/annotations/{sample}/{sample}.ok", sample=sample_data["ID"].tolist()),
+        expand(output_dir+"/assess_assembly/{sample}.ok", sample=sample_data["ID"].tolist())
     output:
         table_sample = output_dir+"/summary/summary_sample.txt",
         table_contig = output_dir+"/summary/summary_contig.txt"
@@ -370,28 +439,25 @@ rule pasta:
         PASTA_TOOLS_DEVDIR=$CONDA_PREFIX/bin/ run_pasta.py -i {output.cp} -j {wildcards.dataset} &> {log}
         """
 
-rule gblocks:
+rule clipkit:
     input:
         output_dir+"/pasta/{dataset}.marker001.{dataset}.aln"
     output:
-        cp = output_dir+"/gblocks/{dataset}.fasta",
-        gb = output_dir+"/gblocks/{dataset}.fasta-gb"
+        output_dir+"/clipkit/{dataset}.fasta",
     log:
-        output_dir+"/logs/gblocks/{dataset}.log"
+        output_dir+"/logs/clipkit/{dataset}.log"
     conda:
-        "envs/gblocks.yaml"
+        "envs/clipkit.yaml"
     shell:
         """
-        cp {input} {output.cp}
-        # gblocks always gives error code of 1. Ignore.
-        Gblocks {output.cp} -t=d &> {log} || true
+        clipkit {input} -o {output} &> {log}
         """
 
 rule iqtree:
     input:
-        output_dir+"/gblocks/{dataset}.fasta-gb"        
+        output_dir+"/clipkit/{dataset}.fasta"        
     output:
-        output_dir+"/iqtree/{dataset}.contree",
+        output_dir+"/iqtree/{dataset}.treefile",
         renamed = output_dir+"/iqtree/{dataset}.fasta"
     log:
         output_dir+"/logs/iqtree/{dataset}.log"
@@ -399,17 +465,23 @@ rule iqtree:
         "envs/iqtree.yaml"
     shell:
         """
+        # only run iqtree if there are at least samples in alignment
+        #if [ $(grep -e "^>" -c {input}) -ge 5 ] ; then  
         # remove special characters from sample names
-        sed -e 's/;/_/g' -e 's/+//g' -e 's/(//g' -e 's/)//g' -e 's/__/_/g' \
+        sed -e 's/;/_/g' -e 's/+//g' \
             {input} > {output.renamed}
 
         # iqtree
-        iqtree -s {output.renamed} -B 1000 --prefix {output_dir}/iqtree/{wildcards.dataset} &> {log}
+        iqtree -s {output.renamed} --prefix {output_dir}/iqtree/{wildcards.dataset} &> {log}
+        #iqtree -s {output.renamed} -B 1000 --prefix {output_dir}/iqtree/{wildcards.dataset} &> {log}
+        #else
+        #    echo Less than 5 samples in alignment. Iqtree not started.
+        #fi
         """
 
 rule plot_tree:
     input:
-        output_dir+"/iqtree/{dataset}.contree"
+        output_dir+"/iqtree/{dataset}.treefile"
     output:
         output_dir+"/plot_tree/{dataset}.png"
     log:
