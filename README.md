@@ -29,7 +29,7 @@ bash additional_scripts/fetch_mitos2_reference_data.sh
 
 ## Download example data
 
-We will use a subset of three Apis mellifera samples from Parejo et al 2020 https://academic.oup.com/gbe/article/12/12/2535/5900668
+We will use a subset of eight Apis mellifera samples from Parejo et al 2020 https://academic.oup.com/gbe/article/12/12/2535/5900668
 
 ```
 # set up sra-tools environment
@@ -114,8 +114,13 @@ It will also create csv table of samples that looks like this:
 |ID|forward|reverse|seed|gene|
 |--|------ | ----- | -- | -- |
 |A.mellifera_ERR5665185|example_data/ERR5665185_1.fastq.gz|example_data/ERR5665185_2.fastq.gz|apis_mellifera_db/mitochondrion/seed.fasta|apis_mellifera_db/mitochondrion/gene.fasta|
-|A.mellifera_ERR5665185|example_data/ERR5665186_1.fastq.gz|example_data/ERR5665186_2.fastq.gz|apis_mellifera_db/mitochondrion/seed.fasta|apis_mellifera_db/mitochondrion/gene.fasta|
-|A.mellifera_ERR5665185|example_data/ERR5665187_1.fastq.gz|example_data/ERR5665187_2.fastq.gz|apis_mellifera_db/mitochondrion/seed.fasta|apis_mellifera_db/mitochondrion/gene.fasta|
+|A.mellifera_ERR5665186|example_data/ERR5665186_1.fastq.gz|example_data/ERR5665186_2.fastq.gz|apis_mellifera_db/mitochondrion/seed.fasta|apis_mellifera_db/mitochondrion/gene.fasta|
+|A.mellifera_ERR5665187|example_data/ERR5665187_1.fastq.gz|example_data/ERR5665187_2.fastq.gz|apis_mellifera_db/mitochondrion/seed.fasta|apis_mellifera_db/mitochondrion/gene.fasta|
+|A.mellifera_ERR5665184|example_data/ERR5665184_1.fastq.gz|example_data/ERR5665184_2.fastq.gz|apis_mellifera_db/mitochondrion/seed.fasta|apis_mellifera_db/mitochondrion/gene.fasta|
+|A.mellifera_ERR5665183|example_data/ERR5665183_1.fastq.gz|example_data/ERR5665183_2.fastq.gz|apis_mellifera_db/mitochondrion/seed.fasta|apis_mellifera_db/mitochondrion/gene.fasta|
+|A.mellifera_ERR5665182|example_data/ERR5665182_1.fastq.gz|example_data/ERR5665182_2.fastq.gz|apis_mellifera_db/mitochondrion/seed.fasta|apis_mellifera_db/mitochondrion/gene.fasta|
+|A.mellifera_ERR5665181|example_data/ERR5665181_1.fastq.gz|example_data/ERR5665181_2.fastq.gz|apis_mellifera_db/mitochondrion/seed.fasta|apis_mellifera_db/mitochondrion/gene.fasta|
+|A.mellifera_ERR5665180|example_data/ERR5665180_1.fastq.gz|example_data/ERR5665180_2.fastq.gz|apis_mellifera_db/mitochondrion/seed.fasta|apis_mellifera_db/mitochondrion/gene.fasta|
 
 
 ## Run Snakemake

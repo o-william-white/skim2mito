@@ -14,7 +14,7 @@ cat config/config.yaml |
 
 # setup example samples.csv
 head -n 1 /home/oliw/software/genome_skimming_pipeline/config/samples.csv > config/samples_example.csv
-for SRA in ERR5665185 ERR5665186 ERR5665187; do
+for SRA in ERR5665185 ERR5665186 ERR5665187 ERR5665184 ERR5665183 ERR5665182 ERR5665181 ERR5665180; do
    echo -e "A.mellifera_${SRA},example_data/${SRA}_1.fastq.gz,example_data/${SRA}_2.fastq.gz,apis_mellifera_db/mitochondrion/seed.fasta,apis_mellifera_db/mitochondrion/gene.fasta"
 done >> config/samples_example.csv
 
