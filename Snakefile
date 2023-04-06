@@ -37,6 +37,7 @@ rule all:
         output_dir+"/snakemake.ok"
 
 # convert fastq to fasta
+# add option for forward and reverse primers if known
 rule fastp:
     input:
         fwd = get_forward,
@@ -57,9 +58,7 @@ rule fastp:
             --out1 {output.fwd} --out2 {output.rev} \
             --html {output.html} --json {output.json} \
             --disable_quality_filtering \
-            --thread {threads} \
-            --adapter_sequence=AGATCGGAAGAGCACACGTCTGAACTCCAGTCA \
-            --adapter_sequence_r2=AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT &> {log}
+            --thread {threads} &> {log}
         """
 
 rule getorganelle:
@@ -78,7 +77,7 @@ rule getorganelle:
     threads: threads
     shell:
         """
-        if [[ {target_type} == "animal_mt" || {target_type} == "embplant_cp" ]]; then 
+        if [[ {target_type} == "animal_mt" || {target_type} == "embplant_pt" ]]; then 
             get_organelle_from_reads.py \
                 -1 {input.fwd} -2 {input.rev} \
                 -o {output_dir}/getorganelle/{wildcards.sample} \
@@ -406,7 +405,7 @@ rule mafft:
         """
         mafft \
             --maxiterate 1000 \
-            --localpair \
+            --globalpair \
             --adjustdirection \
             {input} 1> {output} 2> {log}
         """
@@ -423,25 +422,9 @@ rule filter_alignments:
         python scripts/alignments_filter.py  --input {input} --output {output} --threshold 0.75 > {log}
         """
 
-rule pasta:
-    input:
-        output_dir+"/mafft_filtered/{dataset}.fasta"
-    output:
-        cp = output_dir+"/pasta/{dataset}.fasta",
-        al = output_dir+"/pasta/{dataset}.marker001.{dataset}.aln"
-    log:
-        output_dir+"/logs/pasta/{dataset}.log"
-    conda:
-        "envs/alignments.yaml"
-    shell:
-        """
-        cp {input} {output.cp}
-        PASTA_TOOLS_DEVDIR=$CONDA_PREFIX/bin/ run_pasta.py -i {output.cp} -j {wildcards.dataset} &> {log}
-        """
-
 rule clipkit:
     input:
-        output_dir+"/pasta/{dataset}.marker001.{dataset}.aln"
+        output_dir+"/mafft_filtered/{dataset}.fasta"
     output:
         output_dir+"/clipkit/{dataset}.fasta",
     log:
@@ -472,10 +455,10 @@ rule iqtree:
             {input} > {output.renamed}
 
         # iqtree
-        iqtree -s {output.renamed} --prefix {output_dir}/iqtree/{wildcards.dataset} &> {log}
-        #iqtree -s {output.renamed} -B 1000 --prefix {output_dir}/iqtree/{wildcards.dataset} &> {log}
-        #else
-        #    echo Less than 5 samples in alignment. Iqtree not started.
+        # iqtree will not bootstrap if less than 5 samples in alignment
+        # add if else statement here 
+        #iqtree -s {output.renamed} --prefix {output_dir}/iqtree/{wildcards.dataset} &> {log}
+        iqtree -s {output.renamed} -B 1000 --prefix {output_dir}/iqtree/{wildcards.dataset} &> {log}
         #fi
         """
 

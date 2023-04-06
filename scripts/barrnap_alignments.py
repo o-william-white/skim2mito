@@ -53,7 +53,7 @@ for fas in file_paths(barrnap_dir, ".fas"):
 # get a list of all possible genes in annotation 
 genes = []
 for seq in seq_list:
-    gene = seq[0].split(";")[3]
+    gene = seq[0].split(";")[2]
     #gene = gene.split("_")[0].split("-")[0]
     if gene not in genes:
         genes.append(gene)
