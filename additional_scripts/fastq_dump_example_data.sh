@@ -2,9 +2,9 @@
 
 source activate sra-tools
 
-for SRA in ERR5665185 ERR5665186 ERR5665187 ERR5665184 ERR5665183 ERR5665182 ERR5665181 ERR5665180; do 
+for SRA in SRR5201684 SRR5201683 SRR5201682 SRR5201681 SRR5201680 SRR5201679 SRR5201678 SRR5201677 SRR5201676; do
    echo fetching reads for $SRA
-   fastq-dump --origfmt --split-files -X 500000 --gzip --outdir example_data $SRA
+   fastq-dump --origfmt --split-files -X 250000 --gzip --outdir example_data $SRA
 done
 
 echo Complete!

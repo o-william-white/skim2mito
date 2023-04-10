@@ -1,7 +1,7 @@
 
 # Genome skimming pipeline
 
-This repo is a Snakemake pipeline to assemble organelle or ribsomal sequences from genome skimming data using GetOrganelle, check assembly quality, annotate genes and perfrom basic phylogenetic analyses. This is under active development so issues are likey. Currently, it can assemble and annotate mitochondrial and ribosomal sequences. Chloroplast sequences can be assembled but annotation is not possible yet.  
+This repo is a Snakemake pipeline to assemble organelle or ribsomal sequences from genome skimming data using GetOrganelle, check assembly quality, annotate genes and perform basic phylogenetic analyses. This is under active development so issues are likey. Currently, it can assemble and annotate mitochondrial and ribosomal sequences. Chloroplast sequences can be assembled but annotation is not possible yet.  
 
 ## Setup 
 
@@ -29,7 +29,7 @@ bash additional_scripts/fetch_mitos2_reference_data.sh
 
 ## Download example data
 
-We will use a subset of eight Apis mellifera samples from Parejo et al 2020 https://academic.oup.com/gbe/article/12/12/2535/5900668
+We will use a subset of nine bank vole (Myodes glareolus) samples from Baker et al (2017) https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5680428/
 
 ```
 # set up sra-tools environment
@@ -55,24 +55,24 @@ conda activate go_fetch
 # download refseq mitochondrion sequences for Apis mellifera
 # NOTE: You will need to change the path go_fetch.py and the email address used by Biopython. 
 python /PATH/TO/go_fetch/go_fetch.py \
-   --taxonomy "Apis mellifera" \
+   --taxonomy "Myodes" \
    --target mitochondrion \
    --download \
    --min 2 \
    --max 10 \
    --name mitochondrion \
-   --output apis_mellifera_db \
+   --output myodes_db \
    --email o.william.white@gmail.com
 
 # deactivate environment
 conda deactivate
 ```
 
-You should now have the following refernece data: `apis_mellifera_db/mitochondrion/seed.fasta` and `apis_mellifera_db/mitochondrion/gene.fasta`
+You should now have the following refernece data: `myodes_db/mitochondrion/seed.fasta` and `myodes_db/mitochondrion/gene.fasta`
 
 ## Setup Snakemake config files
 
-Sankemake requires a config.yaml and samples.csv to define input paramters and sequence data for each sample.
+Snakemake requires a config.yaml and samples.csv to define input paramters and sequence data for each sample.
 
 ```
 # setup example config.yaml and samples.csv
@@ -112,15 +112,16 @@ threads: 6
 It will also create csv table of samples that looks like this: 
 
 |ID|forward|reverse|seed|gene|
-|--|------ | ----- | -- | -- |
-|A.mellifera_ERR5665185|example_data/ERR5665185_1.fastq.gz|example_data/ERR5665185_2.fastq.gz|apis_mellifera_db/mitochondrion/seed.fasta|apis_mellifera_db/mitochondrion/gene.fasta|
-|A.mellifera_ERR5665186|example_data/ERR5665186_1.fastq.gz|example_data/ERR5665186_2.fastq.gz|apis_mellifera_db/mitochondrion/seed.fasta|apis_mellifera_db/mitochondrion/gene.fasta|
-|A.mellifera_ERR5665187|example_data/ERR5665187_1.fastq.gz|example_data/ERR5665187_2.fastq.gz|apis_mellifera_db/mitochondrion/seed.fasta|apis_mellifera_db/mitochondrion/gene.fasta|
-|A.mellifera_ERR5665184|example_data/ERR5665184_1.fastq.gz|example_data/ERR5665184_2.fastq.gz|apis_mellifera_db/mitochondrion/seed.fasta|apis_mellifera_db/mitochondrion/gene.fasta|
-|A.mellifera_ERR5665183|example_data/ERR5665183_1.fastq.gz|example_data/ERR5665183_2.fastq.gz|apis_mellifera_db/mitochondrion/seed.fasta|apis_mellifera_db/mitochondrion/gene.fasta|
-|A.mellifera_ERR5665182|example_data/ERR5665182_1.fastq.gz|example_data/ERR5665182_2.fastq.gz|apis_mellifera_db/mitochondrion/seed.fasta|apis_mellifera_db/mitochondrion/gene.fasta|
-|A.mellifera_ERR5665181|example_data/ERR5665181_1.fastq.gz|example_data/ERR5665181_2.fastq.gz|apis_mellifera_db/mitochondrion/seed.fasta|apis_mellifera_db/mitochondrion/gene.fasta|
-|A.mellifera_ERR5665180|example_data/ERR5665180_1.fastq.gz|example_data/ERR5665180_2.fastq.gz|apis_mellifera_db/mitochondrion/seed.fasta|apis_mellifera_db/mitochondrion/gene.fasta|
+|--|-------|-------|----|----|
+|M.glareolus_SRR5201684|example_data/SRR5201684_1.fastq.gz|example_data/SRR5201684_2.fastq.gz|myodes_db/mitochondrion/seed.fasta|myodes_db/mitochondrion/gene.fasta|
+|M.glareolus_SRR5201683|example_data/SRR5201683_1.fastq.gz|example_data/SRR5201683_2.fastq.gz|myodes_db/mitochondrion/seed.fasta|myodes_db/mitochondrion/gene.fasta|
+|M.glareolus_SRR5201682|example_data/SRR5201682_1.fastq.gz|example_data/SRR5201682_2.fastq.gz|myodes_db/mitochondrion/seed.fasta|myodes_db/mitochondrion/gene.fasta|
+|M.glareolus_SRR5201681|example_data/SRR5201681_1.fastq.gz|example_data/SRR5201681_2.fastq.gz|myodes_db/mitochondrion/seed.fasta|myodes_db/mitochondrion/gene.fasta|
+|M.glareolus_SRR5201680|example_data/SRR5201680_1.fastq.gz|example_data/SRR5201680_2.fastq.gz|myodes_db/mitochondrion/seed.fasta|myodes_db/mitochondrion/gene.fasta|
+|M.glareolus_SRR5201679|example_data/SRR5201679_1.fastq.gz|example_data/SRR5201679_2.fastq.gz|myodes_db/mitochondrion/seed.fasta|myodes_db/mitochondrion/gene.fasta|
+|M.glareolus_SRR5201678|example_data/SRR5201678_1.fastq.gz|example_data/SRR5201678_2.fastq.gz|myodes_db/mitochondrion/seed.fasta|myodes_db/mitochondrion/gene.fasta|
+|M.glareolus_SRR5201677|example_data/SRR5201677_1.fastq.gz|example_data/SRR5201677_2.fastq.gz|myodes_db/mitochondrion/seed.fasta|myodes_db/mitochondrion/gene.fasta|
+|M.glareolus_SRR5201676|example_data/SRR5201676_1.fastq.gz|example_data/SRR5201676_2.fastq.gz|myodes_db/mitochondrion/seed.fasta|myodes_db/mitochondrion/gene.fasta|
 
 
 ## Run Snakemake
