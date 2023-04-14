@@ -1,4 +1,0 @@
-channels:
-  - bioconda
-dependencies:
-  - clipkit =1.3.0

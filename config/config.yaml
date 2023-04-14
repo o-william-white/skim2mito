@@ -22,6 +22,9 @@ mitos_code: <code>
 # barrnap kindgom (Bacteria:bac, Archaea:arc, Eukaryota:euk, Metazoan Mitochondria:mito)
 barrnap_kingdom: <barrnap_kingdom>
 
+# alignment trimming method to use (gblocks or clipkit)
+alignment_trim: <alignment_trim_tool>
+
 # number of threads to use
 threads: <threads>
 

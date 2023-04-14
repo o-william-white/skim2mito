@@ -1,5 +1,0 @@
-channels:
-  - bioconda
-dependencies:
-  - mafft =7.508
-  - pasta =1.7.8

@@ -10,6 +10,7 @@ cat config/config.yaml |
        -e 's:</path/to/mitos/refseq>:mitos2_reference_data/refseq89m:g' \
        -e 's:<code>:2:g' \
        -e 's:<barrnap_kingdom>:NA:g' \
+       -e 's/<alignment_trim_tool>/gblocks/g' \
        -e 's:<threads>:6:g' > config/config_example.yaml
 
 # setup example samples.csv

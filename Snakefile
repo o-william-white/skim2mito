@@ -10,7 +10,8 @@ blast_db = config["blast_db"]
 taxdump = config["taxdump"]
 mitos_refseq = config["mitos_refseq"]
 mitos_code = config["mitos_code"]
-barrnap_kingdom = config["barrnap_kingdom"] 
+barrnap_kingdom = config["barrnap_kingdom"]
+alignment_trim = config["alignment_trim"]
 threads = config["threads"]
 
 # read sample data
@@ -400,7 +401,7 @@ rule mafft:
     log:
         output_dir+"/logs/mafft/{dataset}.log"
     conda:
-        "envs/alignments.yaml"
+        "envs/mafft.yaml"
     shell:
         """
         mafft \
@@ -419,26 +420,40 @@ rule filter_alignments:
         output_dir+"/logs/mafft_filtered/{dataset}.log"
     shell:
         """
-        python scripts/alignments_filter.py  --input {input} --output {output} --threshold 0.75 > {log}
+        python scripts/alignments_filter.py  --input {input} --output {output} --threshold 0.5 > {log}
         """
 
-rule clipkit:
+rule alignment_trim:
     input:
         output_dir+"/mafft_filtered/{dataset}.fasta"
     output:
-        output_dir+"/clipkit/{dataset}.fasta",
+        tmp = output_dir+"/alignment_trim/{dataset}_tmp.fasta",
+        out = output_dir+"/alignment_trim/{dataset}.fasta"
     log:
-        output_dir+"/logs/clipkit/{dataset}.log"
+        output_dir+"/logs/alignment_trim/{dataset}.log"
     conda:
-        "envs/clipkit.yaml"
+        "envs/alignment_trim.yaml"
     shell:
         """
-        clipkit {input} -o {output} &> {log}
+        if [[ {alignment_trim} == "gblocks" ]]; then
+            # gblocks add reuslts to same dir as input
+            cp {input} {output.tmp}
+            # gblocks always gives error code of 1. Ignore.
+            Gblocks {output.tmp} -t=d &> {log} || true
+            # sed to remove gaps
+            sed 's/ //g' {output.tmp}-gb > {output.out}        
+            # rm tmp
+            # rm {output.tmp}-gb
+        else
+            if [[ {alignment_trim} == "clipkit" ]]; then
+                clipkit {input} -o {output.out} &> {log}
+            fi
+        fi
         """
 
 rule iqtree:
     input:
-        output_dir+"/clipkit/{dataset}.fasta"        
+        output_dir+"/alignment_trim/{dataset}.fasta"        
     output:
         output_dir+"/iqtree/{dataset}.treefile",
         renamed = output_dir+"/iqtree/{dataset}.fasta"
