@@ -15,13 +15,13 @@ git clone https://github.com/o-william-white/genome_skimming_pipeline
 cd genome_skimming_pipeline
 
 # setup conda env
-conda env create -n genome_skimming_pipeline -f genome_skimming_pipeline/envs/conda_env.yaml
+conda env create -n genome_skimming_pipeline -f envs/conda_env.yaml
 
 # get blast database
 # TBC - already available on NHM HPC :)
 
 # get new_taxdump
-bash additional_scripts/wget_new_taxdump.sh
+bash additional_scripts/fetch_new_taxdump.sh
 
 # get mitos2 annotation
 bash additional_scripts/fetch_mitos2_reference_data.sh
