@@ -43,7 +43,7 @@ bash additional_scripts/fastq_dump_example_data.sh
 
 GetOrganelle requires reference data in the format of seed and gene reference fasta files. You can use the default reference data for GetOrganelle, but I would recomend using custom reference databases where possible. See here for details of how to set up your own databases https://github.com/Kinggerm/GetOrganelle/wiki/FAQ#how-to-assemble-a-target-organelle-genome-using-my-own-reference 
 
-I have shared a basic python script called go_fetch in another repo https://github.com/o-william-white/go_fetch to download and format reference data formated for GetOrganelle. Go fetch downloads the reference from NCBI using biopython, removes repetive sequences using trf, and formats the data for GetOrganelle.
+I have shared a basic python script called go_fetch.py in another repo https://github.com/o-william-white/go_fetch to download and format reference data formatted for GetOrganelle. Go fetch downloads the reference from NCBI using biopython, removes repetitive sequences using trf, and formats the data for GetOrganelle.
 
 ```
 # set up go_fetch environment
@@ -52,7 +52,7 @@ conda create -n go_fetch -c bioconda getorganelle biopython trf
 # activate environment
 conda activate go_fetch
 
-# download refseq mitochondrion sequences for Apis mellifera
+# download refseq mitochondrion sequences for Myodes
 # NOTE: You will need to change the path go_fetch.py and the email address used by Biopython. 
 python /PATH/TO/go_fetch/go_fetch.py \
    --taxonomy "Myodes" \
