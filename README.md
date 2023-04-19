@@ -33,7 +33,7 @@ We will use a subset of nine bank vole (Myodes glareolus) samples from Baker et 
 
 ```
 # set up sra-tools environment
-conda env create -n sra-tools -c bioconda
+conda create -n sra-tools -c bioconda sra-tools
 
 # download reads
 bash additional_scripts/fastq_dump_example_data.sh
