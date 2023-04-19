@@ -52,9 +52,12 @@ conda create -n go_fetch -c bioconda getorganelle biopython trf
 # activate environment
 conda activate go_fetch
 
+# clone go_fetch.py script, NOTE: in this case in $HOME
+cd ~ && git clone https://github.com/o-william-white/go_fetch.git && cd -
+
 # download refseq mitochondrion sequences for Myodes
-# NOTE: You will need to change the path go_fetch.py and the email address used by Biopython. 
-python /PATH/TO/go_fetch/go_fetch.py \
+# NOTE: You will need to change the email address used by Biopython. 
+python $HOME/go_fetch/go_fetch.py \
    --taxonomy "Myodes" \
    --target mitochondrion \
    --download \
@@ -68,7 +71,7 @@ python /PATH/TO/go_fetch/go_fetch.py \
 conda deactivate
 ```
 
-You should now have the following refernece data: `myodes_db/mitochondrion/seed.fasta` and `myodes_db/mitochondrion/gene.fasta`
+You should now have the following reference data: `myodes_db/mitochondrion/seed.fasta` and `myodes_db/mitochondrion/gene.fasta`
 
 ## Setup Snakemake config files
 
