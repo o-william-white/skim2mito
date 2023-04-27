@@ -439,7 +439,7 @@ rule alignment_trim:
             # gblocks add results to same dir as input
             cp {input} {output.tmp}
             # gblocks always gives error code of 1. Ignore.
-            Gblocks {output.tmp} -t=d -b3=8 -b4=5 -g5=h &> {log} || true
+            Gblocks {output.tmp} -t=d -b3=8 -b4=5 -b5=h &> {log} || true
             # sed to remove gaps
             sed 's/ //g' {output.tmp}-gb > {output.out}        
         else
