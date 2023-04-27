@@ -427,7 +427,7 @@ rule alignment_trim:
     input:
         output_dir+"/mafft_filtered/{dataset}.fasta"
     output:
-        tmp = output_dir+"/alignment_trim/{dataset}_tmp.fasta",
+        tmp = output_dir+"/alignment_trim/{dataset}_tmp.txt",
         out = output_dir+"/alignment_trim/{dataset}.fasta"
     log:
         output_dir+"/logs/alignment_trim/{dataset}.log"
@@ -436,17 +436,18 @@ rule alignment_trim:
     shell:
         """
         if [[ {alignment_trim} == "gblocks" ]]; then
-            # gblocks add reuslts to same dir as input
+            # gblocks add results to same dir as input
             cp {input} {output.tmp}
             # gblocks always gives error code of 1. Ignore.
             Gblocks {output.tmp} -t=d &> {log} || true
             # sed to remove gaps
             sed 's/ //g' {output.tmp}-gb > {output.out}        
-            # rm tmp
-            # rm {output.tmp}-gb
         else
             if [[ {alignment_trim} == "clipkit" ]]; then
-                clipkit {input} -o {output.out} &> {log}
+                # create copy as above for gblocks
+                cp {input} {output.tmp}
+                # clipkit
+                clipkit {output.tmp} -o {output.out} &> {log}
             fi
         fi
         """
