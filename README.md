@@ -150,7 +150,7 @@ If you have access to an HPC you can submit this as a job. For example, see the 
 #SBATCH --partition=day
 #SBATCH --output=job_snakemake_example_%j.out
 #SBATCH --error=job_snakemake_example_%j.err
-#SBATCH --mem=18G
+#SBATCH --mem=50G
 #SBATCH --cpus-per-task=18
 
 source activate genome_skimming_pipeline
