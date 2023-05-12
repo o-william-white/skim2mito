@@ -1,4 +1,5 @@
 channels:
   - bioconda
 dependencies:
-  - getorganelle =1.7.6.1
+  - getorganelle =1.7.7.0
+  - spades =3.15.5
