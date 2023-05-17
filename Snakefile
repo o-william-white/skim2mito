@@ -225,6 +225,7 @@ rule blobtools:
     log:
         output_dir+"/logs/blobtools/{sample}.log"
     container:
+        # "docker://genomehubs/blobtoolkit"
         "docker://genomehubs/blobtoolkit"
     shell:
         """
@@ -427,7 +428,7 @@ rule alignment_trim:
     input:
         output_dir+"/mafft_filtered/{dataset}.fasta"
     output:
-        tmp = output_dir+"/alignment_trim/{dataset}_tmp.txt",
+        tmp = output_dir+"/alignment_trim/{dataset}_tmp.fasta",
         out = output_dir+"/alignment_trim/{dataset}.fasta"
     log:
         output_dir+"/logs/alignment_trim/{dataset}.log"
@@ -435,19 +436,24 @@ rule alignment_trim:
         "envs/alignment_trim.yaml"
     shell:
         """
-        if [[ {alignment_trim} == "gblocks" ]]; then
-            # gblocks add results to same dir as input
-            cp {input} {output.tmp}
-            # gblocks always gives error code of 1. Ignore.
-            Gblocks {output.tmp} -t=d -b3=8 -b4=5 -b5=h &> {log} || true
-            # sed to remove gaps
-            sed 's/ //g' {output.tmp}-gb > {output.out}        
+        if [ $(grep -c "^>" {input}) -lt "3" ]; then
+            cp -R {input} {output.tmp}
+            cp -R {input} {output.out}
         else
-            if [[ {alignment_trim} == "clipkit" ]]; then
-                # create copy as above for gblocks
+            # if [ $(grep -c "^>" {input[0]}) -lt "0" ]; then
+            if [[ {alignment_trim} == "gblocks" ]]; then
+                # gblocks add reuslts to same dir as input
                 cp {input} {output.tmp}
-                # clipkit
-                clipkit {output.tmp} -o {output.out} &> {log}
+                # gblocks always gives error code of 1. Ignore.
+                Gblocks {output.tmp} -t=d &> {log} || true
+                # sed to remove gaps
+                sed 's/ //g' {output.tmp}-gb > {output.out}        
+                # rm tmp
+                # rm {output.tmp}-gb
+            else
+                if [[ {alignment_trim} == "clipkit" ]]; then
+                    clipkit {input} -o {output.out} &> {log}
+                fi
             fi
         fi
         """
@@ -474,8 +480,11 @@ rule iqtree:
         # iqtree will not bootstrap if less than 5 samples in alignment
         # add if else statement here 
         #iqtree -s {output.renamed} --prefix {output_dir}/iqtree/{wildcards.dataset} &> {log}
-        iqtree -s {output.renamed} -B 1000 --prefix {output_dir}/iqtree/{wildcards.dataset} &> {log}
-        #fi
+        if [ $(grep -c "^>" {input}) -lt "3" ]; then
+            touch {output[0]}
+        else
+            iqtree -s {output.renamed} -B 1000 --prefix {output_dir}/iqtree/{wildcards.dataset} &> {log}
+        fi
         """
 
 rule plot_tree:
@@ -489,7 +498,11 @@ rule plot_tree:
         "envs/r_env.yaml"
     shell:
         """
-        Rscript scripts/plot_tree.R {input} {output} &> {log}
+        if [ $(grep -cvP '\S' {input[0]}) -eq "0" ]; then
+            touch {output}
+        else
+            Rscript scripts/plot_tree.R {input} {output} &> {log}
+        fi
         """
 
 def get_plot_tree_output(wildcards):
