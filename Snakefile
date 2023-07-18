@@ -35,7 +35,51 @@ rule all:
     input:
         output_dir+"/summary/summary_sample.txt",
         output_dir+"/summary/summary_contig.txt",
-        output_dir+"/snakemake.ok"
+        output_dir+"/snakemake.ok",
+        expand(output_dir+"/fastqc/{sample}_R1.html", 
+            sample=sample_data.index.tolist())
+
+# fastqc
+# quality check fastq files
+rule fastqc:
+    input:
+        fwd = get_forward,
+        rev = get_reverse
+    output:
+        fwd = output_dir+"/fastqc/{sample}_R1.html",
+        rev = output_dir+"/fastqc/{sample}_R2.html",
+    params:
+        outdir=lambda wildcards, output: os.path.abspath(os.path.dirname(output[0])) + "/",
+        fwd_outfile = lambda wildcards, input: os.path.basename(input[0]).replace('.fastq.gz', '_fastqc.html').replace('.fq.gz','_fastqc.html'),
+        rev_outfile = lambda wildcards, input: os.path.basename(input[1]).replace('.fastq.gz', '_fastqc.html').replace('.fq.gz','_fastqc.html')
+    log:
+        output_dir+"/logs/fastqc/{sample}.log"
+    conda:
+        "envs/fastqc.yaml"
+    threads: 1
+    shell:
+        """
+        fastqc -o "{params.outdir}" {input.fwd} -t {threads} &> {log} &&
+        mv {params.outdir}/{params.fwd_outfile} {output.fwd} &&
+        fastqc -o "{params.outdir}" {input.rev} -t {threads} &> {log} &&
+        mv {params.outdir}/{params.rev_outfile} {output.rev}
+        """
+
+# rule fastqc:
+#     input:
+#         get_forward
+#     output:
+#         html=output_dir+"/fastqc/{sample}.html",
+#         zip=output_dir+"/fastqc/{sample}_fastqc.zip" # the suffix _fastqc.zip is necessary for multiqc to find the file. If not using multiqc, you are free to choose an arbitrary filename
+#     params:
+#         extra = "--quiet"
+#     log:
+#         "logs/fastqc/{sample}.log"
+#     threads: 1
+#     resources:
+#         mem_mb = 1024
+#     wrapper:
+#         "v2.1.1/bio/fastqc"
 
 # convert fastq to fasta
 # add option for forward and reverse primers if known
