@@ -65,24 +65,6 @@ rule fastqc:
         mv {params.outdir}/{params.rev_outfile} {output.rev}
         """
 
-# rule fastqc:
-#     input:
-#         get_forward
-#     output:
-#         html=output_dir+"/fastqc/{sample}.html",
-#         zip=output_dir+"/fastqc/{sample}_fastqc.zip" # the suffix _fastqc.zip is necessary for multiqc to find the file. If not using multiqc, you are free to choose an arbitrary filename
-#     params:
-#         extra = "--quiet"
-#     log:
-#         "logs/fastqc/{sample}.log"
-#     threads: 1
-#     resources:
-#         mem_mb = 1024
-#     wrapper:
-#         "v2.1.1/bio/fastqc"
-
-# convert fastq to fasta
-# add option for forward and reverse primers if known
 rule fastp:
     input:
         fwd = get_forward,
@@ -249,7 +231,7 @@ rule minimap:
         OUT=$(echo {output_dir}/minimap/{wildcards.sample}.bam)
         if [ -e $FAS ]; then
             echo Running minimap for {wildcards.sample} > {log}
-            minimap2 -ax sr $FAS {input.fwd} {input.rev} 2> {log} | samtools sort -O BAM -o $OUT - 2>> {log}
+            minimap2 -ax sr $FAS {input.fwd} {input.rev} 2> {log} | samtools view -b -F 4 | samtools sort -O BAM -o $OUT - 2>> {log}
             samtools index $OUT 2>> {log}
             samtools index -c $OUT 2>> {log}
         else
@@ -562,6 +544,10 @@ rule final_log:
     shell:
         """
         touch {output}
+        rm $(find -path '*{output_dir}*' -name "*.ok")
+        rm $(find -path '*{output_dir}*' -name "*.fq")
+        rm $(find -path '*{output_dir}*' -name "*.fq.gz")
+        rm $(find -path '*{output_dir}*' -name "*.fastq.gz")
         """
 
 
