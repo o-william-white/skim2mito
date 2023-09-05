@@ -35,10 +35,36 @@ rule all:
     input:
         output_dir+"/summary/summary_sample.txt",
         output_dir+"/summary/summary_contig.txt",
-        output_dir+"/snakemake.ok"
+        output_dir+"/snakemake.ok",
+        expand(output_dir+"/fastqc/{sample}_R1.html", 
+            sample=sample_data.index.tolist())
 
-# convert fastq to fasta
-# add option for forward and reverse primers if known
+# fastqc
+# quality check fastq files
+rule fastqc:
+    input:
+        fwd = get_forward,
+        rev = get_reverse
+    output:
+        fwd = output_dir+"/fastqc/{sample}_R1.html",
+        rev = output_dir+"/fastqc/{sample}_R2.html",
+    params:
+        outdir=lambda wildcards, output: os.path.abspath(os.path.dirname(output[0])) + "/",
+        fwd_outfile = lambda wildcards, input: os.path.basename(input[0]).replace('.fastq.gz', '_fastqc.html').replace('.fq.gz','_fastqc.html'),
+        rev_outfile = lambda wildcards, input: os.path.basename(input[1]).replace('.fastq.gz', '_fastqc.html').replace('.fq.gz','_fastqc.html')
+    log:
+        output_dir+"/logs/fastqc/{sample}.log"
+    conda:
+        "envs/fastqc.yaml"
+    threads: 1
+    shell:
+        """
+        fastqc -o "{params.outdir}" {input.fwd} -t {threads} &> {log} &&
+        mv {params.outdir}/{params.fwd_outfile} {output.fwd} &&
+        fastqc -o "{params.outdir}" {input.rev} -t {threads} &> {log} &&
+        mv {params.outdir}/{params.rev_outfile} {output.rev}
+        """
+
 rule fastp:
     input:
         fwd = get_forward,
@@ -205,7 +231,7 @@ rule minimap:
         OUT=$(echo {output_dir}/minimap/{wildcards.sample}.bam)
         if [ -e $FAS ]; then
             echo Running minimap for {wildcards.sample} > {log}
-            minimap2 -ax sr $FAS {input.fwd} {input.rev} 2> {log} | samtools sort -O BAM -o $OUT - 2>> {log}
+            minimap2 -ax sr $FAS {input.fwd} {input.rev} 2> {log} | samtools view -b -F 4 | samtools sort -O BAM -o $OUT - 2>> {log}
             samtools index $OUT 2>> {log}
             samtools index -c $OUT 2>> {log}
         else
@@ -225,6 +251,7 @@ rule blobtools:
     log:
         output_dir+"/logs/blobtools/{sample}.log"
     container:
+        # "docker://genomehubs/blobtoolkit"
         "docker://genomehubs/blobtoolkit"
     shell:
         """
@@ -427,7 +454,7 @@ rule alignment_trim:
     input:
         output_dir+"/mafft_filtered/{dataset}.fasta"
     output:
-        tmp = output_dir+"/alignment_trim/{dataset}_tmp.txt",
+        tmp = output_dir+"/alignment_trim/{dataset}_tmp.fasta",
         out = output_dir+"/alignment_trim/{dataset}.fasta"
     log:
         output_dir+"/logs/alignment_trim/{dataset}.log"
@@ -435,19 +462,24 @@ rule alignment_trim:
         "envs/alignment_trim.yaml"
     shell:
         """
-        if [[ {alignment_trim} == "gblocks" ]]; then
-            # gblocks add results to same dir as input
-            cp {input} {output.tmp}
-            # gblocks always gives error code of 1. Ignore.
-            Gblocks {output.tmp} -t=d -b3=8 -b4=5 -b5=h &> {log} || true
-            # sed to remove gaps
-            sed 's/ //g' {output.tmp}-gb > {output.out}        
+        if [ $(grep -c "^>" {input}) -lt "3" ]; then
+            cp -R {input} {output.tmp}
+            cp -R {input} {output.out}
         else
-            if [[ {alignment_trim} == "clipkit" ]]; then
-                # create copy as above for gblocks
+            # if [ $(grep -c "^>" {input[0]}) -lt "0" ]; then
+            if [[ {alignment_trim} == "gblocks" ]]; then
+                # gblocks add reuslts to same dir as input
                 cp {input} {output.tmp}
-                # clipkit
-                clipkit {output.tmp} -o {output.out} &> {log}
+                # gblocks always gives error code of 1. Ignore.
+                Gblocks {output.tmp} -t=d &> {log} || true
+                # sed to remove gaps
+                sed 's/ //g' {output.tmp}-gb > {output.out}        
+                # rm tmp
+                # rm {output.tmp}-gb
+            else
+                if [[ {alignment_trim} == "clipkit" ]]; then
+                    clipkit {input} -o {output.out} &> {log}
+                fi
             fi
         fi
         """
@@ -474,8 +506,11 @@ rule iqtree:
         # iqtree will not bootstrap if less than 5 samples in alignment
         # add if else statement here 
         #iqtree -s {output.renamed} --prefix {output_dir}/iqtree/{wildcards.dataset} &> {log}
-        iqtree -s {output.renamed} -B 1000 --prefix {output_dir}/iqtree/{wildcards.dataset} &> {log}
-        #fi
+        if [ $(grep -c "^>" {input}) -lt "3" ]; then
+            touch {output[0]}
+        else
+            iqtree -s {output.renamed} -B 1000 --prefix {output_dir}/iqtree/{wildcards.dataset} &> {log}
+        fi
         """
 
 rule plot_tree:
@@ -489,7 +524,11 @@ rule plot_tree:
         "envs/r_env.yaml"
     shell:
         """
-        Rscript scripts/plot_tree.R {input} {output} &> {log}
+        if [ $(grep -cvP '\S' {input[0]}) -eq "0" ]; then
+            touch {output}
+        else
+            Rscript scripts/plot_tree.R {input} {output} &> {log}
+        fi
         """
 
 def get_plot_tree_output(wildcards):
@@ -505,6 +544,10 @@ rule final_log:
     shell:
         """
         touch {output}
+        rm $(find -path '*{output_dir}*' -name "*.ok")
+        rm $(find -path '*{output_dir}*' -name "*.fq")
+        rm $(find -path '*{output_dir}*' -name "*.fq.gz")
+        rm $(find -path '*{output_dir}*' -name "*.fastq.gz")
         """
 
 
