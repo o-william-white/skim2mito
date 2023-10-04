@@ -110,7 +110,7 @@ for n in range(0, bam.nreferences):
             # protein coding genes only
             if chrom == reference_name and not re.search("^trn|^OH" , annotation):
                 bed_annotations_list.append([chrom, start, end, annotation])
-                print(f"{chrom}, {start}, {end}, {annotation}")
+                #print(f"{chrom}, {start}, {end}, {annotation}")
     #print(reference_name)
     #print(reference_length)
     #print(bed_df)

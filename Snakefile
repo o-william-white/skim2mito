@@ -39,8 +39,6 @@ rule all:
         expand(output_dir+"/fastqc/{sample}_R1.html", 
             sample=sample_data.index.tolist())
 
-# fastqc
-# quality check fastq files
 rule fastqc:
     input:
         fwd = get_forward,
@@ -207,7 +205,9 @@ rule blastn:
                 -db {blast_db} \
                 -out $OUT \
                 -outfmt '6 qseqid staxids bitscore std' \
-                -max_target_seqs 10 -max_hsps 1 -evalue 1e-25 &> {log} 
+                -max_target_seqs 10 \
+                -max_hsps 1 \
+                -evalue 1e-25 &> {log} 
         else
             echo No assembled sequence for {wildcards.sample} > {log}
         fi
@@ -462,9 +462,9 @@ rule alignment_trim:
         "envs/alignment_trim.yaml"
     shell:
         """
-        if [ $(grep -c "^>" {input}) -lt "3" ]; then
-            cp -R {input} {output.tmp}
-            cp -R {input} {output.out}
+        if [ $(grep -c "^>" {input}) -lt "5" ]; then
+            cp {input} {output.tmp}
+            cp {input} {output.out}
         else
             # if [ $(grep -c "^>" {input[0]}) -lt "0" ]; then
             if [[ {alignment_trim} == "gblocks" ]]; then
@@ -478,6 +478,8 @@ rule alignment_trim:
                 # rm {output.tmp}-gb
             else
                 if [[ {alignment_trim} == "clipkit" ]]; then
+                    # create tmp to avoid error
+                    cp {input} {output.tmp}
                     clipkit {input} -o {output.out} &> {log}
                 fi
             fi
@@ -486,30 +488,25 @@ rule alignment_trim:
 
 rule iqtree:
     input:
-        output_dir+"/alignment_trim/{dataset}.fasta"        
+        fasta = output_dir+"/alignment_trim/{dataset}.fasta"        
     output:
-        output_dir+"/iqtree/{dataset}.treefile",
-        renamed = output_dir+"/iqtree/{dataset}.fasta"
+        tree = output_dir+"/iqtree/{dataset}.treefile",
+        fasta_renamed = output_dir+"/iqtree/{dataset}.fasta"
     log:
         output_dir+"/logs/iqtree/{dataset}.log"
     conda:
         "envs/iqtree.yaml"
     shell:
         """
-        # only run iqtree if there are at least samples in alignment
-        #if [ $(grep -e "^>" -c {input}) -ge 5 ] ; then  
         # remove special characters from sample names
         sed -e 's/;/_/g' -e 's/+//g' \
-            {input} > {output.renamed}
+            {input.fasta} > {output.fasta_renamed}
 
-        # iqtree
         # iqtree will not bootstrap if less than 5 samples in alignment
-        # add if else statement here 
-        #iqtree -s {output.renamed} --prefix {output_dir}/iqtree/{wildcards.dataset} &> {log}
-        if [ $(grep -c "^>" {input}) -lt "3" ]; then
-            touch {output[0]}
+        if [ $(grep -c "^>" {input}) -lt "5" ]; then
+            touch {output.tree}
         else
-            iqtree -s {output.renamed} -B 1000 --prefix {output_dir}/iqtree/{wildcards.dataset} &> {log}
+            iqtree -s {output.fasta_renamed} -B 1000 --prefix {output_dir}/iqtree/{wildcards.dataset} &> {log}
         fi
         """
 
@@ -524,10 +521,13 @@ rule plot_tree:
         "envs/r_env.yaml"
     shell:
         """
-        if [ $(grep -cvP '\S' {input[0]}) -eq "0" ]; then
-            touch {output}
+        # check if file empty
+        if [ -s {input} ]; then
+           # file not empty
+           Rscript scripts/plot_tree.R {input} {output} &> {log} 
         else
-            Rscript scripts/plot_tree.R {input} {output} &> {log}
+           # file empty
+           touch {output}
         fi
         """
 
@@ -544,10 +544,11 @@ rule final_log:
     shell:
         """
         touch {output}
-        rm $(find -path '*{output_dir}*' -name "*.ok")
-        rm $(find -path '*{output_dir}*' -name "*.fq")
-        rm $(find -path '*{output_dir}*' -name "*.fq.gz")
-        rm $(find -path '*{output_dir}*' -name "*.fastq.gz")
+        # clear tmp file? Causes an error
+        #rm $(find -path '*{output_dir}*' -name "*.ok")
+        #rm $(find -path '*{output_dir}*' -name "*.fq")
+        #rm $(find -path '*{output_dir}*' -name "*.fq.gz")
+        #rm $(find -path '*{output_dir}*' -name "*.fastq.gz")
         """
 
 

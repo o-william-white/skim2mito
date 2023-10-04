@@ -1,0 +1,10 @@
+# Need to have mamba installed in base environment. 
+# I used https://github.com/conda-forge/miniforge#mambaforge
+
+# added remote blast 
+
+# blobtools
+# - taxdump must be in the same directory
+# - blobtools writes text to out - pipe this to log
+
+
