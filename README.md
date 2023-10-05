@@ -161,6 +161,6 @@ snakemake \
    --use-singularity \
    --configfile config/config_example.yaml
 
-echo Complete!
+
 ```
 
