@@ -1,31 +1,36 @@
 
-# Genome skimming pipeline
-
-This repo is a Snakemake pipeline to assemble organelle or ribsomal sequences from genome skimming data using GetOrganelle, check assembly quality, annotate genes and perform basic phylogenetic analyses. This is under active development so issues are likey. Currently, it can assemble and annotate mitochondrial and ribosomal sequences. Chloroplast sequences can be assembled but annotation is not possible yet.  
+# skim2phylo  
 
 ## Setup 
 
-The pipeline uses conda environments to install the necessary tools. The pipeline also requires reference data for GetOrganelle, a blastn database, an NCBI taxdump and reference data for MITOS2 gene annotation. Scripts are provided to install the necessary reference databases. 
+The pipeline uses conda environments and singularity images to install the necessary tools. The pipeline also requires reference data for GetOrganelle, a blastn database, an NCBI taxdump and reference data for MITOS2 gene annotation. Scripts are provided to install the necessary reference databases. 
 
 ```
 # get github repo
-git clone https://github.com/o-william-white/genome_skimming_pipeline
+git clone https://github.com/o-william-white/skim2phylo
 
 # change dir
-cd genome_skimming_pipeline
+cd skim2phylo
 
 # setup conda env
-conda env create -n genome_skimming_pipeline -f envs/conda_env.yaml
+conda env create -n skim2phylo -f envs/conda_env.yaml
 
-# get blast database
-# TBC - already available on NHM HPC :)
+# run test data
+bash run_example_data.sh
 
-# get new_taxdump
-bash additional_scripts/fetch_new_taxdump.sh
-
-# get mitos2 annotation
-bash additional_scripts/fetch_mitos2_reference_data.sh
+# run test data using sbatch scheduler
+sbatch --partition=day --cpus-per-task=24 --mem=24G run_example_data.sh
 ```
+
+## get blast database
+## TBC - already available on NHM HPC :)
+#
+## get new_taxdump
+#bash additional_scripts/fetch_new_taxdump.sh
+#
+## get mitos2 annotation
+#bash additional_scripts/fetch_mitos2_reference_data.sh
+#```
 
 ## Download example data
 
