@@ -15,11 +15,20 @@ cd skim2phylo
 # setup conda env
 conda env create -n skim2phylo -f envs/conda_env.yaml
 
+# tmp data set up..
+# to be included in main script
+wget https://zenodo.org/records/8424777/files/refseq_mitochondrion.tar.gz
+tar xvzf refseq_mitochondrion.tar.gz
+wget https://zenodo.org/record/4284483/files/refseq39.tar.bz2
+tar -xf refseq39.tar.bz2
+bash additional_scripts/fetch_new_taxdump.sh
+
 # run test data
 bash run_example_data.sh
 
 # run test data using sbatch scheduler
-sbatch --partition=day --cpus-per-task=24 --mem=24G run_example_data.sh
+sbatch --partition=day   --cpus-per-task=24 --mem=24G run_example_data.sh
+sbatch --partition=short --cpus-per-task=24 --mem=24G run_example_data.sh
 ```
 
 ## get blast database

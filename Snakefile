@@ -7,7 +7,6 @@ configfile: "config/config.yaml"
 target_type = config["target_type"]
 output_dir = config["output_dir"]
 blast_db = config["blast_db"]
-taxdump = config["taxdump"]
 mitos_refseq = config["mitos_refseq"]
 mitos_code = config["mitos_code"]
 barrnap_kingdom = config["barrnap_kingdom"]
@@ -102,7 +101,7 @@ rule getorganelle:
     threads: threads
     shell:
         """
-        if [[ {target_type} == "animal_mt" || {target_type} == "embplant_pt" ]]; then 
+        if [ {target_type} == "animal_mt" ] ; then 
             get_organelle_from_reads.py \
                 -1 {input.fwd} -2 {input.rev} \
                 -o {output_dir}/getorganelle/{wildcards.sample} \
@@ -185,35 +184,120 @@ rule seqkit:
         touch {output.ok}
         """
 
-rule blastn:
-    input: 
-        output_dir+"/assembled_sequence/{sample}.ok"
-    output:
-        ok = output_dir+"/blastn/{sample}.ok"
-    log:
-        output_dir+"/logs/blastn/{sample}.log"
-    conda:
-        "envs/blastn.yaml"
-    shell:
-        """
-        FAS=$(echo {output_dir}/assembled_sequence/{wildcards.sample}.fasta)
-        OUT=$(echo {output_dir}/blastn/{wildcards.sample}.txt)
-        if [ -e $FAS ]; then
-            echo Running blastn for {wildcards.sample} > {log}
-            blastn \
-                -query $FAS \
-                -db {blast_db} \
-                -out $OUT \
-                -outfmt '6 qseqid staxids bitscore std' \
-                -max_target_seqs 10 \
-                -max_hsps 1 \
-                -evalue 1e-25 &> {log} 
-        else
-            echo No assembled sequence for {wildcards.sample} > {log}
-        fi
-        touch {output.ok}
-        """
-
+if target_type == "animal_mt":
+    rule blastdb:
+        output:
+            multiext(output_dir+"/blastdb/refseq_mitochondrion/refseq_mitochondrion",
+                ".ndb",
+                ".nhr",
+                ".nin",
+                ".not",
+                ".nsq",
+                ".ntf",
+                ".nto")
+        log:
+            output_dir+"/logs/blastdb/blastdb.log"
+        shell:
+            """
+            wget -P {output_dir}/blastdb/ https://zenodo.org/records/8424777/files/refseq_mitochondrion.tar.gz > {log}
+            tar xvzf {output_dir}/blastdb/refseq_mitochondrion.tar.gz --directory {output_dir}/blastdb/ >> {log}
+            rm {output_dir}/blastdb/refseq_mitochondrion.tar.gz >> {log}
+            """
+else: 
+    if target_type == "anonym":
+        rule blastdb:
+            output:
+                multiext(output_dir+"/blastdb/silva_138/silva_138",
+                    ".ndb",
+                    ".nhr",
+                    ".nin",
+                    ".not",
+                    ".nsq",
+                    ".ntf",
+                    ".nto")
+            log:
+                output_dir+"/logs/blastdb/blastdb.log"
+            shell:
+                """
+                wget -P {output_dir}/blastdb/ https://zenodo.org/records/8424777/files/silva_138.tar.gz &> {log}
+                tar xvzf {output_dir}/blastdb/silva_138.tar.gz --directory {output_dir}/blastdb/ >> {log}
+                rm {output_dir}/blastdb/silva_138.tar.gz >> {log}
+                """ 
+if target_type == "animal_mt":
+    rule blastn:
+        input:
+            multiext(output_dir+"/blastdb/refseq_mitochondrion/refseq_mitochondrion",
+                ".ndb",
+                ".nhr",
+                ".nin",
+                ".not",
+                ".nsq",
+                ".ntf",
+                ".nto"), 
+            output_dir+"/assembled_sequence/{sample}.ok"
+        output:
+            ok = output_dir+"/blastn/{sample}.ok"
+        log:
+            output_dir+"/logs/blastn/{sample}.log"
+        conda:
+            "envs/blastn.yaml"
+        shell:
+            """
+            FAS=$(echo {output_dir}/assembled_sequence/{wildcards.sample}.fasta)
+            OUT=$(echo {output_dir}/blastn/{wildcards.sample}.txt)
+            if [ -e $FAS ]; then
+                echo Running blastn for {wildcards.sample} > {log}
+                blastn \
+                    -query $FAS \
+                    -db {output_dir}/blastdb/refseq_mitochondrion/refseq_mitochondrion \
+                    -out $OUT \
+                    -outfmt '6 qseqid staxids bitscore std' \
+                    -max_target_seqs 10 \
+                    -max_hsps 1 \
+                    -evalue 1e-25 &> {log} 
+            else
+                echo No assembled sequence for {wildcards.sample} > {log}
+            fi
+            touch {output.ok}
+            """
+else:
+    if target_type == "anonym":
+        rule blastn:
+            input:
+                multiext(output_dir+"/blastdb/refseq_mitochondrion/refseq_mitochondrion",
+                    ".ndb",
+                    ".nhr",
+                    ".nin",
+                    ".not",
+                    ".nsq",
+                    ".ntf",
+                    ".nto"),
+                output_dir+"/assembled_sequence/{sample}.ok"
+            output:
+                ok = output_dir+"/blastn/{sample}.ok"
+            log:
+                output_dir+"/logs/blastn/{sample}.log"
+            conda:
+                "envs/blastn.yaml"
+            shell:
+                """
+                FAS=$(echo {output_dir}/assembled_sequence/{wildcards.sample}.fasta)
+                OUT=$(echo {output_dir}/blastn/{wildcards.sample}.txt)
+                if [ -e $FAS ]; then
+                    echo Running blastn for {wildcards.sample} > {log}
+                    blastn \
+                        -query $FAS \
+                        -db {output_dir}/blastdb/silva_138/silva_138 \
+                        -out $OUT \
+                        -outfmt '6 qseqid staxids bitscore std' \
+                        -max_target_seqs 10 \
+                        -max_hsps 1 \
+                        -evalue 1e-25 &> {log}
+                else
+                    echo No assembled sequence for {wildcards.sample} > {log}
+                fi
+                touch {output.ok}
+                """
 rule minimap:
     input:
         output_dir+"/assembled_sequence/{sample}.ok",
@@ -240,9 +324,51 @@ rule minimap:
         touch {output.ok}
         """
 
-# need to have taxdump in same dir 
+rule taxdump:
+    output: 
+        temp(directory("taxdump")),
+        temp("taxdump/citations.dmp"),
+        temp("taxdump/delnodes.dmp"),
+        temp("taxdump/division.dmp"),
+        temp("taxdump/excludedfromtype.dmp"),
+        temp("taxdump/fullnamelineage.dmp"),
+        temp("taxdump/gencode.dmp"),
+        temp("taxdump/host.dmp"),
+        temp("taxdump/images.dmp"),
+        temp("taxdump/merged.dmp"),
+        temp("taxdump/names.dmp"),
+        temp("taxdump/nodes.dmp"),
+        temp("taxdump/rankedlineage.dmp"),
+        temp("taxdump/taxidlineage.dmp"),
+        temp("taxdump/typematerial.dmp"),
+        temp("taxdump/typeoftype.dmp")
+    log:
+        output_dir+"/logs/taxdump/taxdump.log"
+    shell:
+        """
+        wget -P taxdump/ https://ftp.ncbi.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz &> {log}
+        tar xvzf taxdump/new_taxdump.tar.gz --directory taxdump/ &>> {log}
+        rm taxdump/new_taxdump.tar.gz &>> {log}
+        """
+
 rule blobtools:
     input:
+        directory("taxdump"),
+        "taxdump/citations.dmp",
+        "taxdump/delnodes.dmp",
+        "taxdump/division.dmp",
+        "taxdump/excludedfromtype.dmp",
+        "taxdump/fullnamelineage.dmp",
+        "taxdump/gencode.dmp",
+        "taxdump/host.dmp",
+        "taxdump/images.dmp",
+        "taxdump/merged.dmp",
+        "taxdump/names.dmp",
+        "taxdump/nodes.dmp",
+        "taxdump/rankedlineage.dmp",
+        "taxdump/taxidlineage.dmp",
+        "taxdump/typematerial.dmp",
+        "taxdump/typeoftype.dmp",
         output_dir+"/assembled_sequence/{sample}.ok",
         output_dir+"/blastn/{sample}.ok",
         output_dir+"/minimap/{sample}.ok"
@@ -251,7 +377,6 @@ rule blobtools:
     log:
         output_dir+"/logs/blobtools/{sample}.log"
     container:
-        # "docker://genomehubs/blobtoolkit"
         "docker://genomehubs/blobtoolkit"
     shell:
         """
@@ -264,7 +389,7 @@ rule blobtools:
                 --fasta $FAS \
                 --hits $BLA \
                 --taxrule bestsumorder \
-                --taxdump {taxdump} \
+                --taxdump taxdump \
                 --cov $MAP \
                 {output_dir}/blobtools/{wildcards.sample} &> {log}
             blobtools filter \
