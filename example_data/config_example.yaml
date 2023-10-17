@@ -4,20 +4,23 @@ samples: example_data/samples_example.csv
 # name of output directory
 output_dir: results_example
 
+# fastp depulication (True/False)
+fastp_dedup: True
+
 # GetOrganelle target sequence type (animal_mt,embplant_cp,anonym)
 target_type: animal_mt
 
 # path to blast db
-blast_db: refseq_mitochondrion/refseq_mitochondrion
+# blast_db: refseq_mitochondrion/refseq_mitochondrion
 
 # path to new_taxdump
-taxdump: taxdump
+# taxdump: taxdump
 
-# path to mitos refseq
+# mitos refseq database (refseq39, refseq63f, refseq63m, refseq63o, refseq89f, refseq89m, refseq89o)
 mitos_refseq: refseq39
 
-# mito code
-mitos_code: 2
+# mito code (2 = Vertebrate, 4 = Mold, 5 = Invertebrate, 9 = Echinoderm, 13 = Ascidian, 14 = Alternative flatworm
+mitos_code: 5
 
 # barrnap kindgom (Bacteria:bac, Archaea:arc, Eukaryota:euk, Metazoan Mitochondria:mito)
 barrnap_kingdom: NA

@@ -6,6 +6,7 @@ configfile: "config/config.yaml"
 # configfile parameters
 target_type = config["target_type"]
 output_dir = config["output_dir"]
+fastp_dedup = config["fastp_dedup"]
 blast_db = config["blast_db"]
 mitos_refseq = config["mitos_refseq"]
 mitos_code = config["mitos_code"]
@@ -78,11 +79,20 @@ rule fastp:
     threads: threads
     shell:
         """
-        fastp --in1 {input.fwd} --in2 {input.rev} \
-            --out1 {output.fwd} --out2 {output.rev} \
-            --html {output.html} --json {output.json} \
-            --disable_quality_filtering \
-            --thread {threads} &> {log}
+        if [ {fastp_dedup} == True ]; then
+            fastp --in1 {input.fwd} --in2 {input.rev} \
+                --out1 {output.fwd} --out2 {output.rev} \
+                --html {output.html} --json {output.json} \
+                --disable_quality_filtering \
+                --thread {threads} &> {log}
+        else
+            fastp --in1 {input.fwd} --in2 {input.rev} \
+                --out1 {output.fwd} --out2 {output.rev} \
+                --html {output.html} --json {output.json} \
+                --disable_quality_filtering \
+                --dedup \
+                --thread {threads} &> {log}
+        fi
         """
 
 rule getorganelle:
@@ -199,9 +209,9 @@ if target_type == "animal_mt":
             output_dir+"/logs/blastdb/blastdb.log"
         shell:
             """
-            wget -P {output_dir}/blastdb/ https://zenodo.org/records/8424777/files/refseq_mitochondrion.tar.gz > {log}
-            tar xvzf {output_dir}/blastdb/refseq_mitochondrion.tar.gz --directory {output_dir}/blastdb/ >> {log}
-            rm {output_dir}/blastdb/refseq_mitochondrion.tar.gz >> {log}
+            wget -P {output_dir}/blastdb/ https://zenodo.org/records/8424777/files/refseq_mitochondrion.tar.gz &> {log}
+            tar xvzf {output_dir}/blastdb/refseq_mitochondrion.tar.gz --directory {output_dir}/blastdb/ &>> {log}
+            rm {output_dir}/blastdb/refseq_mitochondrion.tar.gz &>> {log}
             """
 else: 
     if target_type == "anonym":
@@ -220,8 +230,8 @@ else:
             shell:
                 """
                 wget -P {output_dir}/blastdb/ https://zenodo.org/records/8424777/files/silva_138.tar.gz &> {log}
-                tar xvzf {output_dir}/blastdb/silva_138.tar.gz --directory {output_dir}/blastdb/ >> {log}
-                rm {output_dir}/blastdb/silva_138.tar.gz >> {log}
+                tar xvzf {output_dir}/blastdb/silva_138.tar.gz --directory {output_dir}/blastdb/ &>> {log}
+                rm {output_dir}/blastdb/silva_138.tar.gz &>> {log}
                 """ 
 if target_type == "animal_mt":
     rule blastn:
@@ -353,7 +363,7 @@ rule taxdump:
 
 rule blobtools:
     input:
-        directory("taxdump"),
+        "taxdump/",
         "taxdump/citations.dmp",
         "taxdump/delnodes.dmp",
         "taxdump/division.dmp",
@@ -402,53 +412,83 @@ rule blobtools:
         touch {output.ok}
         """
 
-rule annotations:
-    input:
-        output_dir+"/assembled_sequence/{sample}.ok"
-    output:
-        ok = output_dir+"/annotations/{sample}/{sample}.ok"
-    log:
-        output_dir+"/logs/annotations/{sample}.log"
-    conda:
-        "envs/annotations.yaml"
-    shell:
-        """
-        FAS=$(echo {output_dir}/assembled_sequence/{wildcards.sample}.fasta)
-        if [ -e $FAS ]; then
-            if [[ {target_type} == "animal_mt" ]]; then
-                if [ $(grep circular -c $FAS) -eq 1 ] ; then 
-                    echo Treating mitochondrial seqeunce as circular &> {log}
-                    runmitos.py \
-                        --input $FAS \
-                        --code {mitos_code} \
-                        --outdir {output_dir}/annotations/{wildcards.sample}/ \
-                        --refseqver {mitos_refseq} \
-                        --refdir . \
-                        --noplots &>> {log} 
-                else
-                    echo Treating mitochndrial seqeunce as linear &> {log}
-                    runmitos.py \
-                        --input $FAS \
-                        --code {mitos_code} \
-                        --outdir {output_dir}/annotations/{wildcards.sample}/ \
-                        --refseqver {mitos_refseq} \
-                        --refdir . \
-                        --noplots \
-                        --linear &>> {log}
+
+if target_type == "animal_mt": 
+    rule mitos_db:
+        output: 
+            temp(directory(output_dir+"/mitos_db/"+mitos_refseq)),
+        log:
+            output_dir+"/logs/mitos_db/mitos_db.log"
+        shell:
+            """
+            wget -P {output_dir}/mitos_db https://zenodo.org/record/4284483/files/{mitos_refseq}.tar.bz2  &> {log}
+            tar xf {output_dir}/mitos_db/{mitos_refseq}.tar.bz2 --directory {output_dir}/mitos_db &>> {log}
+            rm {output_dir}/mitos_db/{mitos_refseq}.tar.bz2 >> {log}
+            """
+    rule annotations:
+        input:
+            output_dir+"/mitos_db/"+mitos_refseq,
+            output_dir+"/assembled_sequence/{sample}.ok"
+        output:
+            ok = output_dir+"/annotations/{sample}/{sample}.ok"
+        log:
+            output_dir+"/logs/annotations/{sample}.log"
+        conda:
+            "envs/annotations.yaml"
+        shell:
+            """
+            FAS=$(echo {output_dir}/assembled_sequence/{wildcards.sample}.fasta)
+            if [ -e $FAS ]; then
+                if [[ {target_type} == "animal_mt" ]]; then
+                    if [ $(grep circular -c $FAS) -eq 1 ] ; then
+                        echo Treating mitochondrial seqeunce as circular &> {log}
+                        runmitos.py \
+                            --input $FAS \
+                            --code {mitos_code} \
+                            --outdir {output_dir}/annotations/{wildcards.sample}/ \
+                            --refseqver {output_dir}/mitos_db/{mitos_refseq} \
+                            --refdir . \
+                            --noplots &>> {log}
+                    else
+                        echo Treating mitochndrial seqeunce as linear &> {log}
+                        runmitos.py \
+                            --input $FAS \
+                            --code {mitos_code} \
+                            --outdir {output_dir}/annotations/{wildcards.sample}/ \
+                            --refseqver {output_dir}/mitos_db/{mitos_refseq} \
+                            --refdir . \
+                            --noplots \
+                            --linear &>> {log}
+                    fi          
                 fi
             else
-                if [[ {target_type} == "anonym" ]]; then
+                echo No assembled sequence for {wildcards.sample} > {log}
+            fi
+            touch {output.ok}
+            """
+else:
+    if target_type == "anonym":
+        rule annotations:
+            input:
+                output_dir+"/assembled_sequence/{sample}.ok"
+            output:
+                ok = output_dir+"/annotations/{sample}/{sample}.ok"
+            log:
+                output_dir+"/logs/annotations/{sample}.log"
+            conda:
+                "envs/annotations.yaml"
+            shell:
+                """
+                FAS=$(echo {output_dir}/assembled_sequence/{wildcards.sample}.fasta)
+                if [ -e $FAS ]; then
                     barrnap \
                         --kingdom {barrnap_kingdom} \
-                        --outseq {output_dir}/annotations/{wildcards.sample}/result.fas $FAS 1> {output_dir}/annotations/{wildcards.sample}/result.gff 2> {log}
+                        --outseq {output_dir}/annotations/{wildcards.sample}/result.fas $FAS 1> {output_dir}/annotations/{wildcards.sample}/result.gff &> {log}
+                else
+                    echo No assembled sequence for {wildcards.sample} > {log}
                 fi
-            fi
-
-        else
-            echo No assembled sequence for {wildcards.sample} > {log}
-        fi
-        touch {output.ok}
-        """
+                touch {output.ok}
+                """
 
 rule assess_assembly:
     input:
