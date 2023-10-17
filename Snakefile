@@ -336,49 +336,49 @@ rule minimap:
 
 rule taxdump:
     output: 
-        temp(directory("taxdump")),
-        temp("taxdump/citations.dmp"),
-        temp("taxdump/delnodes.dmp"),
-        temp("taxdump/division.dmp"),
-        temp("taxdump/excludedfromtype.dmp"),
-        temp("taxdump/fullnamelineage.dmp"),
-        temp("taxdump/gencode.dmp"),
-        temp("taxdump/host.dmp"),
-        temp("taxdump/images.dmp"),
-        temp("taxdump/merged.dmp"),
-        temp("taxdump/names.dmp"),
-        temp("taxdump/nodes.dmp"),
-        temp("taxdump/rankedlineage.dmp"),
-        temp("taxdump/taxidlineage.dmp"),
-        temp("taxdump/typematerial.dmp"),
-        temp("taxdump/typeoftype.dmp")
+        temp(directory(output_dir+"/taxdump")),
+        temp(output_dir+"/taxdump/citations.dmp"),
+        temp(output_dir+"/taxdump/delnodes.dmp"),
+        temp(output_dir+"/taxdump/division.dmp"),
+        temp(output_dir+"/taxdump/excludedfromtype.dmp"),
+        temp(output_dir+"/taxdump/fullnamelineage.dmp"),
+        temp(output_dir+"/taxdump/gencode.dmp"),
+        temp(output_dir+"/taxdump/host.dmp"),
+        temp(output_dir+"/taxdump/images.dmp"),
+        temp(output_dir+"/taxdump/merged.dmp"),
+        temp(output_dir+"/taxdump/names.dmp"),
+        temp(output_dir+"/taxdump/nodes.dmp"),
+        temp(output_dir+"/taxdump/rankedlineage.dmp"),
+        temp(output_dir+"/taxdump/taxidlineage.dmp"),
+        temp(output_dir+"/taxdump/typematerial.dmp"),
+        temp(output_dir+"/taxdump/typeoftype.dmp")
     log:
         output_dir+"/logs/taxdump/taxdump.log"
     shell:
         """
-        wget -P taxdump/ https://ftp.ncbi.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz &> {log}
-        tar xvzf taxdump/new_taxdump.tar.gz --directory taxdump/ &>> {log}
-        rm taxdump/new_taxdump.tar.gz &>> {log}
+        wget -P {output_dir}/taxdump/ https://ftp.ncbi.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz &> {log}
+        tar xvzf {output_dir}/taxdump/new_taxdump.tar.gz --directory {output_dir}/taxdump/ &>> {log}
+        rm {output_dir}/taxdump/new_taxdump.tar.gz &>> {log}
         """
 
 rule blobtools:
     input:
-        "taxdump/",
-        "taxdump/citations.dmp",
-        "taxdump/delnodes.dmp",
-        "taxdump/division.dmp",
-        "taxdump/excludedfromtype.dmp",
-        "taxdump/fullnamelineage.dmp",
-        "taxdump/gencode.dmp",
-        "taxdump/host.dmp",
-        "taxdump/images.dmp",
-        "taxdump/merged.dmp",
-        "taxdump/names.dmp",
-        "taxdump/nodes.dmp",
-        "taxdump/rankedlineage.dmp",
-        "taxdump/taxidlineage.dmp",
-        "taxdump/typematerial.dmp",
-        "taxdump/typeoftype.dmp",
+        output_dir+"/taxdump/",
+        output_dir+"/taxdump/citations.dmp",
+        output_dir+"/taxdump/delnodes.dmp",
+        output_dir+"/taxdump/division.dmp",
+        output_dir+"/taxdump/excludedfromtype.dmp",
+        output_dir+"/taxdump/fullnamelineage.dmp",
+        output_dir+"/taxdump/gencode.dmp",
+        output_dir+"/taxdump/host.dmp",
+        output_dir+"/taxdump/images.dmp",
+        output_dir+"/taxdump/merged.dmp",
+        output_dir+"/taxdump/names.dmp",
+        output_dir+"/taxdump/nodes.dmp",
+        output_dir+"/taxdump/rankedlineage.dmp",
+        output_dir+"/taxdump/taxidlineage.dmp",
+        output_dir+"/taxdump/typematerial.dmp",
+        output_dir+"/taxdump/typeoftype.dmp",
         output_dir+"/assembled_sequence/{sample}.ok",
         output_dir+"/blastn/{sample}.ok",
         output_dir+"/minimap/{sample}.ok"
@@ -399,7 +399,7 @@ rule blobtools:
                 --fasta $FAS \
                 --hits $BLA \
                 --taxrule bestsumorder \
-                --taxdump taxdump \
+                --taxdump {output_dir}/taxdump \
                 --cov $MAP \
                 {output_dir}/blobtools/{wildcards.sample} &> {log}
             blobtools filter \
