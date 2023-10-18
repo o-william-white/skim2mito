@@ -68,8 +68,8 @@ rule fastp:
         fwd = get_forward,
         rev = get_reverse
     output:
-        fwd = output_dir+"/fastp/{sample}_R1.fq.gz",
-        rev = output_dir+"/fastp/{sample}_R2.fq.gz",
+        fwd = temp(output_dir+"/fastp/{sample}_R1.fq.gz"),
+        rev = temp(output_dir+"/fastp/{sample}_R2.fq.gz"),
         html = output_dir+"/fastp/{sample}.html",
         json = output_dir+"/fastp/{sample}.json"
     log:
@@ -103,7 +103,7 @@ rule getorganelle:
         seed = get_seed,
         gene = get_gene
     output:
-        ok = output_dir+"/getorganelle/{sample}/getorganelle.ok"
+        ok = temp(output_dir+"/getorganelle/{sample}/getorganelle.ok")
     log:
         output_dir+"/logs/getorganelle/{sample}.log"
     conda:
@@ -143,7 +143,7 @@ rule assembled_sequence:
     input:
         output_dir+"/getorganelle/{sample}/getorganelle.ok"
     output:
-        ok = output_dir+"/assembled_sequence/{sample}.ok"
+        ok = temp(output_dir+"/assembled_sequence/{sample}.ok")
     log:
         output_dir+"/logs/assembled_sequence/{sample}.log"
     shell:
@@ -176,7 +176,7 @@ rule seqkit:
     input:
         output_dir+"/assembled_sequence/{sample}.ok"
     output:
-        ok = output_dir+"/seqkit/{sample}.ok"
+        ok = temp(output_dir+"/seqkit/{sample}.ok")
     log:
         output_dir+"/logs/seqkit/{sample}.log"
     conda:
@@ -197,14 +197,17 @@ rule seqkit:
 if target_type == "animal_mt":
     rule blastdb:
         output:
-            multiext(output_dir+"/blastdb/refseq_mitochondrion/refseq_mitochondrion",
+            temp(multiext(output_dir+"/blastdb/refseq_mitochondrion/refseq_mitochondrion",
                 ".ndb",
                 ".nhr",
                 ".nin",
                 ".not",
                 ".nsq",
                 ".ntf",
-                ".nto")
+                ".nto",
+                ".njs",
+                ".nog",
+                ".nos"))
         log:
             output_dir+"/logs/blastdb/blastdb.log"
         shell:
@@ -217,14 +220,17 @@ else:
     if target_type == "anonym":
         rule blastdb:
             output:
-                multiext(output_dir+"/blastdb/silva_138/silva_138",
+                temp(multiext(output_dir+"/blastdb/silva_138/silva_138",
                     ".ndb",
                     ".nhr",
                     ".nin",
                     ".not",
                     ".nsq",
                     ".ntf",
-                    ".nto")
+                    ".nto",
+                    ".njs",
+                    ".nog",
+                    ".nos"))
             log:
                 output_dir+"/logs/blastdb/blastdb.log"
             shell:
@@ -243,10 +249,13 @@ if target_type == "animal_mt":
                 ".not",
                 ".nsq",
                 ".ntf",
-                ".nto"), 
+                ".nto",
+                ".njs",
+                ".nog",
+                ".nos"), 
             output_dir+"/assembled_sequence/{sample}.ok"
         output:
-            ok = output_dir+"/blastn/{sample}.ok"
+            ok = temp(output_dir+"/blastn/{sample}.ok")
         log:
             output_dir+"/logs/blastn/{sample}.log"
         conda:
@@ -281,10 +290,13 @@ else:
                     ".not",
                     ".nsq",
                     ".ntf",
-                    ".nto"),
+                    ".nto",
+                    ".njs",
+                    ".nog",
+                    ".nos"),
                 output_dir+"/assembled_sequence/{sample}.ok"
             output:
-                ok = output_dir+"/blastn/{sample}.ok"
+                ok = temp(output_dir+"/blastn/{sample}.ok")
             log:
                 output_dir+"/logs/blastn/{sample}.log"
             conda:
@@ -314,7 +326,7 @@ rule minimap:
         fwd = output_dir+"/fastp/{sample}_R1.fq.gz",
         rev = output_dir+"/fastp/{sample}_R2.fq.gz"
     output:
-        ok = output_dir+"/minimap/{sample}.ok"
+        ok = temp(output_dir+"/minimap/{sample}.ok")
     log:
         output_dir+"/logs/minimap/{sample}.log"
     conda:
@@ -383,7 +395,7 @@ rule blobtools:
         output_dir+"/blastn/{sample}.ok",
         output_dir+"/minimap/{sample}.ok"
     output:
-        ok = output_dir+"/blobtools/{sample}/{sample}.ok"
+        ok = temp(output_dir+"/blobtools/{sample}/{sample}.ok")
     log:
         output_dir+"/logs/blobtools/{sample}.log"
     container:
@@ -430,7 +442,7 @@ if target_type == "animal_mt":
             output_dir+"/mitos_db/"+mitos_refseq,
             output_dir+"/assembled_sequence/{sample}.ok"
         output:
-            ok = output_dir+"/annotations/{sample}/{sample}.ok"
+            ok = temp(output_dir+"/annotations/{sample}/{sample}.ok")
         log:
             output_dir+"/logs/annotations/{sample}.log"
         conda:
@@ -472,7 +484,7 @@ else:
             input:
                 output_dir+"/assembled_sequence/{sample}.ok"
             output:
-                ok = output_dir+"/annotations/{sample}/{sample}.ok"
+                ok = temp(output_dir+"/annotations/{sample}/{sample}.ok")
             log:
                 output_dir+"/logs/annotations/{sample}.log"
             conda:
@@ -496,7 +508,7 @@ rule assess_assembly:
         output_dir+"/annotations/{sample}/{sample}.ok",
         output_dir+"/minimap/{sample}.ok"
     output:
-        ok = output_dir+"/assess_assembly/{sample}.ok"
+        ok = temp(output_dir+"/assess_assembly/{sample}.ok")
     log:
         output_dir+"/logs/assess_assembly/{sample}.log"
     conda:
@@ -709,11 +721,6 @@ rule final_log:
     shell:
         """
         touch {output}
-        # clear tmp file? Causes an error
-        #rm $(find -path '*{output_dir}*' -name "*.ok")
-        #rm $(find -path '*{output_dir}*' -name "*.fq")
-        #rm $(find -path '*{output_dir}*' -name "*.fq.gz")
-        #rm $(find -path '*{output_dir}*' -name "*.fastq.gz")
         """
 
 
