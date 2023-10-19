@@ -28,6 +28,9 @@ barrnap_kingdom: NA
 # alignment trimming method to use (gblocks or clipkit)
 alignment_trim: gblocks
 
+# alignment missing data threshold for alignment (0.0 - 1.0)
+missing_threshold: 0.5
+
 # number of threads to use
 threads: 6
 

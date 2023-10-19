@@ -12,6 +12,7 @@ mitos_refseq = config["mitos_refseq"]
 mitos_code = config["mitos_code"]
 barrnap_kingdom = config["barrnap_kingdom"]
 alignment_trim = config["alignment_trim"]
+missing_threshold = config["missing_threshold"]
 threads = config["threads"]
 
 # read sample data
@@ -36,8 +37,7 @@ rule all:
         output_dir+"/summary/summary_sample.txt",
         output_dir+"/summary/summary_contig.txt",
         output_dir+"/snakemake.ok",
-        expand(output_dir+"/fastqc/{sample}_R1.html", 
-            sample=sample_data.index.tolist())
+        expand(output_dir+"/fastqc/{sample}_R1.html", sample=sample_data.index.tolist())
 
 rule fastqc:
     input:
@@ -495,6 +495,7 @@ else:
                 if [ -e $FAS ]; then
                     barrnap \
                         --kingdom {barrnap_kingdom} \
+                        --reject 0.0 \
                         --outseq {output_dir}/annotations/{wildcards.sample}/result.fas $FAS 1> {output_dir}/annotations/{wildcards.sample}/result.gff &> {log}
                 else
                     echo No assembled sequence for {wildcards.sample} > {log}
@@ -618,13 +619,15 @@ rule mafft:
 rule filter_alignments:
     input:
         output_dir+"/mafft/{dataset}.fasta"
+    params:
+        threshold = missing_threshold
     output:
         output_dir+"/mafft_filtered/{dataset}.fasta"
     log:
         output_dir+"/logs/mafft_filtered/{dataset}.log"
     shell:
         """
-        python scripts/alignments_filter.py  --input {input} --output {output} --threshold 0.5 > {log}
+        python scripts/alignments_filter.py --input {input} --output {output} --threshold {params.threshold} > {log}
         """
 
 rule alignment_trim:
