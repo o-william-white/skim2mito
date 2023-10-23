@@ -722,6 +722,8 @@ rule final_log:
         get_plot_tree_output
     output:
         "{output_dir}/snakemake.ok"
+    log:
+        "{output_dir}/logs/final_log/final_log.log"
     shell:
         """
         touch {output}
