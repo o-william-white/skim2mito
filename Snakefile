@@ -34,24 +34,25 @@ def get_gene(wildcards):
 # one rule to rule them all :)
 rule all:
     input:
-        output_dir+"/summary/summary_sample.txt",
-        output_dir+"/summary/summary_contig.txt",
-        output_dir+"/snakemake.ok",
-        expand(output_dir+"/fastqc/{sample}_R1.html", sample=sample_data.index.tolist())
+        f"{output_dir}/summary/summary_sample.txt",
+        f"{output_dir}/summary/summary_contig.txt",
+        f"{output_dir}/snakemake.ok", 
+        expand("{out}/fastqc/{sample}_R1.html", sample=sample_data.index.tolist(), out=output_dir)
+
 
 rule fastqc:
     input:
         fwd = get_forward,
         rev = get_reverse
     output:
-        fwd = output_dir+"/fastqc/{sample}_R1.html",
-        rev = output_dir+"/fastqc/{sample}_R2.html",
+        fwd = "{output_dir}/fastqc/{sample}_R1.html",
+        rev = "{output_dir}/fastqc/{sample}_R2.html",
     params:
         outdir=lambda wildcards, output: os.path.abspath(os.path.dirname(output[0])) + "/",
         fwd_outfile = lambda wildcards, input: os.path.basename(input[0]).replace('.fastq.gz', '_fastqc.html').replace('.fq.gz','_fastqc.html'),
         rev_outfile = lambda wildcards, input: os.path.basename(input[1]).replace('.fastq.gz', '_fastqc.html').replace('.fq.gz','_fastqc.html')
     log:
-        output_dir+"/logs/fastqc/{sample}.log"
+        "{output_dir}/logs/fastqc/{sample}.log"
     conda:
         "envs/fastqc.yaml"
     threads: 1
@@ -68,12 +69,12 @@ rule fastp:
         fwd = get_forward,
         rev = get_reverse
     output:
-        fwd = temp(output_dir+"/fastp/{sample}_R1.fq.gz"),
-        rev = temp(output_dir+"/fastp/{sample}_R2.fq.gz"),
-        html = output_dir+"/fastp/{sample}.html",
-        json = output_dir+"/fastp/{sample}.json"
+        fwd = temp("{output_dir}/fastp/{sample}_R1.fq.gz"),
+        rev = temp("{output_dir}/fastp/{sample}_R2.fq.gz"),
+        html = "{output_dir}/fastp/{sample}.html",
+        json = "{output_dir}/fastp/{sample}.json"
     log:
-        output_dir+"/logs/fastp/{sample}.log"
+        "{output_dir}/logs/fastp/{sample}.log"
     conda:
         "envs/fastp.yaml"
     threads: threads
@@ -97,15 +98,15 @@ rule fastp:
 
 rule getorganelle:
     input:
-        fwd = output_dir+"/fastp/{sample}_R1.fq.gz",
-        rev = output_dir+"/fastp/{sample}_R2.fq.gz"
+        fwd = "{output_dir}/fastp/{sample}_R1.fq.gz",
+        rev = "{output_dir}/fastp/{sample}_R2.fq.gz"
     params:
         seed = get_seed,
         gene = get_gene
     output:
-        ok = temp(output_dir+"/getorganelle/{sample}/getorganelle.ok")
+        ok = temp("{output_dir}/getorganelle/{sample}/getorganelle.ok")
     log:
-        output_dir+"/logs/getorganelle/{sample}.log"
+        "{output_dir}/logs/getorganelle/{sample}.log"
     conda:
         "envs/getorganelle.yaml"
     threads: threads
@@ -141,11 +142,11 @@ rule getorganelle:
 
 rule assembled_sequence:
     input:
-        output_dir+"/getorganelle/{sample}/getorganelle.ok"
+        "{output_dir}/getorganelle/{sample}/getorganelle.ok"
     output:
-        ok = temp(output_dir+"/assembled_sequence/{sample}.ok")
+        ok = temp("{output_dir}/assembled_sequence/{sample}.ok")
     log:
-        output_dir+"/logs/assembled_sequence/{sample}.log"
+        "{output_dir}/logs/assembled_sequence/{sample}.log"
     shell:
         """
         # find selected path(s) fasta
@@ -174,11 +175,11 @@ rule assembled_sequence:
 
 rule seqkit:
     input:
-        output_dir+"/assembled_sequence/{sample}.ok"
+        "{output_dir}/assembled_sequence/{sample}.ok"
     output:
-        ok = temp(output_dir+"/seqkit/{sample}.ok")
+        ok = temp("{output_dir}/seqkit/{sample}.ok")
     log:
-        output_dir+"/logs/seqkit/{sample}.log"
+        "{output_dir}/logs/seqkit/{sample}.log"
     conda:
         "envs/seqkit.yaml"
     shell:
@@ -197,19 +198,19 @@ rule seqkit:
 if target_type == "animal_mt":
     rule blastdb:
         output:
-            temp(multiext(output_dir+"/blastdb/refseq_mitochondrion/refseq_mitochondrion",
+            temp(multiext("{output_dir}/blastdb/refseq_mitochondrion/refseq_mitochondrion",
                 ".ndb",
                 ".nhr",
                 ".nin",
+                ".njs",
+                ".nog",
+                ".nos",
                 ".not",
                 ".nsq",
                 ".ntf",
-                ".nto",
-                ".njs",
-                ".nog",
-                ".nos"))
+                ".nto"))
         log:
-            output_dir+"/logs/blastdb/blastdb.log"
+            "{output_dir}/logs/blastdb/blastdb.log"
         shell:
             """
             wget -P {output_dir}/blastdb/ https://zenodo.org/records/8424777/files/refseq_mitochondrion.tar.gz &> {log}
@@ -220,19 +221,19 @@ else:
     if target_type == "anonym":
         rule blastdb:
             output:
-                temp(multiext(output_dir+"/blastdb/silva_138/silva_138",
+                temp(multiext("{output_dir}/blastdb/silva_138/silva_138",
                     ".ndb",
                     ".nhr",
                     ".nin",
+                    ".njs",
+                    ".nog",
+                    ".nos",
                     ".not",
                     ".nsq",
                     ".ntf",
-                    ".nto",
-                    ".njs",
-                    ".nog",
-                    ".nos"))
+                    ".nto"))                     
             log:
-                output_dir+"/logs/blastdb/blastdb.log"
+                "{output_dir}/logs/blastdb/blastdb.log"
             shell:
                 """
                 wget -P {output_dir}/blastdb/ https://zenodo.org/records/8424777/files/silva_138.tar.gz &> {log}
@@ -242,22 +243,22 @@ else:
 if target_type == "animal_mt":
     rule blastn:
         input:
-            multiext(output_dir+"/blastdb/refseq_mitochondrion/refseq_mitochondrion",
+            multiext("{output_dir}/blastdb/refseq_mitochondrion/refseq_mitochondrion",
                 ".ndb",
                 ".nhr",
                 ".nin",
+                ".njs",
+                ".nog",
+                ".nos",
                 ".not",
                 ".nsq",
                 ".ntf",
-                ".nto",
-                ".njs",
-                ".nog",
-                ".nos"), 
-            output_dir+"/assembled_sequence/{sample}.ok"
+                ".nto"),
+            "{output_dir}/assembled_sequence/{sample}.ok"
         output:
-            ok = temp(output_dir+"/blastn/{sample}.ok")
+            ok = temp("{output_dir}/blastn/{sample}.ok")
         log:
-            output_dir+"/logs/blastn/{sample}.log"
+            "{output_dir}/logs/blastn/{sample}.log"
         conda:
             "envs/blastn.yaml"
         shell:
@@ -283,22 +284,22 @@ else:
     if target_type == "anonym":
         rule blastn:
             input:
-                multiext(output_dir+"/blastdb/refseq_mitochondrion/refseq_mitochondrion",
+                multiext("{output_dir}/blastdb/refseq_mitochondrion/refseq_mitochondrion",
                     ".ndb",
                     ".nhr",
                     ".nin",
+                    ".njs",
+                    ".nog",
+                    ".nos",
                     ".not",
                     ".nsq",
                     ".ntf",
-                    ".nto",
-                    ".njs",
-                    ".nog",
-                    ".nos"),
-                output_dir+"/assembled_sequence/{sample}.ok"
+                    ".nto"),
+                    "{output_dir}/assembled_sequence/{sample}.ok"
             output:
-                ok = temp(output_dir+"/blastn/{sample}.ok")
+                ok = temp("{output_dir}/blastn/{sample}.ok")
             log:
-                output_dir+"/logs/blastn/{sample}.log"
+                "{output_dir}/logs/blastn/{sample}.log"
             conda:
                 "envs/blastn.yaml"
             shell:
@@ -322,13 +323,13 @@ else:
                 """
 rule minimap:
     input:
-        output_dir+"/assembled_sequence/{sample}.ok",
-        fwd = output_dir+"/fastp/{sample}_R1.fq.gz",
-        rev = output_dir+"/fastp/{sample}_R2.fq.gz"
+        "{output_dir}/assembled_sequence/{sample}.ok",
+        fwd = "{output_dir}/fastp/{sample}_R1.fq.gz",
+        rev = "{output_dir}/fastp/{sample}_R2.fq.gz"
     output:
-        ok = temp(output_dir+"/minimap/{sample}.ok")
+        ok = temp("{output_dir}/minimap/{sample}.ok")
     log:
-        output_dir+"/logs/minimap/{sample}.log"
+        "{output_dir}/logs/minimap/{sample}.log"
     conda:
         "envs/minimap2.yaml"
     shell:
@@ -348,24 +349,24 @@ rule minimap:
 
 rule taxdump:
     output: 
-        temp(directory(output_dir+"/taxdump")),
-        temp(output_dir+"/taxdump/citations.dmp"),
-        temp(output_dir+"/taxdump/delnodes.dmp"),
-        temp(output_dir+"/taxdump/division.dmp"),
-        temp(output_dir+"/taxdump/excludedfromtype.dmp"),
-        temp(output_dir+"/taxdump/fullnamelineage.dmp"),
-        temp(output_dir+"/taxdump/gencode.dmp"),
-        temp(output_dir+"/taxdump/host.dmp"),
-        temp(output_dir+"/taxdump/images.dmp"),
-        temp(output_dir+"/taxdump/merged.dmp"),
-        temp(output_dir+"/taxdump/names.dmp"),
-        temp(output_dir+"/taxdump/nodes.dmp"),
-        temp(output_dir+"/taxdump/rankedlineage.dmp"),
-        temp(output_dir+"/taxdump/taxidlineage.dmp"),
-        temp(output_dir+"/taxdump/typematerial.dmp"),
-        temp(output_dir+"/taxdump/typeoftype.dmp")
+        temp(directory("{output_dir}/taxdump")),
+        temp("{output_dir}/taxdump/citations.dmp"),
+        temp("{output_dir}/taxdump/delnodes.dmp"),
+        temp("{output_dir}/taxdump/division.dmp"),
+        temp("{output_dir}/taxdump/excludedfromtype.dmp"),
+        temp("{output_dir}/taxdump/fullnamelineage.dmp"),
+        temp("{output_dir}/taxdump/gencode.dmp"),
+        temp("{output_dir}/taxdump/host.dmp"),
+        temp("{output_dir}/taxdump/images.dmp"),
+        temp("{output_dir}/taxdump/merged.dmp"),
+        temp("{output_dir}/taxdump/names.dmp"),
+        temp("{output_dir}/taxdump/nodes.dmp"),
+        temp("{output_dir}/taxdump/rankedlineage.dmp"),
+        temp("{output_dir}/taxdump/taxidlineage.dmp"),
+        temp("{output_dir}/taxdump/typematerial.dmp"),
+        temp("{output_dir}/taxdump/typeoftype.dmp")
     log:
-        output_dir+"/logs/taxdump/taxdump.log"
+        "{output_dir}/logs/taxdump/taxdump.log"
     shell:
         """
         wget -P {output_dir}/taxdump/ https://ftp.ncbi.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz &> {log}
@@ -375,29 +376,29 @@ rule taxdump:
 
 rule blobtools:
     input:
-        output_dir+"/taxdump/",
-        output_dir+"/taxdump/citations.dmp",
-        output_dir+"/taxdump/delnodes.dmp",
-        output_dir+"/taxdump/division.dmp",
-        output_dir+"/taxdump/excludedfromtype.dmp",
-        output_dir+"/taxdump/fullnamelineage.dmp",
-        output_dir+"/taxdump/gencode.dmp",
-        output_dir+"/taxdump/host.dmp",
-        output_dir+"/taxdump/images.dmp",
-        output_dir+"/taxdump/merged.dmp",
-        output_dir+"/taxdump/names.dmp",
-        output_dir+"/taxdump/nodes.dmp",
-        output_dir+"/taxdump/rankedlineage.dmp",
-        output_dir+"/taxdump/taxidlineage.dmp",
-        output_dir+"/taxdump/typematerial.dmp",
-        output_dir+"/taxdump/typeoftype.dmp",
-        output_dir+"/assembled_sequence/{sample}.ok",
-        output_dir+"/blastn/{sample}.ok",
-        output_dir+"/minimap/{sample}.ok"
+        "{output_dir}/taxdump/",
+        "{output_dir}/taxdump/citations.dmp",
+        "{output_dir}/taxdump/delnodes.dmp",
+        "{output_dir}/taxdump/division.dmp",
+        "{output_dir}/taxdump/excludedfromtype.dmp",
+        "{output_dir}/taxdump/fullnamelineage.dmp",
+        "{output_dir}/taxdump/gencode.dmp",
+        "{output_dir}/taxdump/host.dmp",
+        "{output_dir}/taxdump/images.dmp",
+        "{output_dir}/taxdump/merged.dmp",
+        "{output_dir}/taxdump/names.dmp",
+        "{output_dir}/taxdump/nodes.dmp",
+        "{output_dir}/taxdump/rankedlineage.dmp",
+        "{output_dir}/taxdump/taxidlineage.dmp",
+        "{output_dir}/taxdump/typematerial.dmp",
+        "{output_dir}/taxdump/typeoftype.dmp",
+        "{output_dir}/assembled_sequence/{sample}.ok",
+        "{output_dir}/blastn/{sample}.ok",
+        "{output_dir}/minimap/{sample}.ok"
     output:
-        ok = temp(output_dir+"/blobtools/{sample}/{sample}.ok")
+        ok = temp("{output_dir}/blobtools/{sample}/{sample}.ok")
     log:
-        output_dir+"/logs/blobtools/{sample}.log"
+        "{output_dir}/logs/blobtools/{sample}.log"
     container:
         "docker://genomehubs/blobtoolkit"
     shell:
@@ -428,9 +429,9 @@ rule blobtools:
 if target_type == "animal_mt": 
     rule mitos_db:
         output: 
-            temp(directory(output_dir+"/mitos_db/"+mitos_refseq)),
+            temp(directory("{output_dir}/mitos_db/"+mitos_refseq)),
         log:
-            output_dir+"/logs/mitos_db/mitos_db.log"
+            "{output_dir}/logs/mitos_db/mitos_db.log"
         shell:
             """
             wget -P {output_dir}/mitos_db https://zenodo.org/record/4284483/files/{mitos_refseq}.tar.bz2  &> {log}
@@ -439,12 +440,12 @@ if target_type == "animal_mt":
             """
     rule annotations:
         input:
-            output_dir+"/mitos_db/"+mitos_refseq,
-            output_dir+"/assembled_sequence/{sample}.ok"
+            "{output_dir}/mitos_db/"+mitos_refseq,
+            "{output_dir}/assembled_sequence/{sample}.ok"
         output:
-            ok = temp(output_dir+"/annotations/{sample}/{sample}.ok")
+            ok = temp("{output_dir}/annotations/{sample}/{sample}.ok")
         log:
-            output_dir+"/logs/annotations/{sample}.log"
+            "{output_dir}/logs/annotations/{sample}.log"
         conda:
             "envs/annotations.yaml"
         shell:
@@ -482,11 +483,11 @@ else:
     if target_type == "anonym":
         rule annotations:
             input:
-                output_dir+"/assembled_sequence/{sample}.ok"
+                "{output_dir}/assembled_sequence/{sample}.ok"
             output:
-                ok = temp(output_dir+"/annotations/{sample}/{sample}.ok")
+                ok = temp("{output_dir}/annotations/{sample}/{sample}.ok")
             log:
-                output_dir+"/logs/annotations/{sample}.log"
+                "{output_dir}/logs/annotations/{sample}.log"
             conda:
                 "envs/annotations.yaml"
             shell:
@@ -505,13 +506,13 @@ else:
 
 rule assess_assembly:
     input:
-        output_dir+"/assembled_sequence/{sample}.ok",
-        output_dir+"/annotations/{sample}/{sample}.ok",
-        output_dir+"/minimap/{sample}.ok"
+        "{output_dir}/assembled_sequence/{sample}.ok",
+        "{output_dir}/annotations/{sample}/{sample}.ok",
+        "{output_dir}/minimap/{sample}.ok"
     output:
-        ok = temp(output_dir+"/assess_assembly/{sample}.ok")
+        ok = temp("{output_dir}/assess_assembly/{sample}.ok")
     log:
-        output_dir+"/logs/assess_assembly/{sample}.log"
+        "{output_dir}/logs/assess_assembly/{sample}.log"
     conda:
         "envs/assess_assembly.yaml"
     shell:
@@ -551,15 +552,15 @@ rule assess_assembly:
 
 rule summarise:
     input: 
-        expand(output_dir+"/seqkit/{sample}.ok", sample=sample_data["ID"].tolist()),
-        expand(output_dir+"/blobtools/{sample}/{sample}.ok", sample=sample_data["ID"].tolist()),
-        expand(output_dir+"/annotations/{sample}/{sample}.ok", sample=sample_data["ID"].tolist()),
-        expand(output_dir+"/assess_assembly/{sample}.ok", sample=sample_data["ID"].tolist())
+        expand("{out}/seqkit/{sample}.ok", sample=sample_data["ID"].tolist(), out=output_dir),
+        expand("{out}/blobtools/{sample}/{sample}.ok", sample=sample_data["ID"].tolist(), out=output_dir),
+        expand("{out}/annotations/{sample}/{sample}.ok", sample=sample_data["ID"].tolist(), out=output_dir),
+        expand("{out}/assess_assembly/{sample}.ok", sample=sample_data["ID"].tolist(), out=output_dir)
     output:
-        table_sample = output_dir+"/summary/summary_sample.txt",
-        table_contig = output_dir+"/summary/summary_contig.txt"
+        table_sample = "{output_dir}/summary/summary_sample.txt",
+        table_contig = "{output_dir}/summary/summary_contig.txt"
     log:
-        output_dir+"/logs/summarise/summarise.log"
+        "{output_dir}/logs/summarise/summarise.log"
     conda:
         "envs/r_env.yaml"
     shell:
@@ -582,11 +583,11 @@ rule summarise:
 
 checkpoint extract_protein_coding_genes:
     input: 
-        expand(output_dir+"/annotations/{sample}/{sample}.ok", sample=sample_data["ID"].tolist())
+        expand("{out}/annotations/{sample}/{sample}.ok", sample=sample_data["ID"].tolist(), out=output_dir)
     output:
-        directory(output_dir+"/protein_coding_genes/")
+        directory("{output_dir}/protein_coding_genes/")
     log:
-        output_dir+"/logs/protein_coding_genes/protein_coding_genes.log"
+        "{output_dir}/logs/protein_coding_genes/protein_coding_genes.log"
     shell:
         """
         if [[ {target_type} == "animal_mt" ]]; then
@@ -600,11 +601,11 @@ checkpoint extract_protein_coding_genes:
 
 rule mafft:
     input:
-        output_dir+"/protein_coding_genes/{dataset}.fasta"
+        "{output_dir}/protein_coding_genes/{dataset}.fasta"
     output:
-        output_dir+"/mafft/{dataset}.fasta"
+        "{output_dir}/mafft/{dataset}.fasta"
     log:
-        output_dir+"/logs/mafft/{dataset}.log"
+        "{output_dir}/logs/mafft/{dataset}.log"
     conda:
         "envs/mafft.yaml"
     shell:
@@ -618,13 +619,13 @@ rule mafft:
 
 rule filter_alignments:
     input:
-        output_dir+"/mafft/{dataset}.fasta"
+        "{output_dir}/mafft/{dataset}.fasta"
     params:
         threshold = missing_threshold
     output:
-        output_dir+"/mafft_filtered/{dataset}.fasta"
+        "{output_dir}/mafft_filtered/{dataset}.fasta"
     log:
-        output_dir+"/logs/mafft_filtered/{dataset}.log"
+        "{output_dir}/logs/mafft_filtered/{dataset}.log"
     shell:
         """
         python scripts/alignments_filter.py --input {input} --output {output} --threshold {params.threshold} > {log}
@@ -632,12 +633,12 @@ rule filter_alignments:
 
 rule alignment_trim:
     input:
-        output_dir+"/mafft_filtered/{dataset}.fasta"
+        "{output_dir}/mafft_filtered/{dataset}.fasta"
     output:
-        tmp = output_dir+"/alignment_trim/{dataset}_tmp.fasta",
-        out = output_dir+"/alignment_trim/{dataset}.fasta"
+        tmp = "{output_dir}/alignment_trim/{dataset}_tmp.fasta",
+        out = "{output_dir}/alignment_trim/{dataset}.fasta"
     log:
-        output_dir+"/logs/alignment_trim/{dataset}.log"
+        "{output_dir}/logs/alignment_trim/{dataset}.log"
     conda:
         "envs/alignment_trim.yaml"
     shell:
@@ -668,12 +669,12 @@ rule alignment_trim:
 
 rule iqtree:
     input:
-        fasta = output_dir+"/alignment_trim/{dataset}.fasta"        
+        fasta = "{output_dir}/alignment_trim/{dataset}.fasta"        
     output:
-        tree = output_dir+"/iqtree/{dataset}.treefile",
-        fasta_renamed = output_dir+"/iqtree/{dataset}.fasta"
+        tree = "{output_dir}/iqtree/{dataset}.treefile",
+        fasta_renamed = "{output_dir}/iqtree/{dataset}.fasta"
     log:
-        output_dir+"/logs/iqtree/{dataset}.log"
+        "{output_dir}/logs/iqtree/{dataset}.log"
     conda:
         "envs/iqtree.yaml"
     shell:
@@ -692,11 +693,11 @@ rule iqtree:
 
 rule plot_tree:
     input:
-        output_dir+"/iqtree/{dataset}.treefile"
+        "{output_dir}/iqtree/{dataset}.treefile"
     output:
-        output_dir+"/plot_tree/{dataset}.png"
+        "{output_dir}/plot_tree/{dataset}.png"
     log:
-        output_dir+"/logs/plot_tree/{dataset}.log"
+        "{output_dir}/logs/plot_tree/{dataset}.log"
     conda:
         "envs/r_env.yaml"
     shell:
@@ -713,14 +714,14 @@ rule plot_tree:
 
 def get_plot_tree_output(wildcards):
     checkpoint_output = checkpoints.extract_protein_coding_genes.get(**wildcards).output[0]
-    return expand(output_dir+"/plot_tree/{i}.png", i=glob_wildcards(os.path.join(checkpoint_output, "{i}.fasta")).i)
+    return expand("{out}/plot_tree/{i}.png", i=glob_wildcards(os.path.join(checkpoint_output, "{i}.fasta")).i, out=output_dir)
 
 # create final log when complete 
 rule final_log:
     input:
         get_plot_tree_output
     output:
-        output_dir+"/snakemake.ok"
+        "{output_dir}/snakemake.ok"
     shell:
         """
         touch {output}
