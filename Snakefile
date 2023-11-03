@@ -1,4 +1,5 @@
 import pandas as pd
+import sys
 
 # set configfile
 configfile: "config/config.yaml"
@@ -30,6 +31,22 @@ def get_seed(wildcards):
 
 def get_gene(wildcards):
     return sample_data.loc[wildcards.sample, "gene"]
+
+# paramter checks
+if target_type not in ["mitochondrion", "ribosomal"]:
+    sys.exit("Error: target_type must be 'mitochondrion' or 'ribosomal'")
+if target_type == "mitochondrion" and mitos_refseq not in ["refseq39", "refseq63f", "refseq63m", "refseq63o", "refseq89f", "refseq89m", "refseq89o"]:
+    sys.exit("Error: mitos_refseq must be one of 'refseq39', 'refseq63f', 'refseq63m', 'refseq63o', 'refseq89f', 'refseq89m', 'refseq89o'")
+if target_type == "mitochondrion" and mitos_code not in [2,4,5,9,13,14]:
+    sys.exit("Error: mitos_code must be one of 2, 4, 5, 9, 13, 14")
+if not isinstance(missing_threshold, float) or missing_threshold < 0.0 or missing_threshold > 1.0:
+    sys.exit("Error: missing_threshold must be a float between 0.0 and 1.0")
+if target_type == "ribosomal" and barrnap_kingdom not in ["bac","arc","euk"]:
+    sys.exit("Error: barrnap_kingdom must be one of 'bac', 'arc', 'euk'")
+if alignment_trim not in ["gblocks", "clipkit"]:
+    sys.exit("Error: alignment_trim must be 'gblocks' or 'clipkit'")
+if not isinstance(threads, int):
+    sys.exit("Error: threads must be an integer")
 
 # one rule to rule them all :)
 rule all:
@@ -112,22 +129,22 @@ rule getorganelle:
     threads: threads
     shell:
         """
-        if [ {target_type} == "animal_mt" ] ; then 
+        if [ {target_type} == "mitochondrion" ] ; then 
             get_organelle_from_reads.py \
                 -1 {input.fwd} -2 {input.rev} \
                 -o {output_dir}/getorganelle/{wildcards.sample} \
-                -F {target_type} \
+                -F animal_mt \
                 -s {params.seed} \
                 --genes {params.gene} \
                 --reduce-reads-for-coverage inf --max-reads inf \
                 -R 20 \
                 --overwrite -t {threads} &> {log}
         else 
-            if [ {target_type} == "anonym" ]; then
+            if [ {target_type} == "ribosomal" ]; then
                 get_organelle_from_reads.py \
                     -1 {input.fwd} -2 {input.rev} \
                     -o {output_dir}/getorganelle/{wildcards.sample} \
-                    -F {target_type} \
+                    -F anonym \
                     -s {params.seed} \
                     --genes {params.gene} \
                     --reduce-reads-for-coverage inf --max-reads inf \
@@ -195,7 +212,7 @@ rule seqkit:
         touch {output.ok}
         """
 
-if target_type == "animal_mt":
+if target_type == "mitochondrion":
     rule blastdb:
         output:
             temp(multiext("{output_dir}/blastdb/refseq_mitochondrion/refseq_mitochondrion",
@@ -218,7 +235,7 @@ if target_type == "animal_mt":
             rm {output_dir}/blastdb/refseq_mitochondrion.tar.gz &>> {log}
             """
 else: 
-    if target_type == "anonym":
+    if target_type == "ribosomal":
         rule blastdb:
             output:
                 temp(multiext("{output_dir}/blastdb/silva_138/silva_138",
@@ -240,7 +257,7 @@ else:
                 tar xvzf {output_dir}/blastdb/silva_138.tar.gz --directory {output_dir}/blastdb/ &>> {log}
                 rm {output_dir}/blastdb/silva_138.tar.gz &>> {log}
                 """ 
-if target_type == "animal_mt":
+if target_type == "mitochondrion":
     rule blastn:
         input:
             multiext("{output_dir}/blastdb/refseq_mitochondrion/refseq_mitochondrion",
@@ -281,10 +298,10 @@ if target_type == "animal_mt":
             touch {output.ok}
             """
 else:
-    if target_type == "anonym":
+    if target_type == "ribosomal":
         rule blastn:
             input:
-                multiext("{output_dir}/blastdb/refseq_mitochondrion/refseq_mitochondrion",
+                multiext("{output_dir}/blastdb/silva_138/silva_138",
                     ".ndb",
                     ".nhr",
                     ".nin",
@@ -426,7 +443,7 @@ rule blobtools:
         """
 
 
-if target_type == "animal_mt": 
+if target_type == "mitochondrion": 
     rule mitos_db:
         output: 
             temp(directory("{output_dir}/mitos_db/"+mitos_refseq)),
@@ -452,7 +469,7 @@ if target_type == "animal_mt":
             """
             FAS=$(echo {output_dir}/assembled_sequence/{wildcards.sample}.fasta)
             if [ -e $FAS ]; then
-                if [[ {target_type} == "animal_mt" ]]; then
+                if [[ {target_type} == "mitochondrion" ]]; then
                     if [ $(grep circular -c $FAS) -eq 1 ] ; then
                         echo Treating mitochondrial seqeunce as circular &> {log}
                         runmitos.py \
@@ -480,7 +497,7 @@ if target_type == "animal_mt":
             touch {output.ok}
             """
 else:
-    if target_type == "anonym":
+    if target_type == "ribosomal":
         rule annotations:
             input:
                 "{output_dir}/assembled_sequence/{sample}.ok"
@@ -496,7 +513,7 @@ else:
                 if [ -e $FAS ]; then
                     barrnap \
                         --kingdom {barrnap_kingdom} \
-                        --reject 0.0 \
+                        --reject 0.1 \
                         --outseq {output_dir}/annotations/{wildcards.sample}/result.fas $FAS 1> {output_dir}/annotations/{wildcards.sample}/result.gff &> {log}
                 else
                     echo No assembled sequence for {wildcards.sample} > {log}
@@ -519,7 +536,7 @@ rule assess_assembly:
         """
         FAS=$(echo {output_dir}/assembled_sequence/{wildcards.sample}.fasta)
         if [ -e $FAS ]; then
-            if [[ {target_type} == "animal_mt" ]]; then
+            if [[ {target_type} == "mitochondrion" ]]; then
                 if [ $(grep -e "^>" -c $FAS) -eq 1 ] ; then
                     echo Single sequence found in fasta > {log}
                     python scripts/assess_assembly.py \
@@ -542,7 +559,7 @@ rule assess_assembly:
                         --output {output_dir}/assess_assembly/
                 fi
             else
-                if [[ {target_type} == "anonym" ]]; then
+                if [[ {target_type} == "ribosomal" ]]; then
                     echo TBC > {log}
                 fi
             fi
@@ -572,10 +589,10 @@ rule summarise:
         rm {output_dir}/summary/tmp_summary_sample.txt
         
         # join blobtools with mitos annotations for each contig
-        if [[ {target_type} == "animal_mt" ]]; then
+        if [[ {target_type} == "mitochondrion" ]]; then
             Rscript scripts/summarise.R {output_dir}/ mitos {output.table_contig} &> {log}
         else
-            if [[ {target_type} == "anonym" ]]; then
+            if [[ {target_type} == "ribosomal" ]]; then
                 Rscript scripts/summarise.R {output_dir}/ barrnap {output.table_contig} &> {log}
             fi
         fi
@@ -590,10 +607,10 @@ checkpoint extract_protein_coding_genes:
         "{output_dir}/logs/protein_coding_genes/protein_coding_genes.log"
     shell:
         """
-        if [[ {target_type} == "animal_mt" ]]; then
+        if [[ {target_type} == "mitochondrion" ]]; then
             python scripts/mitos_alignments.py {output_dir}/annotations/ {output_dir}/protein_coding_genes &> {log}
         else
-            if [[ {target_type} == "anonym" ]]; then
+            if [[ {target_type} == "ribosomal" ]]; then
                 python scripts/barrnap_alignments.py {output_dir}/annotations/ {output_dir}/protein_coding_genes &> {log}
             fi
         fi
