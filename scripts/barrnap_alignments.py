@@ -59,13 +59,16 @@ for seq in seq_list:
         genes.append(gene)
 genes = sorted(genes)
 
+print(genes)
+
 # create files with sequences for each gene
 if not os.path.exists(output_dir):
     os.mkdir(output_dir)
 for gene in genes:
     with open(output_dir + "/" + gene + ".fasta", "w") as output_fasta:
         for seq in seq_list:
-            output_fasta.write(">" + seq[0] + "\n" + seq[1] + "\n")
+            if re.search(gene, seq[0]):
+                output_fasta.write(">" + seq[0] + "\n" + seq[1] + "\n")
 
 ## create a table of gene presence/absence for each contig
 #table_list = []                        # list to populate

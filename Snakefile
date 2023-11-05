@@ -651,8 +651,9 @@ rule filter_alignments:
 rule alignment_trim:
     input:
         "{output_dir}/mafft_filtered/{dataset}.fasta"
+    params:
+        tmp = "{output_dir}/alignment_trim/{dataset}_tmp.fasta"
     output:
-        tmp = "{output_dir}/alignment_trim/{dataset}_tmp.fasta",
         out = "{output_dir}/alignment_trim/{dataset}.fasta"
     log:
         "{output_dir}/logs/alignment_trim/{dataset}.log"
@@ -661,23 +662,21 @@ rule alignment_trim:
     shell:
         """
         if [ $(grep -c "^>" {input}) -lt "5" ]; then
-            cp {input} {output.tmp}
             cp {input} {output.out}
         else
             # if [ $(grep -c "^>" {input[0]}) -lt "0" ]; then
             if [[ {alignment_trim} == "gblocks" ]]; then
                 # gblocks add reuslts to same dir as input
-                cp {input} {output.tmp}
+                cp {input} {params.tmp}
                 # gblocks always gives error code of 1. Ignore.
-                Gblocks {output.tmp} -t=d &> {log} || true
+                Gblocks {params.tmp} -t=d &> {log} || true
                 # sed to remove gaps
-                sed 's/ //g' {output.tmp}-gb > {output.out}        
+                sed 's/ //g' {params.tmp}-gb > {output.out}        
                 # rm tmp
-                # rm {output.tmp}-gb
+                rm {params.tmp}
+                rm {params.tmp}-gb
             else
-                if [[ {alignment_trim} == "clipkit" ]]; then
-                    # create tmp to avoid error
-                    cp {input} {output.tmp}
+                if [[ {alignment_trim} == "clipkit" ]]; then                  
                     clipkit {input} -o {output.out} &> {log}
                 fi
             fi
