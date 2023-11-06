@@ -1,22 +1,27 @@
 import argparse
+import sys
+import shutil
+import os
 import re
 
+
 usage = """
-TBC
+
 """
 
 description = """
- 
+Simple python script that will remove putative contaminant sequences from an alignment based on strings in the sequence names. 
 """
 
 # argparse
 parser = argparse.ArgumentParser(usage=usage, description=description)
-parser.add_argument("--input",  help = "Input fasta file.", required=True)
-parser.add_argument("--cont",   help = "Comma separated list of contaminant sample names.", required=True)
-parser.add_argument("--output", help = "Output fasta file.", required=True)
+parser.add_argument("--input",     help = "Input directory containg '.fasta' files to be filtered.", nargs = "*", required=True)
+parser.add_argument("--cont",      help = "Comma separated list of contaminant sample names.",       nargs = "*", required=True)
+parser.add_argument("--output",    help = "Output directory to write output fasta files.",           required=True)
+parser.add_argument("--overwrite", help = "Overwrite output directory.", action = "store_true",      required=False)
 args = parser.parse_args()
 
-# read fasta
+# functions
 def read_fasta(filename):
     name, seq = None,''
     fasta = open(filename, 'r')
@@ -39,8 +44,8 @@ def format_name(name):
     name = re.sub("_circular|","", name)
     return name
 
-assert format_name('Spec_SPHI_MRT_3_contig0;6106-6801;+;atp6') == 'Spec_SPHI_MRT_3'
-assert format_name('Spec_SPHI_MRT_3_circular;6106-6801;+;atp6') == 'Spec_SPHI_MRT_3'
+#assert format_name('Spec_SPHI_MRT_3_contig0;6106-6801;+;atp6') == 'Spec_SPHI_MRT_3'
+#assert format_name('Spec_SPHI_MRT_3_circular;6106-6801;+;atp6') == 'Spec_SPHI_MRT_3'
 
 def str_present(name, list_strings):
     result = False
@@ -49,26 +54,67 @@ def str_present(name, list_strings):
         if re.search(s, name):
             result = True
             print(f'Removing {name}')
+            break
     return result
 
-#assert is_cont('Spec_SPHI_MRT_3', ['Suavo_61502', 'Zet_ZALP_103187', 'Suavo_61096']) == False
-#assert is_cont('Spec_SPHI_MRT_3', ['Suavo_61502', 'Zet_ZALP_103187', 'Spec_SPHI_MRT_3']) == True
+#assert str_present('Spec_SPHI_MRT_3', ['Suavo_61502', 'Zet_ZALP_103187', 'Suavo_61096']) == False
+#assert str_present('Spec_SPHI_MRT_3', ['Suavo_61502', 'Zet_ZALP_103187', 'Spec_SPHI_MRT_3']) == True
 
-# read fasta
-fas = read_fasta(args.input)
 
-# samples to remove from fasta
-samples = args.cont.split(',')
+# main 
 
-# output fasta
-out = open(args.output, 'w')
+print("\nRunning remove_contaminants.py")
 
-for f in fas:
-    name, seq = f[0], f[1]
-    if not str_present(name, samples):
-        name = format_name(name)
-        out.write(f'>{name}\n{seq}\n')
+# print input used
+print("\nSearching for '.fasta' files in the following path(s):")
+for i in args.input:
+    print(f"   {i}")
+#print(args.input)
 
-# close output fasta
-out.close()
+print("\nRemoving sequences with names containing the following strings:")
+for i in args.cont:
+    print(f"   {i}")
+#print(args.cont)
 
+# create output dir
+if os.path.exists(args.output):
+    if args.overwrite: 
+        print("\nOverwriting output directory")
+        shutil.rmtree(args.output)
+        os.mkdir(args.output)
+    else: 
+        sys.exit(f"Error: output directory {args.output} already exists.")
+else: 
+    print("\nCreating output directory")
+    os.mkdir(args.output)
+
+# iterate through fasta files in the input directory
+for path in args.input:
+    print(path)
+    for file in os.listdir(path):
+        print(file)
+        if file.endswith(".fasta"):
+            # read fasta
+            print(f"\nReading fasta {file}")
+            fas = read_fasta(f"{path}/{file}")
+            # initiate tmp list to hold fasta data
+            tmp = []
+            # iterate throuh sequences in fasta
+            for i in fas:
+                name, seq = i[0], i[1]
+                # write sequence to output list if contaminant not present in name
+                if not str_present(name, args.cont):
+                    name = format_name(name)
+                    tmp.append([name, seq])
+            
+            # do not generate fasta if less than 5 sequences present
+            if len(tmp) < 5: 
+                print(f"No output generated for {file}. Need at least 5 sequences.")
+            else:
+                out = open(f"{args.output}/{file}", 'w')
+                for x in tmp: 
+                    name, seq = x[0], x[1]
+                    out.write(f'>{name}\n{seq}\n')
+                out.close()
+
+print("Complete!")

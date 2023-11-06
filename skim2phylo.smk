@@ -88,8 +88,8 @@ rule fastp:
     output:
         fwd = temp("{output_dir}/fastp/{sample}_R1.fq.gz"),
         rev = temp("{output_dir}/fastp/{sample}_R2.fq.gz"),
-        html = "{output_dir}/fastp/{sample}.html",
-        json = "{output_dir}/fastp/{sample}.json"
+        html = "{output_dir}/fastp/{sample}.fastp.html",
+        json = "{output_dir}/fastp/{sample}.fastp.json"
     log:
         "{output_dir}/logs/fastp/{sample}.log"
     conda:
