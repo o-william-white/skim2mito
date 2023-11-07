@@ -2,6 +2,7 @@
 import argparse
 import sys
 from ete3 import Tree
+import re
 
 # argparse
 parser = argparse.ArgumentParser()
@@ -18,7 +19,25 @@ print(f"Input tree:\n{tree}\n")
 print(f"Rooting on:\n{args.outgroup}\n")
 
 # split outgroups
-outgroups = args.outgroup.split(",")
+outgroups_tmp = args.outgroup.split(",")
+
+# function to get leaf name if outgroup is not an exact match
+def get_outgroup_leaf_name(tree, outgroup):
+    for n in tree.traverse():
+        if n.is_leaf():
+            if re.search(outgroup, n.name):
+                return(n.name)
+
+# iterate through outgroups to check if matches are exact or partial
+outgroups = []
+for o in outgroups_tmp: 
+    if o == get_outgroup_leaf_name(tree, o):
+        print(f"Exact match found for {o}") 
+        outgroups.append(o)
+    else: 
+        partial_match = get_outgroup_leaf_name(tree, o)
+        print(f"Partial match found for {o}: {partial_match}")
+        outgroups.append(partial_match)
 
 # function to get first ingroup sample
 def select_first_ingroup_leaf(tree, outgroups):

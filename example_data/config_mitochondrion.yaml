@@ -25,5 +25,14 @@ alignment_trim: gblocks
 # alignment missing data threshold for alignment (0.0 - 1.0)
 missing_threshold: 0.5
 
+# name of outgroup sample (optional)
+# use "NA" if there is no obvious outgroup
+# if more than one outgroup use a comma separated list i.e. "sampleA,sampleB"
+outgroup: "Eurema_blanda"
+
+# plot dimensions (cm)
+plot_height: 20
+plot_width: 20
+
 # number of threads to use
 threads: 6

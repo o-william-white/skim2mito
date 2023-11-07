@@ -14,6 +14,9 @@ mitos_code = config["mitos_code"]
 barrnap_kingdom = config["barrnap_kingdom"]
 alignment_trim = config["alignment_trim"]
 missing_threshold = config["missing_threshold"]
+outgroup = config["outgroup"]
+plot_height = config["plot_height"]
+plot_width = config["plot_width"]
 threads = config["threads"]
 
 # read sample data
@@ -353,11 +356,13 @@ rule minimap:
         """
         FAS=$(echo {output_dir}/assembled_sequence/{wildcards.sample}.fasta)
         OUT=$(echo {output_dir}/minimap/{wildcards.sample}.bam)
+        STA=$(echo {output_dir}/minimap/{wildcards.sample}_stats.txt)
         if [ -e $FAS ]; then
             echo Running minimap for {wildcards.sample} > {log}
             minimap2 -ax sr $FAS {input.fwd} {input.rev} 2> {log} | samtools view -b -F 4 | samtools sort -O BAM -o $OUT - 2>> {log}
             samtools index $OUT 2>> {log}
             samtools index -c $OUT 2>> {log}
+            samtools stats $OUT > $STA
         else
             echo No assembled sequence for {wildcards.sample} > {log}
         fi
@@ -707,11 +712,34 @@ rule iqtree:
         fi
         """
 
+rule root_iqtree:
+    input:
+        tree = "{output_dir}/iqtree/{dataset}.treefile"
+    output:
+        tree = "{output_dir}/iqtree/{dataset}.treefile.rooted.newick"
+    log:
+        "{output_dir}/logs/root_iqtree/{dataset}.txt"
+    conda:
+        "envs/ete3.yaml"
+    shell:
+        """
+        if [ $(grep {outgroup} -c {input.tree}) == 0 ] || [ {outgroup} == "NA" ];
+        then
+            echo "Outgroup not present in tree or outgroup not specified. Leaving as unrooted" > {log}
+            cp {input.tree} {output.tree}
+        else
+            python scripts/root_newick.py \
+                --input {input.tree} \
+                --output {output.tree} \
+                --outgroup {outgroup} &> {log}
+        fi
+        """
+
 rule plot_tree:
     input:
-        "{output_dir}/iqtree/{dataset}.treefile"
+        tree = "{output_dir}/iqtree/{dataset}.treefile.rooted.newick"
     output:
-        "{output_dir}/plot_tree/{dataset}.png"
+        png = "{output_dir}/plot_tree/{dataset}.png"
     log:
         "{output_dir}/logs/plot_tree/{dataset}.log"
     conda:
@@ -721,7 +749,7 @@ rule plot_tree:
         # check if file empty
         if [ -s {input} ]; then
            # file not empty
-           Rscript scripts/plot_tree.R {input} {output} &> {log} 
+            Rscript scripts/plot_tree.R {input.tree} {output.png} {plot_height} {plot_width} &> {log} 
         else
            # file empty
            touch {output}

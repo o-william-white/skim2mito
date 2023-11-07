@@ -1,9 +1,16 @@
-
 # skim2phylo  
+
+**skim2phylo** is a snakemake pipeline for the batch assembly, annotation, and phylogenetic analysis of mitochondrial genomes and ribosomal genes from low coverage "genome skims". The pipeline was designed specifically to work with sequence data from museum collections. 
+
+An additional pipeline **gene2phylo** is provided which can be used to implement phylogenetic analysis for a given set of aligned genes.  
 
 ## Setup 
 
-The pipeline uses conda environments and singularity images to install the necessary tools. The pipeline also requires reference data for GetOrganelle, a blastn database, an NCBI taxdump and reference data for MITOS2 gene annotation. Scripts are provided to install the necessary reference databases. 
+The pipeline is written in Snakemake and uses conda environments and singularity images to install the necessary tools. 
+
+It is reccomended to install conda using Mambaforge. See details here https://snakemake.readthedocs.io/en/stable/getting_started/installation.html 
+
+Once conda is installed, you can pull the github repo and set up the base conda environment.
 
 ```
 # get github repo
@@ -14,171 +21,129 @@ cd skim2phylo
 
 # setup conda env
 conda env create -n skim2phylo -f envs/conda_env.yaml
-
-# run test data
-bash run_mitochondrion_example.sh
-bash run_ribosomal_example.sh
-
-# run test data using sbatch scheduler
-sbatch --partition=day --cpus-per-task=24 --mem=24G run_mitochondrion_example.sh
-sbatch --partition=day --cpus-per-task=24 --mem=24G run_ribosomal_example.sh
-
-# remove putative contaminants
-python additional_scripts/remove_contaminants.py \
-   --input results_mitochondrion_example/mafft_filtered/ results_ribosomal_example/mafft_filtered/ \
-   --cont Catacroptera_cloanthe 5.8S \
-   --output results_genes_example \
-   --overwrite
-
-snakemake --snakefile skim2phylo_step2.smk --cores 2 --use-conda --rerun-incomplete
-
-
 ```
 
-## get blast database
-## TBC - already available on NHM HPC :)
-#
-## get new_taxdump
-#bash additional_scripts/fetch_new_taxdump.sh
-#
-## get mitos2 annotation
-#bash additional_scripts/fetch_mitos2_reference_data.sh
-#```
+## Example usage
 
-## Download example data
+Before you run skim2phylo on your own data, it is recommended to run at least one of the example datasets provided. This will confirm there are no user-specific issues with the setup and it also installs all the dependencies. 
 
-We will use a subset of nine bank vole (Myodes glareolus) samples from Baker et al (2017) https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5680428/
+The example data includes simulated mitochondrial and ribosomal reads from 25 different butterfly speices. 
 
+### Mitochondrial example
+
+To run the mitochondrial example data, run the code below. *Note that the first time you run this, it will take some time to install each of the conda environments*, so it is a good time to take a tea break :).
 ```
-# set up sra-tools environment
-conda create -n sra-tools -c bioconda sra-tools
+source activate skim2phylo
 
-# download reads
-bash additional_scripts/fastq_dump_example_data.sh
+snakemake \
+   --snakefile skim2phylo.smk \
+   --cores 6 \
+   --use-conda \
+   --use-singularity \
+   --configfile example_data/config_mitochondrion.yaml \
+   --rerun-incomplete
+``` 
+
+If you have access to a HPC, you can submit snakemake workflows as jobs. For example, using sbatch:
 ```
-
-## Download GetOrganelle reference data
-
-GetOrganelle requires reference data in the format of seed and gene reference fasta files. You can use the default reference data for GetOrganelle, but I would recomend using custom reference databases where possible. See here for details of how to set up your own databases https://github.com/Kinggerm/GetOrganelle/wiki/FAQ#how-to-assemble-a-target-organelle-genome-using-my-own-reference 
-
-I have shared a basic python script called go_fetch.py in another repo https://github.com/o-william-white/go_fetch to download and format reference data formatted for GetOrganelle. Go fetch downloads the reference from NCBI using biopython, removes repetitive sequences using trf, and formats the data for GetOrganelle.
-
-```
-# set up go_fetch environment
-conda create -n go_fetch -c bioconda getorganelle biopython trf
-
-# activate environment
-conda activate go_fetch
-
-# clone go_fetch.py script, NOTE: in this case in $HOME
-cd ~ && git clone https://github.com/o-william-white/go_fetch.git && cd -
-
-# download refseq mitochondrion sequences for Myodes
-# NOTE: You will need to change the email address used by Biopython. 
-python $HOME/go_fetch/go_fetch.py \
-   --taxonomy "Myodes" \
-   --target mitochondrion \
-   --download \
-   --min 2 \
-   --max 10 \
-   --name mitochondrion \
-   --output myodes_db \
-   --email o.william.white@gmail.com
-
-# deactivate environment
-conda deactivate
+sbatch --cpus-per-task=24 --mem=16G run_mitochondrion_example.sh
 ```
 
-You should now have the following reference data: `myodes_db/mitochondrion/seed.fasta` and `myodes_db/mitochondrion/gene.fasta`
-
-## Setup Snakemake config files
-
-Snakemake requires a config.yaml and samples.csv to define input paramters and sequence data for each sample.
-
-```
-# setup example config.yaml and samples.csv
-bash additional_scripts/setup_example_config.sh
-```
-
-This will create a file called config/config_example.yaml that should look like this: 
+Snakemake requires a config.yaml and samples.csv to define input paramters and sequence data for each sample. For the mitochondrion example data provided, the config file is located here `example_data/config_mitochondrion.yaml` and it looks like this: 
 ```
 # path to sample sheet csv with columns for ID,forward,reverse
-samples: config/samples_example.csv
+samples: example_data/samples_mitochondrion.csv
 
 # name of output directory
-output_dir: results_example
+output_dir: results_mitochondrion_example
 
-# GetOrganelle target sequence type (animal_mt,embplant_cp,anonym)
-target_type: animal_mt
+# fastp depulication (True/False)
+fastp_dedup: True
 
-# path to blast db
-blast_db: /workspaces/groups/database/nt-2022-06-22_blastdb/nt
+# GetOrganelle target sequence type (mitochondrion, ribosomal)
+target_type: mitochondrion
 
-# path to new_taxdump
-taxdump: taxdump
+# mitos refseq database (refseq39, refseq63f, refseq63m, refseq63o, refseq89f, refseq89m, refseq89o)
+mitos_refseq: refseq39
 
-# path to mitos refseq
-mitos_refseq: mitos2_reference_data
-
-# mito code
+# mito code (2 = Vertebrate, 4 = Mold, 5 = Invertebrate, 9 = Echinoderm, 13 = Ascidian, 14 = Alternative flatworm
 mitos_code: 5
 
 # barrnap kindgom (Bacteria:bac, Archaea:arc, Eukaryota:euk, Metazoan Mitochondria:mito)
 barrnap_kingdom: NA
 
+# alignment trimming method to use (gblocks or clipkit)
+alignment_trim: gblocks
+
+# alignment missing data threshold for alignment (0.0 - 1.0)
+missing_threshold: 0.5
+
+# name of outgroup sample (optional)
+# use "NA" if there is no obvious outgroup
+# if more than one outgroup use a comma separated list i.e. "sampleA,sampleB"
+outgroup: "Eurema_blanda"
+
+# plot dimensions (cm)
+plot_height: 20
+plot_width: 20
+
 # number of threads to use
 threads: 6
 ```
 
-It will also create csv table of samples that looks like this: 
+The samples.csv file is located here `example_data/samples_mitochondrion.csv` and the first 10 lines look like  this: 
 
-|ID|forward|reverse|seed|gene|
-|--|-------|-------|----|----|
-|M.glareolus_SRR5201684|example_data/SRR5201684_1.fastq.gz|example_data/SRR5201684_2.fastq.gz|myodes_db/mitochondrion/seed.fasta|myodes_db/mitochondrion/gene.fasta|
-|M.glareolus_SRR5201683|example_data/SRR5201683_1.fastq.gz|example_data/SRR5201683_2.fastq.gz|myodes_db/mitochondrion/seed.fasta|myodes_db/mitochondrion/gene.fasta|
-|M.glareolus_SRR5201682|example_data/SRR5201682_1.fastq.gz|example_data/SRR5201682_2.fastq.gz|myodes_db/mitochondrion/seed.fasta|myodes_db/mitochondrion/gene.fasta|
-|M.glareolus_SRR5201681|example_data/SRR5201681_1.fastq.gz|example_data/SRR5201681_2.fastq.gz|myodes_db/mitochondrion/seed.fasta|myodes_db/mitochondrion/gene.fasta|
-|M.glareolus_SRR5201680|example_data/SRR5201680_1.fastq.gz|example_data/SRR5201680_2.fastq.gz|myodes_db/mitochondrion/seed.fasta|myodes_db/mitochondrion/gene.fasta|
-|M.glareolus_SRR5201679|example_data/SRR5201679_1.fastq.gz|example_data/SRR5201679_2.fastq.gz|myodes_db/mitochondrion/seed.fasta|myodes_db/mitochondrion/gene.fasta|
-|M.glareolus_SRR5201678|example_data/SRR5201678_1.fastq.gz|example_data/SRR5201678_2.fastq.gz|myodes_db/mitochondrion/seed.fasta|myodes_db/mitochondrion/gene.fasta|
-|M.glareolus_SRR5201677|example_data/SRR5201677_1.fastq.gz|example_data/SRR5201677_2.fastq.gz|myodes_db/mitochondrion/seed.fasta|myodes_db/mitochondrion/gene.fasta|
-|M.glareolus_SRR5201676|example_data/SRR5201676_1.fastq.gz|example_data/SRR5201676_2.fastq.gz|myodes_db/mitochondrion/seed.fasta|myodes_db/mitochondrion/gene.fasta|
+| ID | forward | reverse | seed | gene |
+|----|---------|---------|------|------|
+| Adelpha_iphiclus           | example_data/mitochondrion/Adelpha_iphiclus_1.fq.gz           | example_data/mitochondrion/Adelpha_iphiclus_2.fq.gz           | example_data/seed_mitochondrion.fasta|example_data/gene_mitochondrion.fasta |
+| Anartia_jatrophae_saturata | example_data/mitochondrion/Anartia_jatrophae_saturata_1.fq.gz | example_data/mitochondrion/Anartia_jatrophae_saturata_2.fq.gz | example_data/seed_mitochondrion.fasta|example_data/gene_mitochondrion.fasta |
+| Araschnia_levana           | example_data/mitochondrion/Araschnia_levana_1.fq.gz           | example_data/mitochondrion/Araschnia_levana_2.fq.gz           | example_data/seed_mitochondrion.fasta|example_data/gene_mitochondrion.fasta |
+| Auzakia_danava             | example_data/mitochondrion/Auzakia_danava_1.fq.gz             | example_data/mitochondrion/Auzakia_danava_2.fq.gz             | example_data/seed_mitochondrion.fasta|example_data/gene_mitochondrion.fasta |
+| Baeotus_beotus             | example_data/mitochondrion/Baeotus_beotus_1.fq.gz             | example_data/mitochondrion/Baeotus_beotus_2.fq.gz             | example_data/seed_mitochondrion.fasta|example_data/gene_mitochondrion.fasta |
+| Catacroptera_cloanthe      | example_data/mitochondrion/Catacroptera_cloanthe_1.fq.gz      | example_data/mitochondrion/Catacroptera_cloanthe_2.fq.gz      | example_data/seed_mitochondrion.fasta|example_data/gene_mitochondrion.fasta |
+| Chalinga_pratti            | example_data/mitochondrion/Chalinga_pratti_1.fq.gz            | example_data/mitochondrion/Chalinga_pratti_2.fq.gz            | example_data/seed_mitochondrion.fasta|example_data/gene_mitochondrion.fasta |
+| Diaethria_gabaza_eupepla   | example_data/mitochondrion/Diaethria_gabaza_eupepla_1.fq.gz   | example_data/mitochondrion/Diaethria_gabaza_eupepla_2.fq.gz   | example_data/seed_mitochondrion.fasta|example_data/gene_mitochondrion.fasta |
+| Doleschallia_melana        | example_data/mitochondrion/Doleschallia_melana_1.fq.gz        | example_data/mitochondrion/Doleschallia_melana_2.fq.gz        | example_data/seed_mitochondrion.fasta|example_data/gene_mitochondrion.fasta |
+| Eurema_blanda              | example_data/mitochondrion/Eurema_blanda_1.fq.gz              | example_data/mitochondrion/Eurema_blanda_2.fq.gz              | example_data/seed_mitochondrion.fasta|example_data/gene_mitochondrion.fasta |
 
+### Ribosomal example
 
-## Run Snakemake
-
-Now we have set up our conda environemt, downloaded the reference data, downloaded the input data and formated the snakemake config, we are ready to run the pipeline. 
-
-The first time you run the pipeline, it will start by setting up the singularity and conda environemts. If you run this Snakemake file again, it will not need to setup these environments again. 
-
-You can run the pipeline by entering:
+To run the ribosomal example data. run the code below. 
 ```
-source activate genome_skimming_pipeline
-
 snakemake \
+   --snakefile skim2phylo.smk \
    --cores 6 \
    --use-conda \
    --use-singularity \
-   --configfile config/config_example.yaml
+   --configfile example_data/config_ribosomal.yaml \
+   --rerun-incomplete
+```
+As above, the ribosomal example can be submitted using sbatch
+```
+sbatch --cpus-per-task=24 --mem=16G run_ribosomal_example.sh
 ```
 
-If you have access to an HPC you can submit this as a job. For example, see the slurm script below. 
+### Main output files
+
+TBC
+
+
+### Filtering putative contaminants 
+
+If you are working with museum collections, it is possible that you may assemble and annotate sequences from contaminant/non-target species. To remove putative contaminants, and generate the files required for a final phylogenetic analysis, a python script is provided: 
 ```
-#!/bin/bash
-#SBATCH --partition=day
-#SBATCH --output=job_snakemake_example_%j.out
-#SBATCH --error=job_snakemake_example_%j.err
-#SBATCH --mem=50G
-#SBATCH --cpus-per-task=18
-
-source activate genome_skimming_pipeline
-
-snakemake \
-   --cores 18 \
-   --use-conda \
-   --use-singularity \
-   --configfile config/config_example.yaml
-
-
+python additional_scripts/remove_contaminants.py \
+   --input results_mitochondrion_example/mafft_filtered/ results_ribosomal_example/mafft_filtered/ \
+   --cont Catacroptera_cloanthe 5.8S \
+   --output results_genes_example \
+   --overwrite
 ```
+
+### Running you own data
+
+You can generate your own config.yaml and samples.csv files. 
+
+GetOrganelle requires reference data in the format of seed and gene reference fasta files. You can use the default reference data for GetOrganelle, but I would recomend using custom reference databases where possible. See here for details of how to set up your own databases https://github.com/Kinggerm/GetOrganelle/wiki/FAQ#how-to-assemble-a-target-organelle-genome-using-my-own-reference 
+
+I have shared a basic python script called go_fetch.py in another repo https://github.com/o-william-white/go_fetch to download and format reference data formatted for GetOrganelle. Go fetch downloads the reference from NCBI using biopython, removes repetitive sequences using trf, and formats the data for GetOrganelle.
 

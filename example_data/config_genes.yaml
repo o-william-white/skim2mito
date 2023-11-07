@@ -1,0 +1,15 @@
+# name of input directory containg aligned genes
+input_dir: "example_data/genes"
+
+# name of output directory
+output_dir: "results_genes_example"
+
+# name of outgroup sample (optional)
+# use "NA" if there is no obvious outgroup
+# if more than one outgroup use a comma separated list i.e. "sampleA,sampleB"
+outgroup: "Eurema_blanda"
+
+# plot dimensions (cm)
+plot_height: 20
+plot_width: 20
+
