@@ -3,7 +3,7 @@ library(ggtree)
 args = commandArgs(trailingOnly=TRUE)
 
 # run as 
-# plot_tree input.tree output.png
+# plot_tree input.tree output.png height width
 
 # read tree
 tre <- read.tree(args[1])
@@ -12,10 +12,10 @@ tre <- read.tree(args[1])
 p <- ggtree(tre) 
 
 # write png
-png(args[2], res=600, height = 12, width = 12, units = "in")
+png(args[2], res=600, height = as.integer(args[3]), width = as.integer(args[4]), units = "cm")
 p + 
-  geom_tiplab() + 
+  geom_tiplab(align = TRUE) + 
   geom_nodelab(aes(x=branch), vjust=-0.75) + 
-  xlim(c(0,1.5*max(p$data$x)))
+  xlim(c(0,2*max(p$data$x)))
 dev.off()
 

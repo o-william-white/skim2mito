@@ -1,6 +1,6 @@
 channels:
   - bioconda
 dependencies:
-  - r-base =4.2.2
+  - r-base =4.3.2
   - r-tidyverse
-  - bioconductor-ggtree =3.6.0
+  - bioconductor-ggtree =3.8.0

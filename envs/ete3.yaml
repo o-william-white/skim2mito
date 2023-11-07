@@ -2,3 +2,4 @@ channels:
   - bioconda
 dependencies:
   - ete3 =3.1.1
+  - xvfbwrapper =0.2.9
