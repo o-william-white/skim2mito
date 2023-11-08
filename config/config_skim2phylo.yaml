@@ -1,38 +1,38 @@
 # path to sample sheet csv with columns for ID,forward,reverse,seed,gene
-samples: example_data/samples_7_ribosomal.csv 
+samples: <samples>
 
 # name of output directory
-output_dir: results_ribosomal_example
+output_dir: <output_dir>
 
 # fastp depulication (True/False)
-fastp_dedup: True
+fastp_dedup: <fastp_dedup>
 
 # GetOrganelle target sequence type (mitochondrion, ribosomal)
-target_type: ribosomal
+target_type: <target_type>
 
 # mitos refseq database (refseq39, refseq63f, refseq63m, refseq63o, refseq89f, refseq89m, refseq89o)
-mitos_refseq: NA
+mitos_refseq: <mitos_refseq>
 
 # mito code (2 = Vertebrate, 4 = Mold, 5 = Invertebrate, 9 = Echinoderm, 13 = Ascidian, 14 = Alternative flatworm
-mitos_code: NA
+mitos_code: <mitos_code>
 
-# barrnap kindgom (Bacteria:bac, Archaea:arc, Eukaryota:euk, Metazoan Mitochondria:mito)
-barrnap_kingdom: euk
+# barrnap kindgom (Bacteria:bac, Archaea:arc, Eukaryota:euk, None:NA)
+barrnap_kingdom: <barrnap_kingdom>
 
 # alignment trimming method to use (gblocks or clipkit)
-alignment_trim: gblocks
+alignment_trim: <alignment_trim>
+
+# alignment missing data threshold for alignment (0.0 - 1.0)
+missing_threshold: <missing_threshold>
 
 # name of outgroup sample (optional)
 # use "NA" if there is no obvious outgroup
 # if more than one outgroup use a comma separated list i.e. "sampleA,sampleB"
-outgroup: "Eurema_blanda"
+outgroup: <outgroup>
 
 # plot dimensions (cm)
-plot_height: 20
-plot_width: 20
-
-# alignment missing data threshold for alignment (0.0 - 1.0)
-missing_threshold: 0.5
+plot_height: <plot_height>
+plot_width: <plot_width>
 
 # number of threads to use
-threads: 6
+threads: <threads>

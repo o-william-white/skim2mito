@@ -61,7 +61,7 @@ for gene in genes:
             if re.search(gene+"$|"+gene+"_[0-9]$|"+gene+"-[a-z]$", seq[0]):
                 output_fasta.write(">" + seq[0] + "\n" + seq[1] + "\n")
 
-## create a table of gene presence/absence for each contig
+### create a table of gene presence/absence for each contig
 #table_list = []                        # list to populate
 #table_list.append(["sample"] + genes)  # column names
 ## loop through bed files and genes
@@ -76,8 +76,8 @@ for gene in genes:
 #                    count += 1
 #            sample_list.append(count)
 #    table_list.append(sample_list)
-
-# write to table
+#
+## write to table
 #with open("get_organelle_mt_mitos/summary.txt", "w") as gene_summary:
 #    for i in table_list:
 #        gene_summary.write("\t".join(map(str, i)) + "\n")

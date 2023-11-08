@@ -1,5 +1,5 @@
-# path to sample sheet csv with columns for ID,forward,reverse
-samples: example_data/samples_mitochondrion.csv
+# path to sample sheet csv with columns for ID,forward,reverse,seed,gene
+samples: example_data/samples_7_mitochondrion.csv
 
 # name of output directory
 output_dir: results_mitochondrion_example

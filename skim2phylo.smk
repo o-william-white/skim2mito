@@ -2,13 +2,12 @@ import pandas as pd
 import sys
 
 # set configfile
-configfile: "config/config.yaml"
+configfile: "config/config_skim2phylo.yaml"
 
 # configfile parameters
 target_type = config["target_type"]
 output_dir = config["output_dir"]
 fastp_dedup = config["fastp_dedup"]
-blast_db = config["blast_db"]
 mitos_refseq = config["mitos_refseq"]
 mitos_code = config["mitos_code"]
 barrnap_kingdom = config["barrnap_kingdom"]
@@ -233,7 +232,7 @@ if target_type == "mitochondrion":
             "{output_dir}/logs/blastdb/blastdb.log"
         shell:
             """
-            wget -P {output_dir}/blastdb/ https://zenodo.org/records/8424777/files/refseq_mitochondrion.tar.gz &> {log}
+            wget --wait 10 --random-wait -P {output_dir}/blastdb/ https://zenodo.org/records/8424777/files/refseq_mitochondrion.tar.gz &> {log}
             tar xvzf {output_dir}/blastdb/refseq_mitochondrion.tar.gz --directory {output_dir}/blastdb/ &>> {log}
             rm {output_dir}/blastdb/refseq_mitochondrion.tar.gz &>> {log}
             """
@@ -256,7 +255,7 @@ else:
                 "{output_dir}/logs/blastdb/blastdb.log"
             shell:
                 """
-                wget -P {output_dir}/blastdb/ https://zenodo.org/records/8424777/files/silva_138.tar.gz &> {log}
+                wget --wait 10 --random-wait -P {output_dir}/blastdb/ https://zenodo.org/records/8424777/files/silva_138.tar.gz &> {log}
                 tar xvzf {output_dir}/blastdb/silva_138.tar.gz --directory {output_dir}/blastdb/ &>> {log}
                 rm {output_dir}/blastdb/silva_138.tar.gz &>> {log}
                 """ 
@@ -369,32 +368,89 @@ rule minimap:
         touch {output.ok}
         """
 
-rule taxdump:
-    output: 
-        temp(directory("{output_dir}/taxdump")),
-        temp("{output_dir}/taxdump/citations.dmp"),
-        temp("{output_dir}/taxdump/delnodes.dmp"),
-        temp("{output_dir}/taxdump/division.dmp"),
-        temp("{output_dir}/taxdump/excludedfromtype.dmp"),
-        temp("{output_dir}/taxdump/fullnamelineage.dmp"),
-        temp("{output_dir}/taxdump/gencode.dmp"),
-        temp("{output_dir}/taxdump/host.dmp"),
-        temp("{output_dir}/taxdump/images.dmp"),
-        temp("{output_dir}/taxdump/merged.dmp"),
-        temp("{output_dir}/taxdump/names.dmp"),
-        temp("{output_dir}/taxdump/nodes.dmp"),
-        temp("{output_dir}/taxdump/rankedlineage.dmp"),
-        temp("{output_dir}/taxdump/taxidlineage.dmp"),
-        temp("{output_dir}/taxdump/typematerial.dmp"),
-        temp("{output_dir}/taxdump/typeoftype.dmp")
-    log:
-        "{output_dir}/logs/taxdump/taxdump.log"
-    shell:
-        """
-        wget -P {output_dir}/taxdump/ https://ftp.ncbi.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz &> {log}
-        tar xvzf {output_dir}/taxdump/new_taxdump.tar.gz --directory {output_dir}/taxdump/ &>> {log}
-        rm {output_dir}/taxdump/new_taxdump.tar.gz &>> {log}
-        """
+if target_type == "mitochondrion":
+    rule taxdump:
+        # if we give the blastdb database as input, it stops wget trying to download the blastdb at the same time as taxdump which causes an error
+        input:
+            multiext("{output_dir}/blastdb/refseq_mitochondrion/refseq_mitochondrion",
+                ".ndb",
+                ".nhr",
+                ".nin",
+                ".njs",
+                ".nog",
+                ".nos",
+                ".not",
+                ".nsq",
+                ".ntf",
+                ".nto")
+        output: 
+            temp(directory("{output_dir}/taxdump")),
+            temp("{output_dir}/taxdump/citations.dmp"),
+            temp("{output_dir}/taxdump/delnodes.dmp"),
+            temp("{output_dir}/taxdump/division.dmp"),
+            temp("{output_dir}/taxdump/excludedfromtype.dmp"),
+            temp("{output_dir}/taxdump/fullnamelineage.dmp"),
+            temp("{output_dir}/taxdump/gencode.dmp"),
+            temp("{output_dir}/taxdump/host.dmp"),
+            temp("{output_dir}/taxdump/images.dmp"),
+            temp("{output_dir}/taxdump/merged.dmp"),
+            temp("{output_dir}/taxdump/names.dmp"),
+            temp("{output_dir}/taxdump/nodes.dmp"),
+            temp("{output_dir}/taxdump/rankedlineage.dmp"),
+            temp("{output_dir}/taxdump/taxidlineage.dmp"),
+            temp("{output_dir}/taxdump/typematerial.dmp"),
+            temp("{output_dir}/taxdump/typeoftype.dmp")
+        log:
+            "{output_dir}/logs/taxdump/taxdump.log"
+        shell:
+            """
+            wget --wait 10 --random-wait -P {output_dir}/taxdump/ https://ftp.ncbi.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz &> {log}
+            tar xvzf {output_dir}/taxdump/new_taxdump.tar.gz --directory {output_dir}/taxdump/ &>> {log}
+            rm {output_dir}/taxdump/new_taxdump.tar.gz &>> {log}
+            """
+else:
+    if target_type == "ribosomal":
+        rule taxdump:
+            # if we give the blastdb database as input, it stops wget trying to download the blastdb at the same time as taxdump which causes an error
+            input:
+                multiext("{output_dir}/blastdb/silva_138/silva_138",
+                    ".ndb",
+                    ".nhr",
+                    ".nin",
+                    ".njs",
+                    ".nog",
+                    ".nos",
+                    ".not",
+                    ".nsq",
+                    ".ntf",
+                    ".nto")
+            output:
+                temp(directory("{output_dir}/taxdump")),
+                temp("{output_dir}/taxdump/citations.dmp"),
+                temp("{output_dir}/taxdump/delnodes.dmp"),
+                temp("{output_dir}/taxdump/division.dmp"),
+                temp("{output_dir}/taxdump/excludedfromtype.dmp"),
+                temp("{output_dir}/taxdump/fullnamelineage.dmp"),
+                temp("{output_dir}/taxdump/gencode.dmp"),
+                temp("{output_dir}/taxdump/host.dmp"),
+                temp("{output_dir}/taxdump/images.dmp"),
+                temp("{output_dir}/taxdump/merged.dmp"),
+                temp("{output_dir}/taxdump/names.dmp"),
+                temp("{output_dir}/taxdump/nodes.dmp"),
+                temp("{output_dir}/taxdump/rankedlineage.dmp"),
+                temp("{output_dir}/taxdump/taxidlineage.dmp"),
+                temp("{output_dir}/taxdump/typematerial.dmp"),
+                temp("{output_dir}/taxdump/typeoftype.dmp")
+            log:
+                "{output_dir}/logs/taxdump/taxdump.log"
+            shell:
+                """
+                wget --wait 10 --random-wait -P {output_dir}/taxdump/ https://ftp.ncbi.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz &> {log}
+                tar xvzf {output_dir}/taxdump/new_taxdump.tar.gz --directory {output_dir}/taxdump/ &>> {log}
+                rm {output_dir}/taxdump/new_taxdump.tar.gz &>> {log}
+                """
+
+
 
 rule blobtools:
     input:
@@ -447,19 +503,37 @@ rule blobtools:
         touch {output.ok}
         """
 
-
 if target_type == "mitochondrion": 
     rule mitos_db:
+        # if we give the taxdump database as input, it stops wget trying to download the taxdump mitos_db at the same time which causes an error 
+        input:
+            "{output_dir}/taxdump/",
+            "{output_dir}/taxdump/citations.dmp",
+            "{output_dir}/taxdump/delnodes.dmp",
+            "{output_dir}/taxdump/division.dmp",
+            "{output_dir}/taxdump/excludedfromtype.dmp",
+            "{output_dir}/taxdump/fullnamelineage.dmp",
+            "{output_dir}/taxdump/gencode.dmp",
+            "{output_dir}/taxdump/host.dmp",
+            "{output_dir}/taxdump/images.dmp",
+            "{output_dir}/taxdump/merged.dmp",
+            "{output_dir}/taxdump/names.dmp",
+            "{output_dir}/taxdump/nodes.dmp",
+            "{output_dir}/taxdump/rankedlineage.dmp",
+            "{output_dir}/taxdump/taxidlineage.dmp",
+            "{output_dir}/taxdump/typematerial.dmp",
+            "{output_dir}/taxdump/typeoftype.dmp"
         output: 
             temp(directory("{output_dir}/mitos_db/"+mitos_refseq)),
         log:
             "{output_dir}/logs/mitos_db/mitos_db.log"
         shell:
             """
-            wget -P {output_dir}/mitos_db https://zenodo.org/record/4284483/files/{mitos_refseq}.tar.bz2  &> {log}
+            wget --wait 10 --random-wait -P {output_dir}/mitos_db https://zenodo.org/record/4284483/files/{mitos_refseq}.tar.bz2  &> {log}
             tar xf {output_dir}/mitos_db/{mitos_refseq}.tar.bz2 --directory {output_dir}/mitos_db &>> {log}
             rm {output_dir}/mitos_db/{mitos_refseq}.tar.bz2 >> {log}
             """
+
     rule annotations:
         input:
             "{output_dir}/mitos_db/"+mitos_refseq,

@@ -2,7 +2,7 @@
 
 **skim2phylo** is a snakemake pipeline for the batch assembly, annotation, and phylogenetic analysis of mitochondrial genomes and ribosomal genes from low coverage "genome skims". The pipeline was designed specifically to work with sequence data from museum collections. 
 
-An additional pipeline **gene2phylo** is provided which can be used to implement phylogenetic analysis for a given set of aligned genes.  
+An additional pipeline **gene2phylo** is provided which can be used to implement further phylogenetic analysis for set of aligned genes, using individual genes, a partitioned gene alignment and astral.
 
 ## Setup 
 
@@ -27,7 +27,7 @@ conda env create -n skim2phylo -f envs/conda_env.yaml
 
 Before you run skim2phylo on your own data, it is recommended to run at least one of the example datasets provided. This will confirm there are no user-specific issues with the setup and it also installs all the dependencies. 
 
-The example data includes simulated mitochondrial and ribosomal reads from 25 different butterfly speices. 
+The example data includes simulated mitochondrial and ribosomal reads from 21 different butterfly speices. The example below will only analyse a smaller subset of 7 samples to reduce computation time.  
 
 ### Mitochondrial example
 
@@ -52,7 +52,7 @@ sbatch --cpus-per-task=24 --mem=16G run_mitochondrion_example.sh
 Snakemake requires a config.yaml and samples.csv to define input paramters and sequence data for each sample. For the mitochondrion example data provided, the config file is located here `example_data/config_mitochondrion.yaml` and it looks like this: 
 ```
 # path to sample sheet csv with columns for ID,forward,reverse
-samples: example_data/samples_mitochondrion.csv
+samples: example_data/samples_7_mitochondrion.csv
 
 # name of output directory
 output_dir: results_mitochondrion_example
@@ -91,20 +91,21 @@ plot_width: 20
 threads: 6
 ```
 
-The samples.csv file is located here `example_data/samples_mitochondrion.csv` and the first 10 lines look like  this: 
+The example samples.csv file is located here `example_data/samples_mitochondrion.csv` and the first 10 lines look like  this: 
 
 | ID | forward | reverse | seed | gene |
 |----|---------|---------|------|------|
-| Adelpha_iphiclus           | example_data/mitochondrion/Adelpha_iphiclus_1.fq.gz           | example_data/mitochondrion/Adelpha_iphiclus_2.fq.gz           | example_data/seed_mitochondrion.fasta|example_data/gene_mitochondrion.fasta |
-| Anartia_jatrophae_saturata | example_data/mitochondrion/Anartia_jatrophae_saturata_1.fq.gz | example_data/mitochondrion/Anartia_jatrophae_saturata_2.fq.gz | example_data/seed_mitochondrion.fasta|example_data/gene_mitochondrion.fasta |
-| Araschnia_levana           | example_data/mitochondrion/Araschnia_levana_1.fq.gz           | example_data/mitochondrion/Araschnia_levana_2.fq.gz           | example_data/seed_mitochondrion.fasta|example_data/gene_mitochondrion.fasta |
-| Auzakia_danava             | example_data/mitochondrion/Auzakia_danava_1.fq.gz             | example_data/mitochondrion/Auzakia_danava_2.fq.gz             | example_data/seed_mitochondrion.fasta|example_data/gene_mitochondrion.fasta |
-| Baeotus_beotus             | example_data/mitochondrion/Baeotus_beotus_1.fq.gz             | example_data/mitochondrion/Baeotus_beotus_2.fq.gz             | example_data/seed_mitochondrion.fasta|example_data/gene_mitochondrion.fasta |
-| Catacroptera_cloanthe      | example_data/mitochondrion/Catacroptera_cloanthe_1.fq.gz      | example_data/mitochondrion/Catacroptera_cloanthe_2.fq.gz      | example_data/seed_mitochondrion.fasta|example_data/gene_mitochondrion.fasta |
-| Chalinga_pratti            | example_data/mitochondrion/Chalinga_pratti_1.fq.gz            | example_data/mitochondrion/Chalinga_pratti_2.fq.gz            | example_data/seed_mitochondrion.fasta|example_data/gene_mitochondrion.fasta |
-| Diaethria_gabaza_eupepla   | example_data/mitochondrion/Diaethria_gabaza_eupepla_1.fq.gz   | example_data/mitochondrion/Diaethria_gabaza_eupepla_2.fq.gz   | example_data/seed_mitochondrion.fasta|example_data/gene_mitochondrion.fasta |
-| Doleschallia_melana        | example_data/mitochondrion/Doleschallia_melana_1.fq.gz        | example_data/mitochondrion/Doleschallia_melana_2.fq.gz        | example_data/seed_mitochondrion.fasta|example_data/gene_mitochondrion.fasta |
-| Eurema_blanda              | example_data/mitochondrion/Eurema_blanda_1.fq.gz              | example_data/mitochondrion/Eurema_blanda_2.fq.gz              | example_data/seed_mitochondrion.fasta|example_data/gene_mitochondrion.fasta |
+| Eurema_blanda     | example_data/mitochondrion/Eurema_blanda_1.fq.gz     | example_data/mitochondrion/Eurema_blanda_2.fq.gz     | example_data/seed_mitochondrion.fasta | example_data/gene_mitochondrion.fasta |
+| Junonia_villida   | example_data/mitochondrion/Junonia_villida_1.fq.gz   | example_data/mitochondrion/Junonia_villida_2.fq.gz   | example_data/seed_mitochondrion.fasta | example_data/gene_mitochondrion.fasta |
+| Kallima_paralekta | example_data/mitochondrion/Kallima_paralekta_1.fq.gz | example_data/mitochondrion/Kallima_paralekta_2.fq.gz | example_data/seed_mitochondrion.fasta | example_data/gene_mitochondrion.fasta |
+| Litinga_cottini   | example_data/mitochondrion/Litinga_cottini_1.fq.gz   | example_data/mitochondrion/Litinga_cottini_2.fq.gz   | example_data/seed_mitochondrion.fasta | example_data/gene_mitochondrion.fasta |
+| Mallika_jacksoni  | example_data/mitochondrion/Mallika_jacksoni_1.fq.gz  | example_data/mitochondrion/Mallika_jacksoni_2.fq.gz  | example_data/seed_mitochondrion.fasta | example_data/gene_mitochondrion.fasta |
+| Parasarpa_zayla   | example_data/mitochondrion/Parasarpa_zayla_1.fq.gz   | example_data/mitochondrion/Parasarpa_zayla_2.fq.gz   | example_data/seed_mitochondrion.fasta | example_data/gene_mitochondrion.fasta |
+| Precis_pelarga    | example_data/mitochondrion/Precis_pelarga_1.fq.gz    | example_data/mitochondrion/Precis_pelarga_2.fq.gz    | example_data/seed_mitochondrion.fasta | example_data/gene_mitochondrion.fasta |
+
+## Main output files
+
+TBC
 
 ### Ribosomal example
 
@@ -122,10 +123,6 @@ As above, the ribosomal example can be submitted using sbatch
 ```
 sbatch --cpus-per-task=24 --mem=16G run_ribosomal_example.sh
 ```
-
-### Main output files
-
-TBC
 
 
 ### Filtering putative contaminants 
