@@ -8,7 +8,7 @@ An additional pipeline **gene2phylo** is provided which can be used to implement
 
 The pipeline is written in Snakemake and uses conda environments and singularity images to install the necessary tools. 
 
-It is reccomended to install conda using Mambaforge. See details here https://snakemake.readthedocs.io/en/stable/getting_started/installation.html 
+It is recommended to install conda using Mambaforge. See details here https://snakemake.readthedocs.io/en/stable/getting_started/installation.html 
 
 Once conda is installed, you can pull the github repo and set up the base conda environment.
 
@@ -27,7 +27,7 @@ conda env create -n skim2phylo -f envs/conda_env.yaml
 
 Before you run skim2phylo on your own data, it is recommended to run at least one of the example datasets provided. This will confirm there are no user-specific issues with the setup and it also installs all the dependencies. 
 
-The example data includes simulated mitochondrial and ribosomal reads from 21 different butterfly speices. The example below will only analyse a smaller subset of 7 samples to reduce computation time.  
+The example data includes simulated mitochondrial and ribosomal reads from 21 different butterfly species. The example below will only analyse a smaller subset of 7 samples to reduce computation time.  
 
 ### Mitochondrial example
 
@@ -49,7 +49,7 @@ If you have access to a HPC, you can submit snakemake workflows as jobs. For exa
 sbatch --cpus-per-task=24 --mem=30G run_mitochondrion_example.sh
 ```
 
-Snakemake requires a config.yaml and samples.csv to define input paramters and sequence data for each sample. For the mitochondrion example data provided, the config file is located here `example_data/config_mitochondrion.yaml` and it looks like this: 
+Snakemake requires a config.yaml and samples.csv to define input parameters and sequence data for each sample. For the mitochondrion example data provided, the config file is located here `example_data/config_mitochondrion.yaml` and it looks like this: 
 ```
 # path to sample sheet csv with columns for ID,forward,reverse
 samples: example_data/samples_7_mitochondrion.csv
@@ -149,9 +149,9 @@ sbatch --cpus-per-task=24 --mem=30G run_ribosomal_example.sh
 
 ### Filtering putative contaminants 
 
-If you are working with museum collections, it is possible that you may assemble and annotate sequences from contaminant/non-target species. *Contaminant sequences can be identfied based on the blast search output or unusual placement in the phylognetic trees* (see blobtools and plot_tree outputs). 
+If you are working with museum collections, it is possible that you may assemble and annotate sequences from contaminant/non-target species. *Contaminant sequences can be identified based on the blast search output or unusual placement in the phylogenetic trees* (see blobtools and plot_tree outputs). 
 
-A python script is provided to remove putative contaminants, and generate the files required for a final phylogenetic analysis. For example, lets say we wanted to remove all sequences from the sample named "Kallima_paralekta" and 5.8S ribosomal sequence, you could run the script as follows: 
+A python script is provided to remove putative contaminants, and generate the files required for a final phylogenetic analysis. For example, let's say we wanted to remove all sequences from the sample named "Kallima_paralekta" and 5.8S ribosomal sequence, you could run the script as follows: 
 
 ```
 python scripts/remove_contaminants.py \
@@ -163,7 +163,7 @@ python scripts/remove_contaminants.py \
 
 ### Re-running phylogenetic analysis
 
-If you had to remove any putative contaminants, you will now have a directory containing a combination of mitochondrial and ribosomal genes across multiple samples. The next step is to repeat the phylogenetic analysis. The supplementory pipeline **gene2phylo** will generate individual gene trees and a partitioned gene tree using iqtree and a species tree using astral.
+If you had to remove any putative contaminants, you will now have a directory containing a combination of mitochondrial and ribosomal genes across multiple samples. The next step is to repeat the phylogenetic analysis. The supplementary pipeline **gene2phylo** will generate individual gene trees and a partitioned gene tree using iqtree and a species tree using astral.
 
 To run the ribosomal example data. run the code below.
 ```
@@ -198,9 +198,9 @@ snakemake \
 
 You can generate your own config.yaml and samples.csv files. 
 
-GetOrganelle requires reference data in the format of seed and gene reference fasta files. You can use the default reference data for GetOrganelle, but I would recomend using custom reference databases where possible. See here for details of how to set up your own databases https://github.com/Kinggerm/GetOrganelle/wiki/FAQ#how-to-assemble-a-target-organelle-genome-using-my-own-reference 
+GetOrganelle requires reference data in the format of seed and gene reference fasta files. You can use the default reference data for GetOrganelle, but I would recommend using custom reference databases where possible. See here for details of how to set up your own databases https://github.com/Kinggerm/GetOrganelle/wiki/FAQ#how-to-assemble-a-target-organelle-genome-using-my-own-reference 
 
 I have shared a basic python script called go_fetch.py in another repo https://github.com/o-william-white/go_fetch to download and format reference data formatted for GetOrganelle. Go fetch downloads the reference from NCBI using biopython, removes repetitive sequences using trf, and formats the data for GetOrganelle.
 
-If you have any questions, please do get in touch in the issues or by email o.william.white@gamil.com
+If you have any questions, please do get in touch in the issues or by email o.william.white@gmail.com
 
