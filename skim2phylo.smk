@@ -748,7 +748,7 @@ rule alignment_trim:
                 # gblocks add reuslts to same dir as input
                 cp {input} {params.tmp}
                 # gblocks always gives error code of 1. Ignore.
-                Gblocks {params.tmp} -t=d &> {log} || true
+                Gblocks {params.tmp} -t=d -b4=5 -b5=h &> {log} || true
                 # sed to remove gaps
                 sed 's/ //g' {params.tmp}-gb > {output.out}        
                 # rm tmp
