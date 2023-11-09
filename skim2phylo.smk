@@ -104,13 +104,13 @@ rule fastp:
                 --out1 {output.fwd} --out2 {output.rev} \
                 --html {output.html} --json {output.json} \
                 --disable_quality_filtering \
+                --dedup \
                 --thread {threads} &> {log}
         else
             fastp --in1 {input.fwd} --in2 {input.rev} \
                 --out1 {output.fwd} --out2 {output.rev} \
                 --html {output.html} --json {output.json} \
                 --disable_quality_filtering \
-                --dedup \
                 --thread {threads} &> {log}
         fi
         """
