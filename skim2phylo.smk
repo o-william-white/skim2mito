@@ -123,7 +123,7 @@ rule getorganelle:
         seed = get_seed,
         gene = get_gene
     output:
-        ok = temp("{output_dir}/getorganelle/{sample}/getorganelle.ok")
+        ok = "{output_dir}/getorganelle/{sample}/getorganelle.ok"
     log:
         "{output_dir}/logs/getorganelle/{sample}.log"
     conda:
@@ -163,7 +163,7 @@ rule assembled_sequence:
     input:
         "{output_dir}/getorganelle/{sample}/getorganelle.ok"
     output:
-        ok = temp("{output_dir}/assembled_sequence/{sample}.ok")
+        ok = "{output_dir}/assembled_sequence/{sample}.ok"
     log:
         "{output_dir}/logs/assembled_sequence/{sample}.log"
     shell:
@@ -196,7 +196,7 @@ rule seqkit:
     input:
         "{output_dir}/assembled_sequence/{sample}.ok"
     output:
-        ok = temp("{output_dir}/seqkit/{sample}.ok")
+        ok = "{output_dir}/seqkit/{sample}.ok"
     log:
         "{output_dir}/logs/seqkit/{sample}.log"
     conda:
@@ -275,7 +275,7 @@ if target_type == "mitochondrion":
                 ".nto"),
             "{output_dir}/assembled_sequence/{sample}.ok"
         output:
-            ok = temp("{output_dir}/blastn/{sample}.ok")
+            ok = "{output_dir}/blastn/{sample}.ok"
         log:
             "{output_dir}/logs/blastn/{sample}.log"
         conda:
@@ -316,7 +316,7 @@ else:
                     ".nto"),
                     "{output_dir}/assembled_sequence/{sample}.ok"
             output:
-                ok = temp("{output_dir}/blastn/{sample}.ok")
+                ok = "{output_dir}/blastn/{sample}.ok"
             log:
                 "{output_dir}/logs/blastn/{sample}.log"
             conda:
@@ -346,7 +346,7 @@ rule minimap:
         fwd = "{output_dir}/fastp/{sample}_R1.fq.gz",
         rev = "{output_dir}/fastp/{sample}_R2.fq.gz"
     output:
-        ok = temp("{output_dir}/minimap/{sample}.ok")
+        ok = "{output_dir}/minimap/{sample}.ok"
     log:
         "{output_dir}/logs/minimap/{sample}.log"
     conda:
@@ -474,7 +474,7 @@ rule blobtools:
         "{output_dir}/blastn/{sample}.ok",
         "{output_dir}/minimap/{sample}.ok"
     output:
-        ok = temp("{output_dir}/blobtools/{sample}/{sample}.ok")
+        ok = "{output_dir}/blobtools/{sample}/{sample}.ok"
     log:
         "{output_dir}/logs/blobtools/{sample}.log"
     container:
@@ -539,7 +539,7 @@ if target_type == "mitochondrion":
             "{output_dir}/mitos_db/"+mitos_refseq,
             "{output_dir}/assembled_sequence/{sample}.ok"
         output:
-            ok = temp("{output_dir}/annotations/{sample}/{sample}.ok")
+            ok = "{output_dir}/annotations/{sample}/{sample}.ok"
         log:
             "{output_dir}/logs/annotations/{sample}.log"
         conda:
@@ -556,8 +556,7 @@ if target_type == "mitochondrion":
                             --code {mitos_code} \
                             --outdir {output_dir}/annotations/{wildcards.sample}/ \
                             --refseqver {output_dir}/mitos_db/{mitos_refseq} \
-                            --refdir . \
-                            --noplots &>> {log}
+                            --refdir . &>> {log}
                     else
                         echo Treating mitochndrial seqeunce as linear &> {log}
                         runmitos.py \
@@ -566,7 +565,6 @@ if target_type == "mitochondrion":
                             --outdir {output_dir}/annotations/{wildcards.sample}/ \
                             --refseqver {output_dir}/mitos_db/{mitos_refseq} \
                             --refdir . \
-                            --noplots \
                             --linear &>> {log}
                     fi          
                 fi
@@ -581,7 +579,7 @@ else:
             input:
                 "{output_dir}/assembled_sequence/{sample}.ok"
             output:
-                ok = temp("{output_dir}/annotations/{sample}/{sample}.ok")
+                ok = "{output_dir}/annotations/{sample}/{sample}.ok"
             log:
                 "{output_dir}/logs/annotations/{sample}.log"
             conda:
@@ -606,7 +604,7 @@ rule assess_assembly:
         "{output_dir}/annotations/{sample}/{sample}.ok",
         "{output_dir}/minimap/{sample}.ok"
     output:
-        ok = temp("{output_dir}/assess_assembly/{sample}.ok")
+        ok = "{output_dir}/assess_assembly/{sample}.ok"
     log:
         "{output_dir}/logs/assess_assembly/{sample}.log"
     conda:
@@ -709,7 +707,7 @@ rule mafft:
         mafft \
             --maxiterate 1000 \
             --globalpair \
-            --adjustdirection \
+            --adjustdirectionaccurately \
             {input} 1> {output} 2> {log}
         """
 
@@ -779,10 +777,10 @@ rule iqtree:
             {input.fasta} > {output.fasta_renamed}
 
         # iqtree will not bootstrap if less than 5 samples in alignment
-        if [ $(grep -c "^>" {input}) -lt "5" ]; then
+        if [ $(grep -c "^>" {input}) -lt "5" ] || [ $(grep -e "^>" -v {input} | sort | uniq | wc -l)  -lt 5 ] ; then
             touch {output.tree}
         else
-            iqtree -s {output.fasta_renamed} -B 1000 --prefix {output_dir}/iqtree/{wildcards.dataset} &> {log}
+            iqtree -s {output.fasta_renamed} -B 1000 --prefix {output_dir}/iqtree/{wildcards.dataset} -redo &> {log}
         fi
         """
 
@@ -797,9 +795,8 @@ rule root_iqtree:
         "envs/ete3.yaml"
     shell:
         """
-        if [ $(grep {outgroup} -c {input.tree}) == 0 ] || [ {outgroup} == "NA" ];
-        then
-            echo "Outgroup not present in tree or outgroup not specified. Leaving as unrooted" > {log}
+        if [ {outgroup} == "NA" ] || [ ! -s {input.tree} ]; then
+            echo "Outgroup not specified. Leaving as unrooted" > {log}
             cp {input.tree} {output.tree}
         else
             python scripts/root_newick.py \
