@@ -20,14 +20,6 @@ for file in os.listdir(input_dir):
 # one rule to rule them all :)
 rule all:
     input:
-        #expand("{out}/iqtree/{gene}.treefile", out=output_dir, gene=GENES),
-        #f"{output_dir}/astral/output.tree", 
-        #f"{output_dir}/concatenate_alignments/output.fasta",
-        #f"{output_dir}/concatenate_alignments/output.txt",
-        #f"{output_dir}/iqtree_partitioned/output.treefile",
-        #f"{output_dir}/iqtree_partitioned/output.treefile.rooted.newick",
-        #expand("{out}/iqtree/{gene}.treefile.rooted.newick", out=output_dir, gene=GENES),
-        #f"{output_dir}/astral/output.tree.rooted.newick",
         expand("{out}/iqtree_plots/{gene}.png", out=output_dir, gene=GENES),
         f"{output_dir}/iqtree_partitioned_plot/iqtree_partitioned_plot.png",
         f"{output_dir}/astral_plot/astral_plot.png"
@@ -57,9 +49,8 @@ rule root_iqtree:
         "envs/ete3.yaml"
     shell:
         """
-        if [ $(grep {outgroup} -c {input.tree}) == 0 ] || [ {outgroup} == "NA" ];
-        then  
-            echo "Outgroup not present in tree or outgroup not specified. Leaving as unrooted" > {log}
+        if [ {outgroup} == "NA" ]; then
+            echo "Outgroup not specified. Leaving as unrooted" > {log}
             cp {input.tree} {output.tree}
         else
             python scripts/root_newick.py \
@@ -129,12 +120,11 @@ rule root_iqtree_partitioned:
         "envs/ete3.yaml"
     shell:
         """
-        if [ $(grep {outgroup} -c {input.tree}) == 0 ] || [ {outgroup} == "NA" ];
-        then
-            echo "Outgroup not present in tree or outgroup not specified. Leaving as unrooted" > {log}
+        if [ {outgroup} == "NA" ]; then
+            echo "Outgroup not specified. Leaving as unrooted" > {log}
             cp {input.tree} {output.tree}
         else
-             python scripts/root_newick.py \
+            python scripts/root_newick.py \
                  --input {input.tree} \
                  --output {output.tree} \
                  --outgroup {outgroup} &> {log}
@@ -195,9 +185,8 @@ rule root_astral:
         "envs/ete3.yaml"
     shell:
         """
-        if [ $(grep {outgroup} -c {input.tree}) == 0 ] || [ {outgroup} == "NA" ];
-        then
-            echo "Outgroup not present in tree or outgroup not specified. Leaving as unrooted" > {log}
+        if [ {outgroup} == "NA" ]; then
+            echo "Outgroup not specified. Leaving as unrooted" > {log}
             cp {input.tree} {output.tree}
         else
             python scripts/root_newick.py \
