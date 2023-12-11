@@ -181,8 +181,7 @@ sbatch --cpus-per-task=24 --mem=10G run_genes_example.sh
 
 ### Barcode only 
 
-If you are only interested in the assembly of genes and potentially barcode sequences without the phylogenetic analysis, you can stop the pipeline after the extraction of gene sequences. For example using the `--until` parameter. 
-
+If you are only interested in the assembly of genes and potentially barcode sequences without the phylogenetic analysis, you can stop the pipeline from running the gene alignment and other downstream steps using the `--omit-from` parameter. 
 ```
 snakemake \
    --snakefile skim2phylo.smk \
@@ -191,7 +190,7 @@ snakemake \
    --use-singularity \
    --configfile example_data/config_mitochondrion.yaml \
    --rerun-incomplete \
-   --until extract_protein_coding_genes
+   --omit-from mafft
 ```
   
 ### Running you own data

@@ -16,32 +16,59 @@ tree = Tree(open(args.input, "r").read().rstrip("\n"))
 
 # print info
 print(f"Input tree:\n{tree}\n")
-print(f"Rooting on:\n{args.outgroup}\n")
+print(f"Trying to root tree on:\n{', '. join(args.outgroup.split(','))}\n")
+
+def get_leaf_names(tree):
+    leaf_names = []
+    for n in tree.traverse():
+        if n.is_leaf():
+            leaf_names.append(n.name)
+    return leaf_names
+
+def exact_match(name, list_names):
+    result = False
+    for i in list_names:
+        if name == i:
+            result = True
+    return result
+assert exact_match("abc", ["abc","def"]) == True
+assert exact_match("abc", ["def","ghi"]) == False
+
+def get_partial_match(name, list_names):
+    result = None
+    for i in list_names:
+        if re.search(name, i):
+            result = i
+    return result
+assert get_partial_match("ab", ["abc","def"]) == "abc"
+assert get_partial_match("ab", ["def","ghi"]) == None
 
 # split outgroups
 outgroups_tmp = args.outgroup.split(",")
 
-# function to get leaf name if outgroup is not an exact match
-# returns None if no match found
-def get_outgroup_leaf_name(tree, outgroup):
-    for n in tree.traverse():
-        if n.is_leaf():
-            if re.search(outgroup, n.name):
-                return n.name
-
 # iterate through outgroups to check if matches are exact or partial
 outgroups = []
-for o in outgroups_tmp: 
-    if o == get_outgroup_leaf_name(tree, o):
-        print(f"Exact match found for {o}") 
+for o in outgroups_tmp:
+    if exact_match(o, get_leaf_names(tree)):
+        print(f"Exact match found for {o}")
         outgroups.append(o)
-    else: 
-        partial_match = get_outgroup_leaf_name(tree, o)
+    else:
+        partial_match = get_partial_match(o, get_leaf_names(tree))
         if partial_match != None:
             print(f"Partial match found for {o}: {partial_match}")
             outgroups.append(partial_match)
-        else: 
+        else:
             print(f"No match found for {o}")
+
+# if no outgroup found, output original tree and exit
+if len(outgroups) == 0: 
+    print("\nNo outgroups found in tree. Writing input tree to output.")
+    # write outfile
+    print("Writing output")
+    outfile = open(args.output, "w")
+    outfile.write(tree.write())
+    outfile.close()
+    sys.exit()
 
 # function to get first ingroup sample
 def select_first_ingroup_leaf(tree, outgroups):
@@ -62,7 +89,6 @@ if len(outgroups) == 1:
     print(tree)
 else:
     # find ancestor of multiple samples
-    print(f"HERE: {outgroups}")
     ancestor = tree.get_common_ancestor(outgroups)
     # check if ancestor is already the current root
     if tree == ancestor:

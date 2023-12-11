@@ -4,6 +4,15 @@ input_dir: "example_data/genes"
 # name of output directory
 output_dir: "results_genes_example"
 
+# realign (True or False)
+realign: True
+
+# alignment missing data threshold for alignment (0.0 - 1.0), only required if realign == True
+missing_threshold: 0.5
+
+# alignment trimming method to use (gblocks or clipkit), only required if realign == True
+alignment_trim: gblocks
+
 # name of outgroup sample (optional)
 # use "NA" if there is no obvious outgroup
 # if more than one outgroup use a comma separated list i.e. "sampleA,sampleB"
