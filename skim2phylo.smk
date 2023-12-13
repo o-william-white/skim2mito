@@ -591,7 +591,7 @@ else:
                     barrnap \
                         --kingdom {barrnap_kingdom} \
                         --reject 0.1 \
-                        --outseq {output_dir}/annotations/{wildcards.sample}/result.fas $FAS 1> {output_dir}/annotations/{wildcards.sample}/result.gff &> {log}
+                        --outseq {output_dir}/annotations/{wildcards.sample}/result.fas $FAS 1> {output_dir}/annotations/{wildcards.sample}/result.gff 2> {log}
                 else
                     echo No assembled sequence for {wildcards.sample} > {log}
                 fi

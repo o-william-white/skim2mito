@@ -44,22 +44,24 @@ def format_name(name):
     name = re.sub("_circular|","", name)
     return name
 
-#assert format_name('Spec_SPHI_MRT_3_contig0;6106-6801;+;atp6') == 'Spec_SPHI_MRT_3'
-#assert format_name('Spec_SPHI_MRT_3_circular;6106-6801;+;atp6') == 'Spec_SPHI_MRT_3'
+assert format_name('Spec_SPHI_MRT_3_contig0;6106-6801;+;atp6') == 'Spec_SPHI_MRT_3'
+assert format_name('Spec_SPHI_MRT_3_circular;6106-6801;+;atp6') == 'Spec_SPHI_MRT_3'
 
 def str_present(name, list_strings):
     result = False
     print(f'Checking {name}')
     for s in list_strings:
-        if re.search(s, name):
+        s_escape = re.escape(s)
+        if re.search(s_escape, name):
             result = True
             print(f'Removing {name}')
             break
     return result
 
-#assert str_present('Spec_SPHI_MRT_3', ['Suavo_61502', 'Zet_ZALP_103187', 'Suavo_61096']) == False
-#assert str_present('Spec_SPHI_MRT_3', ['Suavo_61502', 'Zet_ZALP_103187', 'Spec_SPHI_MRT_3']) == True
-
+#assert str_present('Zet_ZKP_1315332_contig0;3595-5130;+;cox1', ['Zet_ZKP_1315332_contig0;3595-5130;+;cox1',  'Turbo_SRR15496837_contig0;12141-13676;-;cox1']) == True
+#assert str_present('Zet_ZKP_1315332_contig0;3595-5130;+;cox1', ['Zet_ZKP_1315332',                           'Turbo_SRR15496837_contig0;12141-13676;-;cox1']) == True
+#assert str_present('Zet_ZKP_1315332_contig0;3595-5130;+;cox1', ['cox1',                                      'Turbo_SRR15496837_contig0;12141-13676;-;cox1']) == True
+#assert str_present('Zet_ZKP_1315332_contig0;3595-5130;+;cox1', ['Ilang_IWHI_ECP_1_contig0;3409-4944;+;cox1', 'Turbo_SRR15496837_contig0;12141-13676;-;cox1']) == False
 
 # main 
 
