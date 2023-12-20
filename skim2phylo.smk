@@ -88,8 +88,8 @@ rule fastp:
         fwd = get_forward,
         rev = get_reverse
     output:
-        fwd = temp("{output_dir}/fastp/{sample}_R1.fq.gz"),
-        rev = temp("{output_dir}/fastp/{sample}_R2.fq.gz"),
+        fwd = "{output_dir}/fastp/{sample}_R1.fq.gz",
+        rev = "{output_dir}/fastp/{sample}_R2.fq.gz",
         html = "{output_dir}/fastp/{sample}.fastp.html",
         json = "{output_dir}/fastp/{sample}.fastp.json"
     log:
@@ -103,14 +103,12 @@ rule fastp:
             fastp --in1 {input.fwd} --in2 {input.rev} \
                 --out1 {output.fwd} --out2 {output.rev} \
                 --html {output.html} --json {output.json} \
-                --disable_quality_filtering \
                 --dedup \
                 --thread {threads} &> {log}
         else
             fastp --in1 {input.fwd} --in2 {input.rev} \
                 --out1 {output.fwd} --out2 {output.rev} \
                 --html {output.html} --json {output.json} \
-                --disable_quality_filtering \
                 --thread {threads} &> {log}
         fi
         """

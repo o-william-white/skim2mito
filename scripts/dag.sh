@@ -3,12 +3,14 @@
 source activate skim2phylo
 
 snakemake \
+   --snakefile skim2phylo.smk \
    --configfile example_data/config_mitochondrion.yaml \
-   --dag results_mitochondrion_example/summary/summary_contig.txt | dot -Tpdf > dag_part1.pdf
+   --dag | dot -Tsvg > dag_skim2phylo.svg
 
 snakemake \
-   --configfile config/config_example.yaml \
-   --dag results_example/snakemake.ok | dot -Tpdf > dag_part2.pdf
+   --snakefile gene2phylo.smk \
+   --configfile example_data/config_genes.yaml \
+   --dag | dot -Tsvg > dag_gene2phylo.svg
 
 echo Complete!
 

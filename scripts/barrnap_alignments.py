@@ -59,7 +59,7 @@ for seq in seq_list:
         genes.append(gene)
 genes = sorted(genes)
 
-print(genes)
+# print(genes)
 
 # create files with sequences for each gene
 if not os.path.exists(output_dir):
@@ -71,23 +71,24 @@ for gene in genes:
                 output_fasta.write(">" + seq[0] + "\n" + seq[1] + "\n")
 
 ### create a table of gene presence/absence for each contig
-#table_list = []                        # list to populate
-#table_list.append(["sample"] + genes)  # column names
-## loop through bed files and genes
-#for bed_path in file_paths(barrnap_dir, ".bed"):
-#    sample = bed_path.replace(barrnap_dir, "").replace("/result.bed", "").replace("\\", "-")
-#    sample_list = [sample] # list to populate / row
-#    for gene in genes: 
-#        with open(bed_path, "r") as bed:
-#            count = 0
-#            for line in bed:
-#                if gene in line.rstrip("\n").split("\t")[3]:
-#                    count += 1
-#            sample_list.append(count)
-#    table_list.append(sample_list)
-#
-## write to table
-#with open("get_organelle_mt_mitos/summary.txt", "w") as gene_summary:
-#    for i in table_list:
-#        gene_summary.write("\t".join(map(str, i)) + "\n")
+table_list = []                        # list to populate
+table_list.append(["sample"] + genes)  # column names
+# loop through bed files and genes
+for bed_path in file_paths(barrnap_dir, ".gff"):
+    sample = bed_path.replace(barrnap_dir, "").replace("/result.gff", "").replace("\\", "-")
+    sample_list = [sample] # list to populate / row
+    for gene in genes: 
+        with open(bed_path, "r") as bed:
+            count = 0
+            for line in bed:
+                if not line.startswith("#"):
+                    if gene in line.rstrip("\n").split("\t")[8]:
+                        count += 1
+            sample_list.append(count)
+    table_list.append(sample_list)
+
+# write to table
+with open(f"{output_dir}/summary.txt", "w") as gene_summary:
+    for i in table_list:
+        gene_summary.write("\t".join(map(str, i)) + "\n")
 
