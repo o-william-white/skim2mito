@@ -24,17 +24,14 @@ sample_data = pd.read_csv(config["samples"]).set_index("ID", drop=False)
 # functions to get forward and reverse reads from sample data
 def get_forward(wildcards):
     return sample_data.loc[wildcards.sample, "forward"]
-
 def get_reverse(wildcards):
     return sample_data.loc[wildcards.sample, "reverse"]
-
 def get_seed(wildcards):
     return sample_data.loc[wildcards.sample, "seed"]
-
 def get_gene(wildcards):
     return sample_data.loc[wildcards.sample, "gene"]
 
-# paramter checks
+# config paramter checks
 if target_type not in ["mitochondrion", "ribosomal"]:
     sys.exit("Error: target_type must be 'mitochondrion' or 'ribosomal'")
 if target_type == "mitochondrion" and mitos_refseq not in ["refseq39", "refseq63f", "refseq63m", "refseq63o", "refseq89f", "refseq89m", "refseq89o"]:
@@ -50,6 +47,22 @@ if alignment_trim not in ["gblocks", "clipkit"]:
 if not isinstance(threads, int):
     sys.exit("Error: threads must be an integer")
 
+# samples.csv check
+if any(sample_data["ID"].duplicated()):
+    sys.exit(f"Error: duplicated sample names present: {list(sample_data['ID'] [sample_data['ID'].duplicated()] )}")
+for i in sample_data["forward"]:
+    if not os.path.exists(i):
+        sys.exit(f"Error: forward reads path '{i}' does not exist")
+for i in sample_data["reverse"]:
+    if not os.path.exists(i):
+        sys.exit(f"Error: reverse reads path '{i}' does not exist")
+for i in sample_data["seed"].unique():
+    if not os.path.exists(i):
+        sys.exit(f"Error: seed database path '{i}' does not exist")
+for i in sample_data["gene"].unique():
+    if not os.path.exists(i):
+        sys.exit(f"Error: gene database path '{i}' does not exist")
+
 # one rule to rule them all :)
 rule all:
     input:
@@ -57,7 +70,6 @@ rule all:
         f"{output_dir}/summary/summary_contig.txt",
         f"{output_dir}/snakemake.ok", 
         expand("{out}/fastqc/{sample}_R1.html", sample=sample_data.index.tolist(), out=output_dir)
-
 
 rule fastqc:
     input:
