@@ -6,6 +6,7 @@ An additional pipeline **gene2phylo** is provided which can be used to implement
 
 ## Contents
 [Setup](#setup)
+
 [Example usage](#example-usage)
    - [Mitochondrial example](#mitochondrial-example)
    - [Main output files](#main-output-files)
@@ -14,6 +15,7 @@ An additional pipeline **gene2phylo** is provided which can be used to implement
    - [Filtering putative contaminants and formatting alignments](#filtering-putative-contaminants-and-formatting-alignments)
    - [Re-running phylogenetic analysis](#re-running-phylogenetic-analysis)
 [Barcode only](#barcode-only)
+
 [Running your own data](#running-your-own-data)
 
 ## Setup 
