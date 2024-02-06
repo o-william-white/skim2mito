@@ -16,7 +16,7 @@ Simple python script that will remove putative contaminant sequences from an ali
 # argparse
 parser = argparse.ArgumentParser(usage=usage, description=description)
 parser.add_argument("--input",     help = "Input directory containg '.fasta' files to be filtered.", nargs = "*", required=True)
-parser.add_argument("--cont",      help = "Comma separated list of contaminant sample names.",       nargs = "*", required=True)
+parser.add_argument("--cont",      help = "Comma separated list of contaminant sample names.",       nargs = "*", required=False)
 parser.add_argument("--output",    help = "Output directory to write output fasta files.",           required=True)
 parser.add_argument("--overwrite", help = "Overwrite output directory.", action = "store_true",      required=False)
 args = parser.parse_args()
@@ -73,9 +73,12 @@ for i in args.input:
     print(f"   {i}")
 #print(args.input)
 
-print("\nRemoving sequences with names containing the following strings:")
-for i in args.cont:
-    print(f"   {i}")
+if args.cont != None:
+    print("\nRemoving sequences with names containing the following strings:")
+    for i in args.cont:
+        print(f"   {i}")
+else:
+    print("\nNo names provided to indicate putative contaminants")
 #print(args.cont)
 
 # create output dir
@@ -92,9 +95,9 @@ else:
 
 # iterate through fasta files in the input directory
 for path in args.input:
-    print(path)
+    # print(path)
     for file in os.listdir(path):
-        print(file)
+        #print(file)
         if file.endswith(".fasta"):
             # read fasta
             print(f"\nReading fasta {file}")
@@ -105,10 +108,14 @@ for path in args.input:
             for i in fas:
                 name, seq = i[0], i[1]
                 # write sequence to output list if contaminant not present in name
-                if not str_present(name, args.cont):
+                if args.cont != None: 
+                    if not str_present(name, args.cont):
+                        name = format_name(name)
+                        tmp.append([name, seq])
+                else: 
                     name = format_name(name)
                     tmp.append([name, seq])
-            
+
             # do not generate fasta if less than 5 sequences present
             if len(tmp) < 5: 
                 print(f"No output generated for {file}. Need at least 5 sequences.")

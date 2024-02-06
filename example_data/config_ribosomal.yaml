@@ -1,5 +1,5 @@
 # path to sample sheet csv with columns for ID,forward,reverse,seed,gene
-samples: example_data/samples_7_ribosomal.csv 
+samples: example_data/samples_ribosomal.csv 
 
 # name of output directory
 output_dir: results_ribosomal_example

@@ -19,7 +19,10 @@ plot_width = config["plot_width"]
 threads = config["threads"]
 
 # read sample data
-sample_data = pd.read_csv(config["samples"]).set_index("ID", drop=False)
+if os.path.exists(config["samples"]):
+    sample_data = pd.read_csv(config["samples"]).set_index("ID", drop=False)
+else:
+    sys.exit(f"Error: samples.csv file '{config['samples']}' does not exist")
 
 # functions to get forward and reverse reads from sample data
 def get_forward(wildcards):

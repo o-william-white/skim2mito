@@ -1,8 +1,0 @@
-ID,forward,reverse,seed,gene
-Eurema_blanda,example_data/ribosomal/Eurema_blanda_1.fq.gz,example_data/ribosomal/Eurema_blanda_2.fq.gz,example_data/seed_ribosomal.fasta,example_data/gene_ribosomal.fasta
-Junonia_villida,example_data/ribosomal/Junonia_villida_1.fq.gz,example_data/ribosomal/Junonia_villida_2.fq.gz,example_data/seed_ribosomal.fasta,example_data/gene_ribosomal.fasta
-Kallima_paralekta,example_data/ribosomal/Kallima_paralekta_1.fq.gz,example_data/ribosomal/Kallima_paralekta_2.fq.gz,example_data/seed_ribosomal.fasta,example_data/gene_ribosomal.fasta
-Litinga_cottini,example_data/ribosomal/Litinga_cottini_1.fq.gz,example_data/ribosomal/Litinga_cottini_2.fq.gz,example_data/seed_ribosomal.fasta,example_data/gene_ribosomal.fasta
-Mallika_jacksoni,example_data/ribosomal/Mallika_jacksoni_1.fq.gz,example_data/ribosomal/Mallika_jacksoni_2.fq.gz,example_data/seed_ribosomal.fasta,example_data/gene_ribosomal.fasta
-Parasarpa_zayla,example_data/ribosomal/Parasarpa_zayla_1.fq.gz,example_data/ribosomal/Parasarpa_zayla_2.fq.gz,example_data/seed_ribosomal.fasta,example_data/gene_ribosomal.fasta
-Precis_pelarga,example_data/ribosomal/Precis_pelarga_1.fq.gz,example_data/ribosomal/Precis_pelarga_2.fq.gz,example_data/seed_ribosomal.fasta,example_data/gene_ribosomal.fasta
