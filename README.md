@@ -207,6 +207,12 @@ As above, the ribosomal example can be submitted using sbatch
 sbatch --cpus-per-task=24 --mem=30G run_ribosomal_example.sh
 ```
 
+<br/>
+<div align="right">
+    <b><a href="#skim2phylo">↥ back to top</a></b>
+</div>
+<br/>
+
 ### Counting annotated mitochondrial and ribosomal genes
 
 Now we have assembled and annotated mitochondrial and ribosomal genes, it is useful to count the number of annotated genes across samples. This can be useful for identifying samples or genes with large amounts of missing data for downstream analyses.  
