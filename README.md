@@ -4,6 +4,18 @@
 
 An additional pipeline **gene2phylo** is provided which can be used to implement further phylogenetic analysis for set of aligned genes, using individual genes, a partitioned gene alignment and astral.
 
+## Contents
+[Setup](#setup)
+[Example usage](#example-usage)
+   - [Mitochondrial example](#mitochondrial-example)
+   - [Main output files](#main-output-files)
+   - [Ribosomal example](#ribosomal-example)
+   - [Counting annotated mitochondrial and ribosomal genes](#counting-annotated-mitochondrial-and-ribosomal-genes)
+   - [Filtering putative contaminants and formatting alignments](#filtering-putative-contaminants-and-formatting-alignments)
+   - [Re-running phylogenetic analysis](#re-running-phylogenetic-analysis)
+[Barcode only](#barcode-only)
+[Running your own data](#running-your-own-data)
+
 ## Setup 
 
 The pipeline is written in Snakemake and uses conda environments and singularity images to install the necessary tools. 
