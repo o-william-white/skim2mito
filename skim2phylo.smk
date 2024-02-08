@@ -82,9 +82,9 @@ rule fastqc:
         fwd = "{output_dir}/fastqc/{sample}_R1.html",
         rev = "{output_dir}/fastqc/{sample}_R2.html",
     params:
-        outdir=lambda wildcards, output: os.path.abspath(os.path.dirname(output[0])) + "/",
-        fwd_outfile = lambda wildcards, input: os.path.basename(input[0]).replace('.fastq.gz', '_fastqc.html').replace('.fq.gz','_fastqc.html'),
-        rev_outfile = lambda wildcards, input: os.path.basename(input[1]).replace('.fastq.gz', '_fastqc.html').replace('.fq.gz','_fastqc.html')
+        out = lambda wildcards, output: os.path.abspath(os.path.dirname(output[0])) + "/",
+        fwd_outfile = lambda wildcards, input: os.path.basename(input.fwd).replace('.fastq.gz', '_fastqc.html').replace('.fq.gz','_fastqc.html'),
+        rev_outfile = lambda wildcards, input: os.path.basename(input.rev).replace('.fastq.gz', '_fastqc.html').replace('.fq.gz','_fastqc.html')
     log:
         "{output_dir}/logs/fastqc/{sample}.log"
     conda:
@@ -92,16 +92,18 @@ rule fastqc:
     threads: 1
     shell:
         """
-        fastqc -o "{params.outdir}" {input.fwd} -t {threads} &> {log} &&
-        mv {params.outdir}/{params.fwd_outfile} {output.fwd} &&
-        fastqc -o "{params.outdir}" {input.rev} -t {threads} &> {log} &&
-        mv {params.outdir}/{params.rev_outfile} {output.rev}
+        fastqc -o {params.out} {input.fwd} -t {threads} &> {log} &&
+        mv {params.out}/{params.fwd_outfile} {output.fwd} &&
+        fastqc -o {params.out} {input.rev} -t {threads} &> {log} &&
+        mv {params.out}/{params.rev_outfile} {output.rev}
         """
 
 rule fastp:
     input:
         fwd = get_forward,
         rev = get_reverse
+    params:
+        dedup = fastp_dedup
     output:
         fwd = "{output_dir}/fastp/{sample}_R1.fq.gz",
         rev = "{output_dir}/fastp/{sample}_R2.fq.gz",
@@ -114,7 +116,7 @@ rule fastp:
     threads: threads
     shell:
         """
-        if [ {fastp_dedup} == True ]; then
+        if [ {params.dedup} == True ]; then
             fastp --in1 {input.fwd} --in2 {input.rev} \
                 --out1 {output.fwd} --out2 {output.rev} \
                 --html {output.html} --json {output.json} \
@@ -133,8 +135,10 @@ rule getorganelle:
         fwd = "{output_dir}/fastp/{sample}_R1.fq.gz",
         rev = "{output_dir}/fastp/{sample}_R2.fq.gz"
     params:
+        target = target_type,
         seed = get_seed,
-        gene = get_gene
+        gene = get_gene,
+        out = output_dir
     output:
         ok = "{output_dir}/getorganelle/{sample}/getorganelle.ok"
     log:
@@ -144,10 +148,10 @@ rule getorganelle:
     threads: threads
     shell:
         """
-        if [ {target_type} == "mitochondrion" ] ; then 
+        if [ {params.target} == "mitochondrion" ] ; then 
             get_organelle_from_reads.py \
                 -1 {input.fwd} -2 {input.rev} \
-                -o {output_dir}/getorganelle/{wildcards.sample} \
+                -o {params.out}/getorganelle/{wildcards.sample} \
                 -F animal_mt \
                 -s {params.seed} \
                 --genes {params.gene} \
@@ -155,10 +159,10 @@ rule getorganelle:
                 -R 20 \
                 --overwrite -t {threads} &> {log}
         else 
-            if [ {target_type} == "ribosomal" ]; then
+            if [ {params.target} == "ribosomal" ]; then
                 get_organelle_from_reads.py \
                     -1 {input.fwd} -2 {input.rev} \
-                    -o {output_dir}/getorganelle/{wildcards.sample} \
+                    -o {params.out}/getorganelle/{wildcards.sample} \
                     -F anonym \
                     -s {params.seed} \
                     --genes {params.gene} \
@@ -175,14 +179,18 @@ rule getorganelle:
 rule assembled_sequence:
     input:
         "{output_dir}/getorganelle/{sample}/getorganelle.ok"
+    params:
+        out = output_dir
     output:
         ok = "{output_dir}/assembled_sequence/{sample}.ok"
     log:
         "{output_dir}/logs/assembled_sequence/{sample}.log"
+    conda:
+        "envs/conda_env.yaml"
     shell:
         """
         # find selected path(s) fasta
-        FAS=$(find {output_dir}/getorganelle/{wildcards.sample}/ -name *path_sequence.fasta)
+        FAS=$(find {params.out}/getorganelle/{wildcards.sample}/ -name *path_sequence.fasta)
         # z option: true if length if string is zero.
         if [[ -z $FAS ]]; then
             echo No assembly produced for {wildcards.sample} > {log}
@@ -194,13 +202,13 @@ rule assembled_sequence:
             python scripts/rename_assembled.py \
                 --input $FAS1 \
                 --sample {wildcards.sample} \
-                --output {output_dir}/assembled_sequence
+                --output {params.out}/assembled_sequence
         elif [ "$(echo $FAS | tr ' ' '\\n' | wc -l)" -eq 1 ]; then
             echo One assembly produced for {wildcards.sample} > {log}
             python scripts/rename_assembled.py \
                 --input $FAS \
                 --sample {wildcards.sample} \
-                --output {output_dir}/assembled_sequence
+                --output {params.out}/assembled_sequence
         fi
         touch {output.ok}
         """
@@ -208,6 +216,8 @@ rule assembled_sequence:
 rule seqkit:
     input:
         "{output_dir}/assembled_sequence/{sample}.ok"
+    params:
+        out = output_dir
     output:
         ok = "{output_dir}/seqkit/{sample}.ok"
     log:
@@ -216,8 +226,8 @@ rule seqkit:
         "envs/seqkit.yaml"
     shell:
         """
-        FAS=$(echo {output_dir}/assembled_sequence/{wildcards.sample}.fasta)
-        OUT=$(echo {output_dir}/seqkit/{wildcards.sample}.txt)
+        FAS=$(echo {params.out}/assembled_sequence/{wildcards.sample}.fasta)
+        OUT=$(echo {params.out}/seqkit/{wildcards.sample}.txt)
         if [ -e $FAS ]; then
             echo Running seqkit for {wildcards.sample} > {log}
             seqkit stats -b $FAS > $OUT
@@ -229,6 +239,8 @@ rule seqkit:
 
 if target_type == "mitochondrion":
     rule blastdb:
+        params:
+            out = output_dir
         output:
             temp(multiext("{output_dir}/blastdb/refseq_mitochondrion/refseq_mitochondrion",
                 ".ndb",
@@ -243,15 +255,19 @@ if target_type == "mitochondrion":
                 ".nto"))
         log:
             "{output_dir}/logs/blastdb/blastdb.log"
+        conda:
+            "envs/conda_env.yaml"
         shell:
             """
-            wget --wait 10 --random-wait -P {output_dir}/blastdb/ https://zenodo.org/records/8424777/files/refseq_mitochondrion.tar.gz &> {log}
-            tar xvzf {output_dir}/blastdb/refseq_mitochondrion.tar.gz --directory {output_dir}/blastdb/ &>> {log}
-            rm {output_dir}/blastdb/refseq_mitochondrion.tar.gz &>> {log}
+            wget --wait 10 --random-wait -P {params.out}/blastdb/ https://zenodo.org/records/8424777/files/refseq_mitochondrion.tar.gz &> {log}
+            tar xvzf {params.out}/blastdb/refseq_mitochondrion.tar.gz --directory {params.out}/blastdb/ &>> {log}
+            rm {params.out}/blastdb/refseq_mitochondrion.tar.gz &>> {log}
             """
 else: 
     if target_type == "ribosomal":
         rule blastdb:
+            params:
+                out = output_dir
             output:
                 temp(multiext("{output_dir}/blastdb/silva_138/silva_138",
                     ".ndb",
@@ -266,11 +282,13 @@ else:
                     ".nto"))                     
             log:
                 "{output_dir}/logs/blastdb/blastdb.log"
+            conda:
+                "envs/conda_env.yaml"
             shell:
                 """
-                wget --wait 10 --random-wait -P {output_dir}/blastdb/ https://zenodo.org/records/8424777/files/silva_138.tar.gz &> {log}
-                tar xvzf {output_dir}/blastdb/silva_138.tar.gz --directory {output_dir}/blastdb/ &>> {log}
-                rm {output_dir}/blastdb/silva_138.tar.gz &>> {log}
+                wget --wait 10 --random-wait -P {params.out}/blastdb/ https://zenodo.org/records/8424777/files/silva_138.tar.gz &> {log}
+                tar xvzf {params.out}/blastdb/silva_138.tar.gz --directory {params.out}/blastdb/ &>> {log}
+                rm {params.out}/blastdb/silva_138.tar.gz &>> {log}
                 """ 
 if target_type == "mitochondrion":
     rule blastn:
@@ -287,6 +305,8 @@ if target_type == "mitochondrion":
                 ".ntf",
                 ".nto"),
             "{output_dir}/assembled_sequence/{sample}.ok"
+        params:
+            out = output_dir
         output:
             ok = "{output_dir}/blastn/{sample}.ok"
         log:
@@ -295,13 +315,13 @@ if target_type == "mitochondrion":
             "envs/blastn.yaml"
         shell:
             """
-            FAS=$(echo {output_dir}/assembled_sequence/{wildcards.sample}.fasta)
-            OUT=$(echo {output_dir}/blastn/{wildcards.sample}.txt)
+            FAS=$(echo {params.out}/assembled_sequence/{wildcards.sample}.fasta)
+            OUT=$(echo {params.out}/blastn/{wildcards.sample}.txt)
             if [ -e $FAS ]; then
                 echo Running blastn for {wildcards.sample} > {log}
                 blastn \
                     -query $FAS \
-                    -db {output_dir}/blastdb/refseq_mitochondrion/refseq_mitochondrion \
+                    -db {params.out}/blastdb/refseq_mitochondrion/refseq_mitochondrion \
                     -out $OUT \
                     -outfmt '6 qseqid staxids bitscore std' \
                     -max_target_seqs 10 \
@@ -328,6 +348,8 @@ else:
                     ".ntf",
                     ".nto"),
                     "{output_dir}/assembled_sequence/{sample}.ok"
+            params:
+                out = output_dir
             output:
                 ok = "{output_dir}/blastn/{sample}.ok"
             log:
@@ -336,13 +358,13 @@ else:
                 "envs/blastn.yaml"
             shell:
                 """
-                FAS=$(echo {output_dir}/assembled_sequence/{wildcards.sample}.fasta)
-                OUT=$(echo {output_dir}/blastn/{wildcards.sample}.txt)
+                FAS=$(echo {params.out}/assembled_sequence/{wildcards.sample}.fasta)
+                OUT=$(echo {params.out}/blastn/{wildcards.sample}.txt)
                 if [ -e $FAS ]; then
                     echo Running blastn for {wildcards.sample} > {log}
                     blastn \
                         -query $FAS \
-                        -db {output_dir}/blastdb/silva_138/silva_138 \
+                        -db {params.out}/blastdb/silva_138/silva_138 \
                         -out $OUT \
                         -outfmt '6 qseqid staxids bitscore std' \
                         -max_target_seqs 10 \
@@ -358,6 +380,8 @@ rule minimap:
         "{output_dir}/assembled_sequence/{sample}.ok",
         fwd = "{output_dir}/fastp/{sample}_R1.fq.gz",
         rev = "{output_dir}/fastp/{sample}_R2.fq.gz"
+    params:
+        out = output_dir
     output:
         ok = "{output_dir}/minimap/{sample}.ok"
     log:
@@ -366,9 +390,9 @@ rule minimap:
         "envs/minimap2.yaml"
     shell:
         """
-        FAS=$(echo {output_dir}/assembled_sequence/{wildcards.sample}.fasta)
-        OUT=$(echo {output_dir}/minimap/{wildcards.sample}.bam)
-        STA=$(echo {output_dir}/minimap/{wildcards.sample}_stats.txt)
+        FAS=$(echo {params.out}/assembled_sequence/{wildcards.sample}.fasta)
+        OUT=$(echo {params.out}/minimap/{wildcards.sample}.bam)
+        STA=$(echo {params.out}/minimap/{wildcards.sample}_stats.txt)
         if [ -e $FAS ]; then
             echo Running minimap for {wildcards.sample} > {log}
             minimap2 -ax sr $FAS {input.fwd} {input.rev} 2> {log} | samtools view -b -F 4 | samtools sort -O BAM -o $OUT - 2>> {log}
@@ -396,6 +420,8 @@ if target_type == "mitochondrion":
                 ".nsq",
                 ".ntf",
                 ".nto")
+        params:
+            out = output_dir
         output: 
             temp(directory("{output_dir}/taxdump")),
             temp("{output_dir}/taxdump/citations.dmp"),
@@ -415,11 +441,13 @@ if target_type == "mitochondrion":
             temp("{output_dir}/taxdump/typeoftype.dmp")
         log:
             "{output_dir}/logs/taxdump/taxdump.log"
+        conda:
+            "envs/conda_env.yaml"
         shell:
             """
-            wget --wait 10 --random-wait -P {output_dir}/taxdump/ https://ftp.ncbi.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz &> {log}
-            tar xvzf {output_dir}/taxdump/new_taxdump.tar.gz --directory {output_dir}/taxdump/ &>> {log}
-            rm {output_dir}/taxdump/new_taxdump.tar.gz &>> {log}
+            wget --wait 10 --random-wait -P {params.out}/taxdump/ https://ftp.ncbi.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz &> {log}
+            tar xvzf {params.out}/taxdump/new_taxdump.tar.gz --directory {params.out}/taxdump/ &>> {log}
+            rm {params.out}/taxdump/new_taxdump.tar.gz &>> {log}
             """
 else:
     if target_type == "ribosomal":
@@ -437,6 +465,8 @@ else:
                     ".nsq",
                     ".ntf",
                     ".nto")
+            params:
+                out = output_dir
             output:
                 temp(directory("{output_dir}/taxdump")),
                 temp("{output_dir}/taxdump/citations.dmp"),
@@ -456,11 +486,13 @@ else:
                 temp("{output_dir}/taxdump/typeoftype.dmp")
             log:
                 "{output_dir}/logs/taxdump/taxdump.log"
+            conda:
+                "envs/conda_env.yaml"
             shell:
                 """
-                wget --wait 10 --random-wait -P {output_dir}/taxdump/ https://ftp.ncbi.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz &> {log}
-                tar xvzf {output_dir}/taxdump/new_taxdump.tar.gz --directory {output_dir}/taxdump/ &>> {log}
-                rm {output_dir}/taxdump/new_taxdump.tar.gz &>> {log}
+                wget --wait 10 --random-wait -P {params.out}/taxdump/ https://ftp.ncbi.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz &> {log}
+                tar xvzf {params.out}/taxdump/new_taxdump.tar.gz --directory {params.out}/taxdump/ &>> {log}
+                rm {params.out}/taxdump/new_taxdump.tar.gz &>> {log}
                 """
 
 
@@ -486,6 +518,8 @@ rule blobtools:
         "{output_dir}/assembled_sequence/{sample}.ok",
         "{output_dir}/blastn/{sample}.ok",
         "{output_dir}/minimap/{sample}.ok"
+    params:
+        out = output_dir
     output:
         ok = "{output_dir}/blobtools/{sample}/{sample}.ok"
     log:
@@ -494,22 +528,22 @@ rule blobtools:
         "docker://genomehubs/blobtoolkit"
     shell:
         """
-        FAS=$(echo {output_dir}/assembled_sequence/{wildcards.sample}.fasta)
-        BLA=$(echo {output_dir}/blastn/{wildcards.sample}.txt)
-        MAP=$(echo {output_dir}/minimap/{wildcards.sample}.bam)
-        OUT=$(echo {output_dir}/blobtools/{wildcards.sample}/table.tsv)
+        FAS=$(echo {params.out}/assembled_sequence/{wildcards.sample}.fasta)
+        BLA=$(echo {params.out}/blastn/{wildcards.sample}.txt)
+        MAP=$(echo {params.out}/minimap/{wildcards.sample}.bam)
+        OUT=$(echo {params.out}/blobtools/{wildcards.sample}/table.tsv)
         if [ -e $FAS ]; then            
             blobtools create \
                 --fasta $FAS \
                 --hits $BLA \
                 --taxrule bestsumorder \
-                --taxdump {output_dir}/taxdump \
+                --taxdump {params.out}/taxdump \
                 --cov $MAP \
-                {output_dir}/blobtools/{wildcards.sample} &> {log}
+                {params.out}/blobtools/{wildcards.sample} &> {log}
             blobtools filter \
                 --table $OUT \
                 --table-fields gc,length,{wildcards.sample}_cov,bestsumorder_superkingdom,bestsumorder_kingdom,bestsumorder_phylum,bestsumorder_class,bestsumorder_order,bestsumorder_family,bestsumorder_species \
-                {output_dir}/blobtools/{wildcards.sample} &>> {log}
+                {params.out}/blobtools/{wildcards.sample} &>> {log}
         else
             echo No assembled sequence for {wildcards.sample} > {log}
         fi
@@ -536,21 +570,31 @@ if target_type == "mitochondrion":
             "{output_dir}/taxdump/taxidlineage.dmp",
             "{output_dir}/taxdump/typematerial.dmp",
             "{output_dir}/taxdump/typeoftype.dmp"
+        params:
+            out = output_dir,
+            refseq = mitos_refseq
         output: 
-            temp(directory("{output_dir}/mitos_db/"+mitos_refseq)),
+            temp(directory("{output_dir}/mitos_db/{mitos_refseq}"))
         log:
-            "{output_dir}/logs/mitos_db/mitos_db.log"
+            "{output_dir}/logs/mitos_db/mitos_db_{mitos_refseq}.log"
+        conda:
+            "envs/conda_env.yaml"
         shell:
             """
-            wget --wait 10 --random-wait -P {output_dir}/mitos_db https://zenodo.org/record/4284483/files/{mitos_refseq}.tar.bz2  &> {log}
-            tar xf {output_dir}/mitos_db/{mitos_refseq}.tar.bz2 --directory {output_dir}/mitos_db &>> {log}
-            rm {output_dir}/mitos_db/{mitos_refseq}.tar.bz2 >> {log}
+            wget --wait 10 --random-wait -P {params.out}/mitos_db https://zenodo.org/record/4284483/files/{params.refseq}.tar.bz2  &> {log}
+            tar xf {params.out}/mitos_db/{params.refseq}.tar.bz2 --directory {params.out}/mitos_db &>> {log}
+            rm {params.out}/mitos_db/{params.refseq}.tar.bz2 >> {log}
             """
 
     rule annotations:
         input:
-            "{output_dir}/mitos_db/"+mitos_refseq,
+            expand("{out}/mitos_db/{refseq}", out=output_dir, refseq=mitos_refseq),
             "{output_dir}/assembled_sequence/{sample}.ok"
+        params:
+            out = output_dir,
+            target = target_type,
+            refseq = mitos_refseq,
+            code = mitos_code
         output:
             ok = "{output_dir}/annotations/{sample}/{sample}.ok"
         log:
@@ -559,24 +603,24 @@ if target_type == "mitochondrion":
             "envs/annotations.yaml"
         shell:
             """
-            FAS=$(echo {output_dir}/assembled_sequence/{wildcards.sample}.fasta)
+            FAS=$(echo {params.out}/assembled_sequence/{wildcards.sample}.fasta)
             if [ -e $FAS ]; then
-                if [[ {target_type} == "mitochondrion" ]]; then
+                if [[ {params.target} == "mitochondrion" ]]; then
                     if [ $(grep circular -c $FAS) -eq 1 ] ; then
                         echo Treating mitochondrial seqeunce as circular &> {log}
                         runmitos.py \
                             --input $FAS \
-                            --code {mitos_code} \
-                            --outdir {output_dir}/annotations/{wildcards.sample}/ \
-                            --refseqver {output_dir}/mitos_db/{mitos_refseq} \
+                            --code {params.code} \
+                            --outdir {params.out}/annotations/{wildcards.sample}/ \
+                            --refseqver {params.out}/mitos_db/{params.refseq} \
                             --refdir . &>> {log}
                     else
                         echo Treating mitochndrial seqeunce as linear &> {log}
                         runmitos.py \
                             --input $FAS \
-                            --code {mitos_code} \
-                            --outdir {output_dir}/annotations/{wildcards.sample}/ \
-                            --refseqver {output_dir}/mitos_db/{mitos_refseq} \
+                            --code {params.code} \
+                            --outdir {params.out}/annotations/{wildcards.sample}/ \
+                            --refseqver {params.out}/mitos_db/{params.refseq} \
                             --refdir . \
                             --linear &>> {log}
                     fi          
@@ -591,6 +635,9 @@ else:
         rule annotations:
             input:
                 "{output_dir}/assembled_sequence/{sample}.ok"
+            params:
+                out = output_dir,
+                kingdom = barrnap_kingdom
             output:
                 ok = "{output_dir}/annotations/{sample}/{sample}.ok"
             log:
@@ -602,9 +649,9 @@ else:
                 FAS=$(echo {output_dir}/assembled_sequence/{wildcards.sample}.fasta)
                 if [ -e $FAS ]; then
                     barrnap \
-                        --kingdom {barrnap_kingdom} \
+                        --kingdom {params.kingdom} \
                         --reject 0.1 \
-                        --outseq {output_dir}/annotations/{wildcards.sample}/result.fas $FAS 1> {output_dir}/annotations/{wildcards.sample}/result.gff 2> {log}
+                        --outseq {params.out}/annotations/{wildcards.sample}/result.fas $FAS 1> {params.out}/annotations/{wildcards.sample}/result.gff 2> {log}
                 else
                     echo No assembled sequence for {wildcards.sample} > {log}
                 fi
@@ -616,6 +663,9 @@ rule assess_assembly:
         "{output_dir}/assembled_sequence/{sample}.ok",
         "{output_dir}/annotations/{sample}/{sample}.ok",
         "{output_dir}/minimap/{sample}.ok"
+    params:
+        out = output_dir,
+        target = target_type 
     output:
         ok = "{output_dir}/assess_assembly/{sample}.ok"
     log:
@@ -624,32 +674,32 @@ rule assess_assembly:
         "envs/assess_assembly.yaml"
     shell:
         """
-        FAS=$(echo {output_dir}/assembled_sequence/{wildcards.sample}.fasta)
+        FAS=$(echo {params.out}/assembled_sequence/{wildcards.sample}.fasta)
         if [ -e $FAS ]; then
-            if [[ {target_type} == "mitochondrion" ]]; then
+            if [[ {params.target} == "mitochondrion" ]]; then
                 if [ $(grep -e "^>" -c $FAS) -eq 1 ] ; then
                     echo Single sequence found in fasta > {log}
                     python scripts/assess_assembly.py \
-                        --fasta {output_dir}/assembled_sequence/{wildcards.sample}.fasta \
-                        --bam {output_dir}/minimap/{wildcards.sample}.bam \
-                        --bed {output_dir}/annotations/{wildcards.sample}/result.bed \
+                        --fasta {params.out}/assembled_sequence/{wildcards.sample}.fasta \
+                        --bam {params.out}/minimap/{wildcards.sample}.bam \
+                        --bed {params.out}/annotations/{wildcards.sample}/result.bed \
                         --sample {wildcards.sample} \
-                        --output {output_dir}/assess_assembly/
+                        --output {params.out}/assess_assembly/
                 else
                     echo More than one sequence found in fasta > {log}
                     # mitos creates subdirectories for each contig
                     # find bed files and cat
-                    find {output_dir}/annotations/{wildcards.sample}/ -type f -name result.bed | while read line; do  cat $line; done > {output_dir}/assess_assembly/{wildcards.sample}.bed
+                    find {params.out}/annotations/{wildcards.sample}/ -type f -name result.bed | while read line; do  cat $line; done > {params.out}/assess_assembly/{wildcards.sample}.bed
 
                     python scripts/assess_assembly.py \
-                        --fasta {output_dir}/assembled_sequence/{wildcards.sample}.fasta \
-                        --bam {output_dir}/minimap/{wildcards.sample}.bam \
-                        --bed {output_dir}/assess_assembly/{wildcards.sample}.bed \
+                        --fasta {params.out}/assembled_sequence/{wildcards.sample}.fasta \
+                        --bam {params.out}/minimap/{wildcards.sample}.bam \
+                        --bed {params.out}/assess_assembly/{wildcards.sample}.bed \
                         --sample {wildcards.sample} \
-                        --output {output_dir}/assess_assembly/
+                        --output {params.out}/assess_assembly/
                 fi
             else
-                if [[ {target_type} == "ribosomal" ]]; then
+                if [[ {params.target} == "ribosomal" ]]; then
                     echo TBC > {log}
                 fi
             fi
@@ -663,6 +713,9 @@ rule summarise:
         expand("{out}/blobtools/{sample}/{sample}.ok", sample=sample_data["ID"].tolist(), out=output_dir),
         expand("{out}/annotations/{sample}/{sample}.ok", sample=sample_data["ID"].tolist(), out=output_dir),
         expand("{out}/assess_assembly/{sample}.ok", sample=sample_data["ID"].tolist(), out=output_dir)
+    params:
+        out = output_dir,
+        target = target_type
     output:
         table_sample = "{output_dir}/summary/summary_sample.txt",
         table_contig = "{output_dir}/summary/summary_contig.txt"
@@ -673,17 +726,17 @@ rule summarise:
     shell:
         """
         # cat seqkit output for each sample
-        echo -e "sample format type num_seqs sum_len min_len avg_len max_len" > {output_dir}/summary/tmp_summary_sample.txt
-        cat {output_dir}/seqkit/*.txt | grep file -v >> {output_dir}/summary/tmp_summary_sample.txt
-        column -t {output_dir}/summary/tmp_summary_sample.txt > {output.table_sample}
-        rm {output_dir}/summary/tmp_summary_sample.txt
+        echo -e "sample format type num_seqs sum_len min_len avg_len max_len" > {params.out}/summary/tmp_summary_sample.txt
+        cat {params.out}/seqkit/*.txt | grep file -v >> {params.out}/summary/tmp_summary_sample.txt
+        column -t {params.out}/summary/tmp_summary_sample.txt > {output.table_sample}
+        rm {params.out}/summary/tmp_summary_sample.txt
         
         # join blobtools with mitos annotations for each contig
-        if [[ {target_type} == "mitochondrion" ]]; then
-            Rscript scripts/summarise.R {output_dir}/ mitos {output.table_contig} &> {log}
+        if [[ {params.target} == "mitochondrion" ]]; then
+            Rscript scripts/summarise.R {params.out}/ mitos {output.table_contig} &> {log}
         else
-            if [[ {target_type} == "ribosomal" ]]; then
-                Rscript scripts/summarise.R {output_dir}/ barrnap {output.table_contig} &> {log}
+            if [[ {params.target} == "ribosomal" ]]; then
+                Rscript scripts/summarise.R {params.out}/ barrnap {output.table_contig} &> {log}
             fi
         fi
         """
@@ -691,17 +744,22 @@ rule summarise:
 checkpoint extract_protein_coding_genes:
     input: 
         expand("{out}/annotations/{sample}/{sample}.ok", sample=sample_data["ID"].tolist(), out=output_dir)
+    params:
+        out = output_dir,
+        target = target_type
     output:
         directory("{output_dir}/protein_coding_genes/")
     log:
         "{output_dir}/logs/protein_coding_genes/protein_coding_genes.log"
+    conda:
+        "envs/conda_env.yaml"
     shell:
         """
-        if [[ {target_type} == "mitochondrion" ]]; then
-            python scripts/mitos_alignments.py {output_dir}/annotations/ {output_dir}/protein_coding_genes &> {log}
+        if [[ {params.target} == "mitochondrion" ]]; then
+            python scripts/mitos_alignments.py {params.out}/annotations/ {params.out}/protein_coding_genes &> {log}
         else
-            if [[ {target_type} == "ribosomal" ]]; then
-                python scripts/barrnap_alignments.py {output_dir}/annotations/ {output_dir}/protein_coding_genes &> {log}
+            if [[ {params.target} == "ribosomal" ]]; then
+                python scripts/barrnap_alignments.py {params.out}/annotations/ {params.out}/protein_coding_genes &> {log}
             fi
         fi
         """
@@ -733,6 +791,8 @@ rule filter_alignments:
         "{output_dir}/mafft_filtered/{dataset}.fasta"
     log:
         "{output_dir}/logs/mafft_filtered/{dataset}.log"
+    conda:
+        "envs/conda_env.yaml"
     shell:
         """
         python scripts/alignments_filter.py --input {input} --output {output} --threshold {params.threshold} > {log}
@@ -740,34 +800,34 @@ rule filter_alignments:
 
 rule alignment_trim:
     input:
-        "{output_dir}/mafft_filtered/{dataset}.fasta"
+        fasta = "{output_dir}/mafft_filtered/{dataset}.fasta"
     params:
+        trim = alignment_trim,
         tmp = "{output_dir}/alignment_trim/{dataset}_tmp.fasta"
     output:
-        out = "{output_dir}/alignment_trim/{dataset}.fasta"
+        fasta = "{output_dir}/alignment_trim/{dataset}.fasta"
     log:
         "{output_dir}/logs/alignment_trim/{dataset}.log"
     conda:
         "envs/alignment_trim.yaml"
     shell:
         """
-        if [ $(grep -c "^>" {input}) -lt "5" ]; then
-            cp {input} {output.out}
+        if [ $(grep -c "^>" {input.fasta}) -lt "5" ]; then
+            cp {input.fasta} {output.fasta}
         else
-            # if [ $(grep -c "^>" {input[0]}) -lt "0" ]; then
-            if [[ {alignment_trim} == "gblocks" ]]; then
+            if [[ {params.trim} == "gblocks" ]]; then
                 # gblocks add reuslts to same dir as input
-                cp {input} {params.tmp}
+                cp {input.fasta} {params.tmp}
                 # gblocks always gives error code of 1. Ignore.
                 Gblocks {params.tmp} -t=d -b4=5 -b5=h &> {log} || true
                 # sed to remove gaps
-                sed 's/ //g' {params.tmp}-gb > {output.out}        
+                sed 's/ //g' {params.tmp}-gb > {output.fasta}        
                 # rm tmp
                 rm {params.tmp}
                 rm {params.tmp}-gb
             else
-                if [[ {alignment_trim} == "clipkit" ]]; then                  
-                    clipkit {input} -o {output.out} &> {log}
+                if [[ {params.trim} == "clipkit" ]]; then                  
+                    clipkit {input.fasta} -o {output.fasta} &> {log}
                 fi
             fi
         fi
@@ -775,7 +835,9 @@ rule alignment_trim:
 
 rule iqtree:
     input:
-        fasta = "{output_dir}/alignment_trim/{dataset}.fasta"        
+        fasta = "{output_dir}/alignment_trim/{dataset}.fasta"
+    params:
+        out = output_dir
     output:
         tree = "{output_dir}/iqtree/{dataset}.treefile",
         fasta_renamed = "{output_dir}/iqtree/{dataset}.fasta"
@@ -790,16 +852,18 @@ rule iqtree:
             {input.fasta} > {output.fasta_renamed}
 
         # iqtree will not bootstrap if less than 5 samples in alignment
-        if [ $(grep -c "^>" {input}) -lt "5" ] || [ $(grep -e "^>" -v {input} | sort | uniq | wc -l)  -lt 5 ] ; then
+        if [ $(grep -c "^>" {input.fasta}) -lt "5" ] || [ $(grep -e "^>" -v {input.fasta} | sort | uniq | wc -l)  -lt 5 ] ; then
             touch {output.tree}
         else
-            iqtree -s {output.fasta_renamed} -B 1000 --prefix {output_dir}/iqtree/{wildcards.dataset} -redo &> {log}
+            iqtree -s {output.fasta_renamed} -B 1000 --prefix {params.out}/iqtree/{wildcards.dataset} -redo &> {log}
         fi
         """
 
 rule root_iqtree:
     input:
         tree = "{output_dir}/iqtree/{dataset}.treefile"
+    params:
+        outgroup = outgroup
     output:
         tree = "{output_dir}/iqtree/{dataset}.treefile.rooted.newick"
     log:
@@ -808,20 +872,23 @@ rule root_iqtree:
         "envs/ete3.yaml"
     shell:
         """
-        if [ {outgroup} == "NA" ] || [ ! -s {input.tree} ]; then
+        if [ {params.outgroup} == "NA" ] || [ ! -s {input.tree} ]; then
             echo "Outgroup not specified. Leaving as unrooted" > {log}
             cp {input.tree} {output.tree}
         else
             python scripts/root_newick.py \
                 --input {input.tree} \
                 --output {output.tree} \
-                --outgroup {outgroup} &> {log}
+                --outgroup {params.outgroup} &> {log}
         fi
         """
 
 rule plot_tree:
     input:
         tree = "{output_dir}/iqtree/{dataset}.treefile.rooted.newick"
+    params:
+        height = plot_height,
+        width = plot_width
     output:
         png = "{output_dir}/plot_tree/{dataset}.png"
     log:
@@ -833,7 +900,7 @@ rule plot_tree:
         # check if file empty
         if [ -s {input} ]; then
            # file not empty
-            Rscript scripts/plot_tree.R {input.tree} {output.png} {plot_height} {plot_width} &> {log} 
+            Rscript scripts/plot_tree.R {input.tree} {output.png} {params.height} {params.width} &> {log} 
         else
            # file empty
            touch {output}
@@ -852,6 +919,8 @@ rule final_log:
         "{output_dir}/snakemake.ok"
     log:
         "{output_dir}/logs/final_log/final_log.log"
+    conda:
+        "envs/conda_env.yaml"
     shell:
         """
         touch {output}
