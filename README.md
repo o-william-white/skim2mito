@@ -104,7 +104,7 @@ plot_height: 20
 plot_width: 20
 ```
 
-The example samples.csv file is located here `config/samples.csv` and it looks like this:
+The example samples.csv file is located here `config/samples.csv` and it looks like this (note that the seed and gene columns are only required if the custom getorganelle database option is specified in the config file):
 
 
  ID | forward | reverse | taxid | seed | gene 
@@ -228,6 +228,12 @@ You can use the default reference data for GetOrganelle, but I would recommend u
 
 If you have any questions, please do get in touch in the issues or by email o.william.white@gmail.com
 
+<br/>
+<div align="right">
+    <b><a href="#skim2mt">↥ back to top</a></b>
+</div>
+<br/>
+
 ## Citations
 
 If you use the pipeline, please cite our bioarxiv preprint: https://doi.org/10.1101/2023.08.11.552985
@@ -247,3 +253,9 @@ Since the pipeline is a wrapper for several other bioinformatic tools we also as
  - Iqtree https://doi.org/10.1093/molbev/msu300
  - ete3 https://doi.org/10.1093/molbev/msw046
  - ggtree https://doi.org/10.1111/2041-210X.12628
+
+<br/>
+<div align="right">
+    <b><a href="#skim2mt">↥ back to top</a></b>
+</div>
+<br/>
