@@ -1,0 +1,56 @@
+
+# load rules
+include: "rules/common.smk"
+include: "rules/go_fetch.smk"
+include: "rules/fastqc_raw.smk"
+include: "rules/fastp.smk"
+include: "rules/fastqc_qc.smk"
+include: "rules/getorganelle.smk"
+include: "rules/assembled_sequence.smk"
+include: "rules/seqkit.smk"
+include: "rules/blastdb.smk"
+include: "rules/blastn.smk"
+include: "rules/minimap.smk"
+include: "rules/taxdump.smk"
+include: "rules/blobtools.smk"
+include: "rules/mitos_db.smk"
+include: "rules/annotations.smk"
+include: "rules/assess_assembly.smk"
+include: "rules/summarise.smk"
+include: "rules/extract_annotated_genes.smk"
+include: "rules/mafft.smk"
+include: "rules/filter_alignments.smk"
+include: "rules/gene_counts.smk"
+include: "rules/alignment_trim.smk"
+include: "rules/iqtree.smk"
+include: "rules/root_iqtree.smk"
+include: "rules/plot_tree.smk"
+include: "rules/final_log.smk"
+
+# one rule to rule them all :)
+if go_reference == "go_fetch": 
+    rule all:
+        input:
+            expand("results/go_fetch/{taxids}/gene.fasta", taxids=list(set(sample_data["taxid"]))),
+            expand("results/go_fetch/{taxids}/seed.fasta", taxids=list(set(sample_data["taxid"]))),
+            expand("results/fastqc_raw/{sample}_R1.html", sample=sample_data.index.tolist()),
+            expand("results/fastqc_raw/{sample}_R2.html", sample=sample_data.index.tolist()),
+            expand("results/fastqc_qc/{sample}_R1.html",  sample=sample_data.index.tolist()),
+            expand("results/fastqc_qc/{sample}_R2.html",  sample=sample_data.index.tolist()),
+            "results/summary/summary_sample.txt",
+            "results/summary/summary_contig.txt",
+            "results/summary/summary_gene_counts.txt",
+            "results/snakemake.ok"
+else: 
+    if go_reference == "custom":
+        rule all:
+            input:
+                expand("results/fastqc_raw/{sample}_R1.html", sample=sample_data.index.tolist()),
+                expand("results/fastqc_raw/{sample}_R2.html", sample=sample_data.index.tolist()),
+                expand("results/fastqc_qc/{sample}_R1.html",  sample=sample_data.index.tolist()),
+                expand("results/fastqc_qc/{sample}_R2.html",  sample=sample_data.index.tolist()),
+                "results/summary/summary_sample.txt",
+                "results/summary/summary_contig.txt",
+                "results/summary/summary_gene_counts.txt"
+                "results/snakemake.ok"
+

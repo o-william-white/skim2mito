@@ -1,3 +1,0 @@
-ID,forward,reverse,seed,gene
-sampleA,path/to/sampleA_R1.fq.gz,path/to/sampleA_R1.fq.gz,/path/to/seed.fasta,/path/to/gene.fasta
-sampleB,path/to/sampleB_R1.fq.gz,path/to/sampleB_R2.fq.gz,/path/to/seed.fasta,/path/to/gene.fasta
