@@ -1,4 +1,4 @@
-rule go_batch:
+rule go_fetch:
     params: 
         email = user_email
     output:
@@ -18,6 +18,6 @@ rule go_batch:
             --max 10 \
             --output results/go_fetch/{wildcards.taxids} \
             --getorganelle \
-            --email o.william.white@gmail.com \
+            --email params.email \
             --overwrite &> {log}
         """
