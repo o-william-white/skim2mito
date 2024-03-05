@@ -1,7 +1,7 @@
 if fastp_dedup == "True":
-    extra_params = "--dedup"
+    extra_params = "--dedup  --trim_poly_g"
 else:
-    extra_params = ""
+    extra_params = "--trim_poly_g"
 
 rule fastp_pe:
     input:

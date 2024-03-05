@@ -8,7 +8,7 @@
  - [Input](#input)
  - [Output](#output)
  - [Filtering contaminants](#filtering-contaminants)
- - [Barcode only](#barcode-only)
+ - [Assembly and annotation only](#assembly-and-annotation-only)
  - [Running your own data](#running-your-own-data)
  - [Getting help](#getting-help)
  - [Citations](#citations)
@@ -197,9 +197,9 @@ python workflow/scripts/format_alignments.py  \
 </div>
 <br/>
 
-## Barcode only
+## Assembly and annotation only
 
-If you are only interested in the assembly of genes and potentially barcode sequences without the phylogenetic analysis, you can stop the pipeline from running the gene alignment and phylogenetic analyses using the `--omit-from` parameter.
+If you are only interested in the assembly of mitochondrial sequences and annotation of genes without the phylogenetic analysis, you can stop the pipeline from running the gene alignment and phylogenetic analyses using the `--omit-from` parameter.
 ```
 snakemake \
    --cores 4 \
