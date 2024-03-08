@@ -1,6 +1,6 @@
 # skim2mt
 
-**skim2mt** is a snakemake pipeline for the batch assembly, annotation, and phylogenetic analysis of mitochondrial genomes from low coverage genome skims. The pipeline was designed to work with sequence data from museum collections. However, it should also work with geneome skims from recently collected samples.
+**skim2mt** is a snakemake pipeline for the batch assembly, annotation, and phylogenetic analysis of mitochondrial genomes from low coverage genome skims. The pipeline was designed to work with sequence data from museum collections. However, it should also work with genome skims from recently collected samples.
 
 ## Contents
  - [Setup](#setup)
