@@ -55,6 +55,8 @@ def get_mafft_filtered_output(wildcards):
 
 
 # config paramter checks
+if go_reference == "go_fetch" and user_email == "user@example_email.com":
+    sys.exit(f"Error: if using go_fetch to download references, please change the example email provided in the config file'")
 if go_reference != "go_fetch" and go_reference != "custom":
     sys.exit(f"Error: go_reference must be 'go_fetch' or 'custom'")
 if not isinstance(fastp_dedup, bool):

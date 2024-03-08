@@ -13,7 +13,7 @@ forward_adapter: AGATCGGAAGAGCACACGTCTGAACTCCAGTCA
 # reverse adapter
 reverse_adapter: AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT
 
-# fastp depulication (True/False)
+# fastp deduplication (True/False)
 fastp_dedup: True
 
 # mitos refseq database (refseq39, refseq63f, refseq63m, refseq63o, refseq89f, refseq89m, refseq89o)

@@ -42,14 +42,15 @@ conda env create -n snakemake -f workflow/envs/conda_env.yaml
 
 Before you run your own data, it is recommended to run the example datasets provided . This will confirm there are no user-specific issues with the setup and it also installs all the dependencies. The example data includes simulated mitochondrial data from 25 different butterfly species. 
 
-To run the example data, use the code below. *Note that the first time you run the pipeline, it will take some time to install each of the conda environments*, so it is a good time to take a tea break :).
+To run the example data, use the code below. **Note that you need to change the user email to your own address**. The email is required by the Bio Entrez package to fetch reference sequences. The first time you run the pipeline, it will take some time to install each of the conda environments, so it is a good time to take a tea break :).
 ```
 conda activate snakemake
 
 snakemake \
    --cores 4 \
    --use-conda \
-   --use-singularity
+   --use-singularity \ 
+   --config user_email=user@example_email.com
 ```
 
 <br/>
@@ -79,7 +80,7 @@ forward_adapter: AGATCGGAAGAGCACACGTCTGAACTCCAGTCA
 # reverse adapter
 reverse_adapter: AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT
 
-# fastp depulication (True/False)
+# fastp deduplication (True/False)
 fastp_dedup: True
 
 # mitos refseq database (refseq39, refseq63f, refseq63m, refseq63o, refseq89f, refseq89m, refseq89o)
