@@ -1,12 +1,12 @@
 rule minimap:
     input:
         "results/assembled_sequence/{sample}.ok",
-        fwd = "results/fastp/{sample}_R1.fastq",
-        rev = "results/fastp/{sample}_R2.fastq"
+        fwd="results/fastp/{sample}_R1.fastq",
+        rev="results/fastp/{sample}_R2.fastq",
     output:
-        ok = "results/minimap/{sample}.ok"
+        ok="results/minimap/{sample}.ok",
     log:
-        "logs/minimap/{sample}.log"
+        "logs/minimap/{sample}.log",
     conda:
         "../envs/minimap2.yaml"
     shell:

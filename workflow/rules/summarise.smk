@@ -1,14 +1,19 @@
 rule summarise:
     input:
         expand("results/seqkit/{sample}.ok", sample=sample_data["ID"].tolist()),
-        expand("results/blobtools/{sample}/{sample}.ok", sample=sample_data["ID"].tolist()),
-        expand("results/annotations/{sample}/{sample}.ok", sample=sample_data["ID"].tolist()),
-        expand("results/assess_assembly/{sample}.ok", sample=sample_data["ID"].tolist())
+        expand(
+            "results/blobtools/{sample}/{sample}.ok", sample=sample_data["ID"].tolist()
+        ),
+        expand(
+            "results/annotations/{sample}/{sample}.ok",
+            sample=sample_data["ID"].tolist(),
+        ),
+        expand("results/assess_assembly/{sample}.ok", sample=sample_data["ID"].tolist()),
     output:
-        table_sample = "results/summary/summary_sample.txt",
-        table_contig = "results/summary/summary_contig.txt"
+        table_sample="results/summary/summary_sample.txt",
+        table_contig="results/summary/summary_contig.txt",
     log:
-        "logs/summarise/summarise.log"
+        "logs/summarise/summarise.log",
     conda:
         "../envs/r_env.yaml"
     shell:

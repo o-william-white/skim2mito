@@ -1,10 +1,10 @@
 rule seqkit:
     input:
-        "results/assembled_sequence/{sample}.ok"
+        "results/assembled_sequence/{sample}.ok",
     output:
-        ok = "results/seqkit/{sample}.ok"
+        ok="results/seqkit/{sample}.ok",
     log:
-        "logs/seqkit/{sample}.log"
+        "logs/seqkit/{sample}.log",
     conda:
         "../envs/seqkit.yaml"
     shell:

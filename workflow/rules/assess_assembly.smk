@@ -2,11 +2,11 @@ rule assess_assembly:
     input:
         "results/assembled_sequence/{sample}.ok",
         "results/annotations/{sample}/{sample}.ok",
-        "results/minimap/{sample}.ok"
+        "results/minimap/{sample}.ok",
     output:
-        ok = "results/assess_assembly/{sample}.ok"
+        ok="results/assess_assembly/{sample}.ok",
     log:
-        "logs/assess_assembly/{sample}.log"
+        "logs/assess_assembly/{sample}.log",
     conda:
         "../envs/assess_assembly.yaml"
     shell:

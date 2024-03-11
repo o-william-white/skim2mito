@@ -1,14 +1,14 @@
 rule annotations:
     input:
         expand("resources/mitos_db/{refseq}", refseq=mitos_refseq),
-        "results/assembled_sequence/{sample}.ok"
+        "results/assembled_sequence/{sample}.ok",
     params:
-        refseq = mitos_refseq,
-        code = mitos_code
+        refseq=mitos_refseq,
+        code=mitos_code,
     output:
-        ok = "results/annotations/{sample}/{sample}.ok"
+        ok="results/annotations/{sample}/{sample}.ok",
     log:
-        "logs/annotations/{sample}.log"
+        "logs/annotations/{sample}.log",
     conda:
         "../envs/annotations.yaml"
     shell:

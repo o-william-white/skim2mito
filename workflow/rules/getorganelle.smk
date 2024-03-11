@@ -1,14 +1,15 @@
 if go_reference == "go_fetch":
+
     rule getorganelle:
         input:
-            fwd = "results/fastp/{sample}_R1.fastq",
-            rev = "results/fastp/{sample}_R2.fastq"
+            fwd="results/fastp/{sample}_R1.fastq",
+            rev="results/fastp/{sample}_R2.fastq",
         params:
-            taxid = get_taxid,
+            taxid=get_taxid,
         output:
-            ok = "results/getorganelle/{sample}/getorganelle.ok"
+            ok="results/getorganelle/{sample}/getorganelle.ok",
         log:
-            "logs/getorganelle/{sample}.log"
+            "logs/getorganelle/{sample}.log",
         conda:
             "../envs/getorganelle.yaml"
         shell:
@@ -26,19 +27,21 @@ if go_reference == "go_fetch":
                 --overwrite &> {log}
             touch {output.ok}
             """
-else: 
+
+else:
     if go_reference == "custom":
+
         rule getorganelle:
             input:
-                fwd = "results/fastp/{sample}_R1.fastq",
-                rev = "results/fastp/{sample}_R2.fastq"
+                fwd="results/fastp/{sample}_R1.fastq",
+                rev="results/fastp/{sample}_R2.fastq",
             params:
-                seed = get_seed,
-                gene = get_gene,
+                seed=get_seed,
+                gene=get_gene,
             output:
-                ok = "results/getorganelle/{sample}/getorganelle.ok"
+                ok="results/getorganelle/{sample}/getorganelle.ok",
             log:
-                "logs/getorganelle/{sample}.log"
+                "logs/getorganelle/{sample}.log",
             conda:
                 "../envs/getorganelle.yaml"
             shell:
@@ -56,4 +59,3 @@ else:
                     --overwrite &> {log}
                 touch {output.ok}
                 """
-

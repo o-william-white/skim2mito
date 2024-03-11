@@ -1,11 +1,11 @@
 rule go_fetch:
-    params: 
-        email = user_email
+    params:
+        email=user_email,
     output:
         "results/go_fetch/{taxids}/gene.fasta",
-        "results/go_fetch/{taxids}/seed.fasta"
+        "results/go_fetch/{taxids}/seed.fasta",
     log:
-        "logs/go_fetch/{taxids}.log"
+        "logs/go_fetch/{taxids}.log",
     conda:
         "../envs/go_fetch.yaml"
     shell:

@@ -1,13 +1,13 @@
 rule alignment_trim:
     input:
-        fasta = "results/mafft_filtered/{dataset}.fasta"
+        fasta="results/mafft_filtered/{dataset}.fasta",
     params:
-        trim = alignment_trim,
-        tmp = "results/alignment_trim/{dataset}_tmp.fasta"
+        trim=alignment_trim,
+        tmp="results/alignment_trim/{dataset}_tmp.fasta",
     output:
-        fasta = "results/alignment_trim/{dataset}.fasta"
+        fasta="results/alignment_trim/{dataset}.fasta",
     log:
-        "logs/alignment_trim/{dataset}.log"
+        "logs/alignment_trim/{dataset}.log",
     conda:
         "../envs/alignment_trim.yaml"
     shell:

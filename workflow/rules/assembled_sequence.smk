@@ -1,10 +1,10 @@
 rule assembled_sequence:
     input:
-        "results/getorganelle/{sample}/getorganelle.ok"
+        "results/getorganelle/{sample}/getorganelle.ok",
     output:
-        ok = "results/assembled_sequence/{sample}.ok"
+        ok="results/assembled_sequence/{sample}.ok",
     log:
-        "logs/assembled_sequence/{sample}.log"
+        "logs/assembled_sequence/{sample}.log",
     conda:
         "../envs/conda_env.yaml"
     shell:

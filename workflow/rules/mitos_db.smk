@@ -16,13 +16,13 @@ rule mitos_db:
         "resources/taxdump/rankedlineage.dmp",
         "resources/taxdump/taxidlineage.dmp",
         "resources/taxdump/typematerial.dmp",
-        "resources/taxdump/typeoftype.dmp"
+        "resources/taxdump/typeoftype.dmp",
     params:
-        refseq = mitos_refseq
+        refseq=mitos_refseq,
     output:
-        directory("resources/mitos_db/{mitos_refseq}")
+        directory("resources/mitos_db/{mitos_refseq}"),
     log:
-        "logs/mitos_db/mitos_db_{mitos_refseq}.log"
+        "logs/mitos_db/mitos_db_{mitos_refseq}.log",
     conda:
         "../envs/conda_env.yaml"
     shell:

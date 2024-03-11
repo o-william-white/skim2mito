@@ -1,10 +1,10 @@
 rule gene_counts:
     input:
-        get_mafft_filtered_output
+        get_mafft_filtered_output,
     output:
-        "results/summary/summary_gene_counts.txt"
+        "results/summary/summary_gene_counts.txt",
     log:
-        "logs/gene_counts/gene_counts.log"
+        "logs/gene_counts/gene_counts.log",
     conda:
         "../envs/conda_env.yaml"
     shell:

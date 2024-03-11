@@ -1,7 +1,8 @@
 rule taxdump:
     # if we give the blastdb database as input, it stops wget trying to download the blastdb at the same time as taxdump which causes an error
     input:
-        multiext("resources/blastdb/refseq_mitochondrion/refseq_mitochondrion",
+        multiext(
+            "resources/blastdb/refseq_mitochondrion/refseq_mitochondrion",
             ".ndb",
             ".nhr",
             ".nin",
@@ -11,7 +12,8 @@ rule taxdump:
             ".not",
             ".nsq",
             ".ntf",
-            ".nto")
+            ".nto",
+        ),
     output:
         directory("resources/taxdump"),
         "resources/taxdump/citations.dmp",
@@ -28,9 +30,9 @@ rule taxdump:
         "resources/taxdump/rankedlineage.dmp",
         "resources/taxdump/taxidlineage.dmp",
         "resources/taxdump/typematerial.dmp",
-        "resources/taxdump/typeoftype.dmp"
+        "resources/taxdump/typeoftype.dmp",
     log:
-        "logs/taxdump/taxdump.log"
+        "logs/taxdump/taxdump.log",
     conda:
         "../envs/conda_env.yaml"
     shell:

@@ -1,13 +1,13 @@
 rule plot_tree:
     input:
-        tree = "results/iqtree/{dataset}.treefile.rooted.newick"
+        tree="results/iqtree/{dataset}.treefile.rooted.newick",
     params:
-        height = plot_height,
-        width = plot_width
+        height=plot_height,
+        width=plot_width,
     output:
-        png = "results/plot_tree/{dataset}.png"
+        png="results/plot_tree/{dataset}.png",
     log:
-        "logs/plot_tree/{dataset}.log"
+        "logs/plot_tree/{dataset}.log",
     conda:
         "../envs/r_env.yaml"
     shell:

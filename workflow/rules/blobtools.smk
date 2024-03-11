@@ -18,11 +18,11 @@ rule blobtools:
         "resources/taxdump/typeoftype.dmp",
         "results/assembled_sequence/{sample}.ok",
         "results/blastn/{sample}.ok",
-        "results/minimap/{sample}.ok"
+        "results/minimap/{sample}.ok",
     output:
-        ok = "results/blobtools/{sample}/{sample}.ok"
+        ok="results/blobtools/{sample}/{sample}.ok",
     log:
-        "logs/blobtools/{sample}.log"
+        "logs/blobtools/{sample}.log",
     container:
         "docker://genomehubs/blobtoolkit"
     shell:

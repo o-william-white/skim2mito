@@ -1,6 +1,7 @@
 rule blastdb:
     output:
-        multiext("resources/blastdb/refseq_mitochondrion/refseq_mitochondrion",
+        multiext(
+            "resources/blastdb/refseq_mitochondrion/refseq_mitochondrion",
             ".ndb",
             ".nhr",
             ".nin",
@@ -10,9 +11,10 @@ rule blastdb:
             ".not",
             ".nsq",
             ".ntf",
-            ".nto")
+            ".nto",
+        ),
     log:
-        "logs/blastdb/blastdb.log"
+        "logs/blastdb/blastdb.log",
     conda:
         "../envs/conda_env.yaml"
     shell:

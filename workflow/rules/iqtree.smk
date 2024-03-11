@@ -1,11 +1,11 @@
 rule iqtree:
     input:
-        fasta = "results/alignment_trim/{dataset}.fasta"
+        fasta="results/alignment_trim/{dataset}.fasta",
     output:
-        tree = "results/iqtree/{dataset}.treefile",
-        fasta_renamed = "results/iqtree/{dataset}.fasta"
+        tree="results/iqtree/{dataset}.treefile",
+        fasta_renamed="results/iqtree/{dataset}.fasta",
     log:
-        "logs/iqtree/{dataset}.log"
+        "logs/iqtree/{dataset}.log",
     conda:
         "../envs/iqtree.yaml"
     shell:

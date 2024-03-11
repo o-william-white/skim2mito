@@ -1,4 +1,3 @@
-
 # load rules
 include: "rules/common.smk"
 include: "rules/go_fetch.smk"
@@ -27,30 +26,60 @@ include: "rules/root_iqtree.smk"
 include: "rules/plot_tree.smk"
 include: "rules/final_log.smk"
 
+
 # one rule to rule them all :)
-if go_reference == "go_fetch": 
+if go_reference == "go_fetch":
+
     rule all:
         input:
-            expand("results/go_fetch/{taxids}/gene.fasta", taxids=list(set(sample_data["taxid"]))),
-            expand("results/go_fetch/{taxids}/seed.fasta", taxids=list(set(sample_data["taxid"]))),
-            expand("results/fastqc_raw/{sample}_R1.html", sample=sample_data.index.tolist()),
-            expand("results/fastqc_raw/{sample}_R2.html", sample=sample_data.index.tolist()),
-            expand("results/fastqc_qc/{sample}_R1.html",  sample=sample_data.index.tolist()),
-            expand("results/fastqc_qc/{sample}_R2.html",  sample=sample_data.index.tolist()),
+            expand(
+                "results/go_fetch/{taxids}/gene.fasta",
+                taxids=list(set(sample_data["taxid"])),
+            ),
+            expand(
+                "results/go_fetch/{taxids}/seed.fasta",
+                taxids=list(set(sample_data["taxid"])),
+            ),
+            expand(
+                "results/fastqc_raw/{sample}_R1.html",
+                sample=sample_data.index.tolist(),
+            ),
+            expand(
+                "results/fastqc_raw/{sample}_R2.html",
+                sample=sample_data.index.tolist(),
+            ),
+            expand(
+                "results/fastqc_qc/{sample}_R1.html", sample=sample_data.index.tolist()
+            ),
+            expand(
+                "results/fastqc_qc/{sample}_R2.html", sample=sample_data.index.tolist()
+            ),
             "results/summary/summary_sample.txt",
             "results/summary/summary_contig.txt",
             "results/summary/summary_gene_counts.txt",
-            "results/snakemake.ok"
-else: 
+            "results/snakemake.ok",
+
+else:
     if go_reference == "custom":
+
         rule all:
             input:
-                expand("results/fastqc_raw/{sample}_R1.html", sample=sample_data.index.tolist()),
-                expand("results/fastqc_raw/{sample}_R2.html", sample=sample_data.index.tolist()),
-                expand("results/fastqc_qc/{sample}_R1.html",  sample=sample_data.index.tolist()),
-                expand("results/fastqc_qc/{sample}_R2.html",  sample=sample_data.index.tolist()),
+                expand(
+                    "results/fastqc_raw/{sample}_R1.html",
+                    sample=sample_data.index.tolist(),
+                ),
+                expand(
+                    "results/fastqc_raw/{sample}_R2.html",
+                    sample=sample_data.index.tolist(),
+                ),
+                expand(
+                    "results/fastqc_qc/{sample}_R1.html",
+                    sample=sample_data.index.tolist(),
+                ),
+                expand(
+                    "results/fastqc_qc/{sample}_R2.html",
+                    sample=sample_data.index.tolist(),
+                ),
                 "results/summary/summary_sample.txt",
                 "results/summary/summary_contig.txt",
-                "results/summary/summary_gene_counts.txt"
-                "results/snakemake.ok"
-
+                "results/summary/summary_gene_counts.txt" "results/snakemake.ok",

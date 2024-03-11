@@ -1,6 +1,7 @@
 rule blastn:
     input:
-        multiext("resources/blastdb/refseq_mitochondrion/refseq_mitochondrion",
+        multiext(
+            "resources/blastdb/refseq_mitochondrion/refseq_mitochondrion",
             ".ndb",
             ".nhr",
             ".nin",
@@ -10,12 +11,13 @@ rule blastn:
             ".not",
             ".nsq",
             ".ntf",
-            ".nto"),
-            "results/assembled_sequence/{sample}.ok"
+            ".nto",
+        ),
+        "results/assembled_sequence/{sample}.ok",
     output:
-        ok = "results/blastn/{sample}.ok"
+        ok="results/blastn/{sample}.ok",
     log:
-        "logs/blastn/{sample}.log"
+        "logs/blastn/{sample}.log",
     conda:
         "../envs/blastn.yaml"
     shell:

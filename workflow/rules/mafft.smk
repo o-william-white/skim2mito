@@ -1,10 +1,10 @@
 rule mafft:
     input:
-        "results/annotated_genes/{dataset}.fasta"
+        "results/annotated_genes/{dataset}.fasta",
     output:
-        "results/mafft/{dataset}.fasta"
+        "results/mafft/{dataset}.fasta",
     log:
-        "logs/mafft/{dataset}.log"
+        "logs/mafft/{dataset}.log",
     conda:
         "../envs/mafft.yaml"
     shell:

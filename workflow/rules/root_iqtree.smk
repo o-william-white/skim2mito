@@ -1,12 +1,12 @@
 rule root_iqtree:
     input:
-        tree = "results/iqtree/{dataset}.treefile"
+        tree="results/iqtree/{dataset}.treefile",
     params:
-        outgroup = outgroup
+        outgroup=outgroup,
     output:
-        tree = "results/iqtree/{dataset}.treefile.rooted.newick"
+        tree="results/iqtree/{dataset}.treefile.rooted.newick",
     log:
-        "logs/root_iqtree/{dataset}.txt"
+        "logs/root_iqtree/{dataset}.txt",
     conda:
         "../envs/ete3.yaml"
     shell:
