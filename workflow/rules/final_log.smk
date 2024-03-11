@@ -6,6 +6,8 @@ rule final_log:
         "results/snakemake.ok"
     conda:
         "../envs/conda_env.yaml"
+    log:
+        "logs/final.log"
     shell:
         """
         touch {output}

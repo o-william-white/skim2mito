@@ -181,12 +181,12 @@ If you are working with museum collections, it is possible that you may assemble
 
 A supplementary python script `format_alignments.py `is provided to remove putative contaminants from alignments, and format the alignments for downstream phylogenetic analysis.
 
-For example, let's say we wanted to remove all sequences from the sample "Kallima_paralekta" and 5.8S ribosomal sequence, you could run the script as shown below. The script works by identifying and removing sequences that have names with  `Kallima_paralekta` or `5_8S` in the sequence names. The filtered alignments are written to a new output directory `filter_alignments_output`.
+For example, let's say we wanted to remove all sequences from the sample "Kallima_paralekta" and atp6 gene sequences, you could run the script as shown below. The script works by identifying and removing sequences that have names with  `Kallima_paralekta` or `atp6` in the sequence names. The filtered alignments are written to a new output directory `filter_alignments_output`.
 
 ```
 python workflow/scripts/format_alignments.py  \
-   --input results/mafft_filtered/
-   --cont Kallima_paralekta 5_8S \
+   --input results/mafft_filtered/ \
+   --cont Kallima_paralekta atp6 \
    --output filter_alignments_output
 ```
 
@@ -206,6 +206,7 @@ snakemake \
    --cores 4 \
    --use-conda \
    --use-singularity \
+   --config user_email=user@example_email.com \
    --omit-from mafft
 ```
 
