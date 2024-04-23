@@ -19,6 +19,8 @@ The pipeline is written in Snakemake and uses conda and singularity to install t
 
 It is *strongly recommended* to install conda using Mambaforge. See details here https://snakemake.readthedocs.io/en/stable/getting_started/installation.html
 
+You can install Singularity from [Apptainer](https://apptainer.org/docs/admin/latest/installation.html) or [SingularityCE](https://docs.sylabs.io/guides/4.1/admin-guide/installation.html).
+
 Once conda is installed, you can pull the github repo and set up the base conda environment.
 
 ```
@@ -46,11 +48,7 @@ To run the example data, use the code below. **Note that you need to change the 
 ```
 conda activate snakemake
 
-snakemake \
-   --cores 4 \
-   --use-conda \
-   --use-singularity \ 
-   --config user_email=user@example_email.com
+snakemake --cores 4 --use-conda --use-singularity --config user_email=user@example_email.com
 ```
 
 <br/>
