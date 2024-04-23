@@ -23,8 +23,8 @@ rule blobtools:
         ok="results/blobtools/{sample}/{sample}.ok",
     log:
         "logs/blobtools/{sample}.log",
-    container:
-        "docker://genomehubs/blobtoolkit"
+    conda:
+        "../envs/blobtools.yaml"
     shell:
         """
         FAS=$(echo results/assembled_sequence/{wildcards.sample}.fasta)
