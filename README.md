@@ -15,11 +15,9 @@
 
 ## Setup
 
-The pipeline is written in Snakemake and uses conda and singularity to install the necessary tools.
+The pipeline is written in Snakemake and uses conda to install the necessary tools.
 
 It is *strongly recommended* to install conda using Mambaforge. See details here https://snakemake.readthedocs.io/en/stable/getting_started/installation.html
-
-You can install Singularity from [Apptainer](https://apptainer.org/docs/admin/latest/installation.html) or [SingularityCE](https://docs.sylabs.io/guides/4.1/admin-guide/installation.html).
 
 Once conda is installed, you can pull the github repo and set up the base conda environment.
 
@@ -48,7 +46,7 @@ To run the example data, use the code below. **Note that you need to change the 
 ```
 conda activate snakemake
 
-snakemake --cores 4 --use-conda --use-singularity --config user_email=user@example_email.com
+snakemake --cores 4 --use-conda --config user_email=user@example_email.com
 ```
 
 <br/>
@@ -200,12 +198,7 @@ python workflow/scripts/format_alignments.py  \
 
 If you are only interested in the assembly of mitochondrial sequences and annotation of genes without the phylogenetic analysis, you can stop the pipeline from running the gene alignment and phylogenetic analyses using the `--omit-from` parameter.
 ```
-snakemake \
-   --cores 4 \
-   --use-conda \
-   --use-singularity \
-   --config user_email=user@example_email.com \
-   --omit-from mafft
+snakemake --cores 4 --use-conda --config user_email=user@example_email.com --omit-from mafft
 ```
 
 <br/>
