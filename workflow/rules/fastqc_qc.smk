@@ -3,11 +3,11 @@ rule fastqc_qc_fwd:
         "results/fastp/{sample}_R1.fastq",
     output:
         html="results/fastqc_qc/{sample}_R1.html",
-        zip="results/fastqc_qc/{sample}_R2_fastqc.zip",
+        zip="results/fastqc_qc/{sample}_R1_fastqc.zip",
     params:
         extra="--quiet",
     log:
-        "logs/fastqc_qc/{sample}_R2.log",
+        "logs/fastqc_qc/{sample}_R1.log",
     threads: 1
     resources:
         mem_mb=1024,
@@ -24,7 +24,7 @@ rule fastqc_qc_rev:
     params:
         extra="--quiet",
     log:
-        "logs/fastqc_qc/{sample}.log",
+        "logs/fastqc_qc/{sample}_R2.log",
     threads: 1
     resources:
         mem_mb=1024,

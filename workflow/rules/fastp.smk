@@ -12,8 +12,8 @@ rule fastp_pe:
         unpaired1="results/fastp/{sample}_u1.fastq",
         unpaired2="results/fastp/{sample}_u2.fastq",
         failed="results/fastp/{sample}.failed.fastq",
-        html="results/fastp/{sample}.html",
-        json="results/fastp/{sample}.json",
+        html="results/fastp/{sample}_fastp.html",
+        json="results/fastp/{sample}_fastp.json",
     log:
         "logs/fastp/{sample}.log",
     params:
