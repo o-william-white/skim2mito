@@ -30,6 +30,7 @@ cd skim2mt
 
 # setup conda env
 conda env create -n snakemake -f workflow/envs/conda_env.yaml
+conda config --set channel_priority flexible
 ```
 
 <br/>
