@@ -1,5 +1,7 @@
 channels:
+  - conda-forge
   - bioconda
+  - defaults
 dependencies:
   - gblocks =0.91b
   - clipkit =1.3.0
