@@ -39,6 +39,21 @@ conda config --set channel_priority flexible
 </div>
 <br/>
 
+### VS Code Setup, with devcontainer
+
+This workflow can be run within a docker container from VisualStudio Code, using the included configuration file (`.devcontainer/devcontainer.json`). The docker container used is built specifically for running snakemake. This enables use of the workflow on a wide range of systems, including Apple Silicon (M1+) chipsets.
+
+Requirements:
+- [VisualStudio Code](https://code.visualstudio.com/)
+- [Docker](https://www.docker.com/)
+
+Installation process:
+- Download the code repository as above, but do not create the conda environment.
+- Install the `Dev Containers` extension within VS Code.
+- Open the repository folder in VS Code
+- You should be prompted to reopen the folder in a dev container. If not then click on the blue button in the lower left corner of the VS Code window, and select `reopen in dev container`.
+- Adjust the conda configuration to ensure the required environments can be built: `conda config --set channel_priority flexible` 
+
 ## Example data
 
 Before you run your own data, it is recommended to run the example datasets provided . This will confirm there are no user-specific issues with the setup and it also installs all the dependencies. The example data includes simulated mitochondrial data from 25 different butterfly species. 
