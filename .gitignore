@@ -1,0 +1,7 @@
+# Snakemake artifacts
+.snakemake/
+
+# outputs that should not be committed
+logs/
+resources/
+results/

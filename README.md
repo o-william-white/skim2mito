@@ -15,7 +15,7 @@
 
 ## Setup
 
-The pipeline is written in Snakemake and uses conda and singularity to install the necessary tools.
+The pipeline is written in Snakemake and uses conda to install the necessary tools.
 
 It is *strongly recommended* to install conda using Mambaforge. See details here https://snakemake.readthedocs.io/en/stable/getting_started/installation.html
 
@@ -30,6 +30,7 @@ cd skim2mt
 
 # setup conda env
 conda env create -n snakemake -f workflow/envs/conda_env.yaml
+conda config --set channel_priority flexible
 ```
 
 <br/>
@@ -46,11 +47,7 @@ To run the example data, use the code below. **Note that you need to change the 
 ```
 conda activate snakemake
 
-snakemake \
-   --cores 4 \
-   --use-conda \
-   --use-singularity \ 
-   --config user_email=user@example_email.com
+snakemake --cores 4 --use-conda --config user_email=user@example_email.com
 ```
 
 <br/>
@@ -202,12 +199,7 @@ python workflow/scripts/format_alignments.py  \
 
 If you are only interested in the assembly of mitochondrial sequences and annotation of genes without the phylogenetic analysis, you can stop the pipeline from running the gene alignment and phylogenetic analyses using the `--omit-from` parameter.
 ```
-snakemake \
-   --cores 4 \
-   --use-conda \
-   --use-singularity \
-   --config user_email=user@example_email.com \
-   --omit-from mafft
+snakemake --cores 4 --use-conda --config user_email=user@example_email.com --omit-from mafft
 ```
 
 <br/>
