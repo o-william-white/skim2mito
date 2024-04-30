@@ -1,4 +1,4 @@
-rule blobtools:
+rule blobtools_create:
     input:
         "resources/taxdump/",
         "resources/taxdump/citations.dmp",
@@ -20,11 +20,13 @@ rule blobtools:
         "results/blastn/{sample}.ok",
         "results/minimap/{sample}.ok",
     output:
-        ok="results/blobtools/{sample}/{sample}.ok",
+        ok="results/blobtools/{sample}/{sample}_create.ok",
     log:
-        "logs/blobtools/{sample}.log",
+        "logs/blobtools/{sample}_create.log",
     conda:
         "../envs/blobtools.yaml"
+    resources:
+        mem_mb=7164
     shell:
         """
         FAS=$(echo results/assembled_sequence/{wildcards.sample}.fasta)
@@ -39,10 +41,6 @@ rule blobtools:
                 --taxdump resources/taxdump \
                 --cov $MAP \
                 results/blobtools/{wildcards.sample} &> {log}
-            blobtools filter \
-                --table $OUT \
-                --table-fields gc,length,{wildcards.sample}_cov,bestsumorder_superkingdom,bestsumorder_kingdom,bestsumorder_phylum,bestsumorder_class,bestsumorder_order,bestsumorder_family,bestsumorder_species \
-                results/blobtools/{wildcards.sample} &>> {log}
         else
             echo No assembled sequence for {wildcards.sample} > {log}
         fi

@@ -19,6 +19,7 @@ rule blastdb:
         "../envs/conda_env.yaml"
     shell:
         """
+        rm -f resources/blastdb/refseq_mitochondrion.tar.gz
         wget --wait 10 --random-wait -P resources/blastdb/ https://zenodo.org/records/8424777/files/refseq_mitochondrion.tar.gz &> {log}
         tar xvzf resources/blastdb/refseq_mitochondrion.tar.gz --directory resources/blastdb/ &>> {log}
         rm resources/blastdb/refseq_mitochondrion.tar.gz &>> {log}

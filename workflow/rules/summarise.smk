@@ -2,7 +2,7 @@ rule summarise:
     input:
         expand("results/seqkit/{sample}.ok", sample=sample_data["ID"].tolist()),
         expand(
-            "results/blobtools/{sample}/{sample}.ok", sample=sample_data["ID"].tolist()
+            "results/blobtools/{sample}/{sample}_filter.ok", sample=sample_data["ID"].tolist()
         ),
         expand(
             "results/annotations/{sample}/{sample}.ok",
