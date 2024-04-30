@@ -25,6 +25,8 @@ rule blobtools_create:
         "logs/blobtools/{sample}_create.log",
     conda:
         "../envs/blobtools.yaml"
+    resources:
+        mem_mb=7164
     shell:
         """
         FAS=$(echo results/assembled_sequence/{wildcards.sample}.fasta)
