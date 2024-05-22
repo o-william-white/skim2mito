@@ -4,7 +4,7 @@ else:
     extra_params = "--trim_poly_g"
 
 
-rule fastp_pe:
+rule fastp:
     input:
         sample=get_fastq,
     output:
