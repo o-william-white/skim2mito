@@ -2,6 +2,8 @@ if go_reference == "go_fetch":
 
     rule getorganelle:
         input:
+            expand("results/go_fetch/{taxids}/gene.fasta", taxids=list(set(sample_data["taxid"]))),
+            expand("results/go_fetch/{taxids}/seed.fasta", taxids=list(set(sample_data["taxid"]))),
             fwd="results/fastp/{sample}_R1.fastq",
             rev="results/fastp/{sample}_R2.fastq",
         params:

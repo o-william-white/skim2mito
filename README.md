@@ -56,6 +56,14 @@ snakemake --cores 4 --use-conda --config user_email=user@example_email.com
 </div>
 <br/>
 
+## Rule graph
+
+To visualise a rule graph use the command below. **Note that you need to change the user email to your own address**.
+
+```
+snakemake --rulegraph --config user_email=user@example_email.com | dot -Tsvg > rulegraph.svg
+```
+
 ## Input
 
 Snakemake requires a `config.yaml` and `samples.csv` to define input parameters and sequence data for each sample. 

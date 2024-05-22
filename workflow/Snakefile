@@ -1,6 +1,7 @@
 # load rules
 include: "rules/common.smk"
-include: "rules/go_fetch.smk"
+if go_reference == "go_fetch":
+    include: "rules/go_fetch.smk"
 include: "rules/fastqc_raw.smk"
 include: "rules/fastp.smk"
 include: "rules/fastqc_qc.smk"
@@ -32,14 +33,6 @@ if go_reference == "go_fetch":
 
     rule all:
         input:
-            expand(
-                "results/go_fetch/{taxids}/gene.fasta",
-                taxids=list(set(sample_data["taxid"])),
-            ),
-            expand(
-                "results/go_fetch/{taxids}/seed.fasta",
-                taxids=list(set(sample_data["taxid"])),
-            ),
             expand(
                 "results/fastqc_raw/{sample}_R1.html",
                 sample=sample_data.index.tolist(),
