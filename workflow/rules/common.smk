@@ -2,6 +2,8 @@ import pandas as pd
 import sys
 from snakemake.utils import min_version
 
+
+# define min version
 min_version("8.4.12")
 
 
@@ -30,7 +32,7 @@ else:
     sys.exit(f"Error: samples.csv file '{config['samples']}' does not exist")
 
 
-# functions to get forward and reverse reads from sample data
+# functions to get metadata sample list
 def get_forward(wildcards):
     return sample_data.loc[wildcards.sample, "forward"]
 
@@ -55,6 +57,15 @@ def get_seed(wildcards):
 
 def get_gene(wildcards):
     return sample_data.loc[wildcards.sample, "gene"]
+
+
+# functions for checkpoints
+def get_assembled_samples(wildcards):
+    ck_output = checkpoints.assembled_sequence.get(**wildcards).output[0]
+    return expand(
+        rules.seqkit.output,
+        sample=glob_wildcards(os.path.join(ck_output, "{sample}.fasta")).sample,
+    )
 
 
 def get_plot_tree_output(wildcards):

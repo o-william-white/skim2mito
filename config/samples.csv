@@ -24,3 +24,5 @@ Salamis_cacta,.test/reads/Salamis_cacta_1.fq.gz,.test/reads/Salamis_cacta_2.fq.g
 Smyrna_blomfildia,.test/reads/Smyrna_blomfildia_1.fq.gz,.test/reads/Smyrna_blomfildia_2.fq.gz,40040,.test/seed_mitochondrion.fasta,.test/gene_mitochondrion.fasta
 Tacola_larymna,.test/reads/Tacola_larymna_1.fq.gz,.test/reads/Tacola_larymna_2.fq.gz,100750,.test/seed_mitochondrion.fasta,.test/gene_mitochondrion.fasta
 Yoma_algina,.test/reads/Yoma_algina_1.fq.gz,.test/reads/Yoma_algina_2.fq.gz,40040,.test/seed_mitochondrion.fasta,.test/gene_mitochondrion.fasta
+Tacola_larymna_subset,.test/reads/Tacola_larymna_subset_1.fq.gz,.test/reads/Tacola_larymna_subset_2.fq.gz,100750,.test/seed_mitochondrion.fasta,.test/gene_mitochondrion.fasta
+Yoma_algina_subset,.test/reads/Yoma_algina_subset_1.fq.gz,.test/reads/Yoma_algina_subset_2.fq.gz,40040,.test/seed_mitochondrion.fasta,.test/gene_mitochondrion.fasta

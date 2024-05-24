@@ -16,35 +16,26 @@ rule blobtools:
         "resources/taxdump/taxidlineage.dmp",
         "resources/taxdump/typematerial.dmp",
         "resources/taxdump/typeoftype.dmp",
-        "results/assembled_sequence/{sample}.ok",
-        "results/blastn/{sample}.ok",
-        "results/minimap/{sample}.ok",
+        fas="results/assembled_sequence/{sample}.fasta",
+        bla="results/blastn/{sample}.fasta",
+        bam="results/minimap/{sample}.fasta",
     output:
-        ok="results/blobtools/{sample}/{sample}.ok",
+        "results/blobtools/{sample}/table.tsv",
     log:
         "logs/blobtools/{sample}.log",
     conda:
         "../envs/blobtools.yaml"
     shell:
         """
-        FAS=$(echo results/assembled_sequence/{wildcards.sample}.fasta)
-        BLA=$(echo results/blastn/{wildcards.sample}.txt)
-        MAP=$(echo results/minimap/{wildcards.sample}.bam)
-        OUT=$(echo results/blobtools/{wildcards.sample}/table.tsv)
-        if [ -e $FAS ]; then
-            blobtools create \
-                --fasta $FAS \
-                --hits $BLA \
-                --taxrule bestsumorder \
-                --taxdump resources/taxdump \
-                --cov $MAP \
-                results/blobtools/{wildcards.sample} &> {log}
-            blobtools filter \
-                --table $OUT \
-                --table-fields gc,length,{wildcards.sample}_cov,bestsumorder_superkingdom,bestsumorder_kingdom,bestsumorder_phylum,bestsumorder_class,bestsumorder_order,bestsumorder_family,bestsumorder_species \
-                results/blobtools/{wildcards.sample} &>> {log}
-        else
-            echo No assembled sequence for {wildcards.sample} > {log}
-        fi
-        touch {output.ok}
+        blobtools create \
+            --fasta {input.fas} \
+            --hits {input.bla} \
+            --taxrule bestsumorder \
+            --taxdump resources/taxdump \
+            --cov {input.bam} \
+            results/blobtools/{wildcards.sample} &> {log}
+        blobtools filter \
+            --table {output} \
+            --table-fields gc,length,{wildcards.sample}_cov,bestsumorder_superkingdom,bestsumorder_kingdom,bestsumorder_phylum,bestsumorder_class,bestsumorder_order,bestsumorder_family,bestsumorder_species \
+            results/blobtools/{wildcards.sample} &>> {log}
         """
