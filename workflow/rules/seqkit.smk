@@ -2,7 +2,7 @@ rule seqkit:
     input:
         "results/assembled_sequence/{sample}.fasta",
     output:
-        "results/seqkit/{wildcards.sample}.txt",
+        "results/seqkit/{sample}.txt",
     log:
         "logs/seqkit/{sample}.log",
     conda:

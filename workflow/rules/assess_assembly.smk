@@ -1,6 +1,6 @@
 rule assess_assembly:
     input:
-        directory("results/annotations/{sample}/)",
+        "results/annotations/{sample}/{sample}.ok",
         fas="results/assembled_sequence/{sample}.fas",
         bam="results/minimap/{sample}.bam",
     output:

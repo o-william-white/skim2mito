@@ -23,6 +23,6 @@ rule fastp:
             rev=reverse_adapter,
         ),
         extra=extra_params,
-    threads: 2
+    threads: 1
     wrapper:
         "v3.3.6/bio/fastp"
