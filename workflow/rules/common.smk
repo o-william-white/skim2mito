@@ -81,6 +81,27 @@ def get_assess_assembly_output(wildcards):
         sample=glob_wildcards(os.path.join(ck_output, "{sample}.fasta")).sample,
     )
 
+def get_annotated_samples(wildcards):
+    ck_output = checkpoints.assembled_sequence.get(**wildcards).output[0]
+    return expand(
+        "results/annotations/{sample}/{sample}.ok",
+        sample=glob_wildcards(os.path.join(ck_output, "{sample}.fasta")).sample,
+    )
+
+def get_assembled_samples(wildcards):
+    ck_output = checkpoints.assembled_sequence.get(**wildcards).output[0]
+    return expand(
+        rules.seqkit.output,
+        sample=glob_wildcards(os.path.join(ck_output, "{sample}.fasta")).sample,
+    )
+
+def get_mafft_output(wildcards):
+    checkpoint_output = checkpoints.extract_annotated_genes.get(**wildcards).output[0]
+    return expand(
+        "results/mafft/{i}.fasta",
+        i=glob_wildcards(os.path.join(checkpoint_output, "{i}.fasta")).i,
+    )
+
 #def get_plot_tree_output(wildcards):
 #    checkpoint_output = checkpoints.assembled_sequence.get(**wildcards).output[0]
 #    return expand(

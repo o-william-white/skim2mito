@@ -1,9 +1,6 @@
 checkpoint extract_annotated_genes:
     input:
-        expand(
-            "results/annotations/{sample}/{sample}.ok",
-            sample=sample_data["ID"].tolist(),
-        ),
+        get_annotated_samples,
     output:
         directory("results/annotated_genes/"),
     log:
