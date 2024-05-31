@@ -23,7 +23,7 @@ rule blastn:
     shell:
         """
         blastn \
-            -query {input.fasta} \
+            -query {input.fas} \
             -db resources/blastdb/refseq_mitochondrion/refseq_mitochondrion \
             -out {output} \
             -outfmt '6 qseqid staxids bitscore std' \

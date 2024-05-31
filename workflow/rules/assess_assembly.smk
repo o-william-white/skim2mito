@@ -1,7 +1,7 @@
 rule assess_assembly:
     input:
         "results/annotations/{sample}/{sample}.ok",
-        fas="results/assembled_sequence/{sample}.fas",
+        fasta="results/assembled_sequence/{sample}.fasta",
         bam="results/minimap/{sample}.bam",
     output:
         directory("results/assess_assembly/{sample}"),
@@ -11,7 +11,7 @@ rule assess_assembly:
         "../envs/assess_assembly.yaml"
     shell:
         """
-        if [ $(grep -e "^>" -c $FAS) -eq 1 ] ; then
+        if [ $(grep -e "^>" -c {input.fasta}) -eq 1 ] ; then
             echo Single sequence found in fasta > {log}
             python workflow/scripts/assess_assembly.py \
                 --fasta {input.fasta} \
@@ -25,12 +25,12 @@ rule assess_assembly:
             # find bed files and cat
             find results/annotations/{wildcards.sample}/ -type f -name result.bed | while read line; do 
                 cat $line
-            done > results/assess_assembly/{wildcards.sample}.bed
+            done > results/assess_assembly/{wildcards.sample}/{wildcards.sample}.bed
 
             python workflow/scripts/assess_assembly.py \
                 --fasta {input.fasta} \
                 --bam {input.bam} \
-                --bed results/assess_assembly/{wildcards.sample}.bed \
+                --bed results/assess_assembly/{wildcards.sample}/{wildcards.sample}.bed \
                 --sample {wildcards.sample} \
                 --output results/assess_assembly/{wildcards.sample}
         fi

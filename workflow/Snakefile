@@ -25,7 +25,7 @@ include: "rules/alignment_trim.smk"
 include: "rules/iqtree.smk"
 include: "rules/root_iqtree.smk"
 include: "rules/plot_tree.smk"
-include: "rules/final_log.smk"
+#include: "rules/final_log.smk"
 
 
 # one rule to rule them all :)
@@ -47,7 +47,10 @@ if go_reference == "go_fetch":
             expand(
                 "results/fastqc_qc/{sample}_R2.html", sample=sample_data.index.tolist()
             ),
-            get_assembled_samples,
+            get_seqkit_output,
+            get_blobtools_output,
+            get_assess_assembly_output,
+            get_mafft_filtered_output,
             #"results/summary/summary_sample.txt",
             #"results/summary/summary_contig.txt",
             #"results/summary/summary_gene_counts.txt",
@@ -74,7 +77,10 @@ else:
                     "results/fastqc_qc/{sample}_R2.html",
                     sample=sample_data.index.tolist(),
                 ),
-                get_assembled_samples,
+                get_seqkit_output,
+                get_blobtools_output,
+                get_assess_assembly_output,
+                get_mafft_filtered_output,
                 #"results/summary/summary_sample.txt",
                 #"results/summary/summary_contig.txt",
                 #"results/summary/summary_gene_counts.txt" "results/snakemake.ok",

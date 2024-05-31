@@ -17,8 +17,8 @@ rule blobtools:
         "resources/taxdump/typematerial.dmp",
         "resources/taxdump/typeoftype.dmp",
         fas="results/assembled_sequence/{sample}.fasta",
-        bla="results/blastn/{sample}.fasta",
-        bam="results/minimap/{sample}.fasta",
+        bla="results/blastn/{sample}.txt",
+        bam="results/minimap/{sample}.bam",
     output:
         "results/blobtools/{sample}/table.tsv",
     log:

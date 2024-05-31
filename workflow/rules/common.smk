@@ -60,21 +60,33 @@ def get_gene(wildcards):
 
 
 # functions for checkpoints
-def get_assembled_samples(wildcards):
+def get_seqkit_output(wildcards):
     ck_output = checkpoints.assembled_sequence.get(**wildcards).output[0]
     return expand(
         rules.seqkit.output,
         sample=glob_wildcards(os.path.join(ck_output, "{sample}.fasta")).sample,
     )
 
-
-def get_plot_tree_output(wildcards):
-    checkpoint_output = checkpoints.extract_annotated_genes.get(**wildcards).output[0]
+def get_blobtools_output(wildcards):
+    ck_output = checkpoints.assembled_sequence.get(**wildcards).output[0]
     return expand(
-        "results/plot_tree/{i}.png",
-        i=glob_wildcards(os.path.join(checkpoint_output, "{i}.fasta")).i,
+        rules.blobtools.output,
+        sample=glob_wildcards(os.path.join(ck_output, "{sample}.fasta")).sample,
     )
 
+def get_assess_assembly_output(wildcards):
+    ck_output = checkpoints.assembled_sequence.get(**wildcards).output[0]
+    return expand(
+        rules.assess_assembly.output,
+        sample=glob_wildcards(os.path.join(ck_output, "{sample}.fasta")).sample,
+    )
+
+#def get_plot_tree_output(wildcards):
+#    checkpoint_output = checkpoints.assembled_sequence.get(**wildcards).output[0]
+#    return expand(
+#        rules.plot_tree.output,
+#        i=glob_wildcards(os.path.join(checkpoint_output, "{i}.fasta")).i,
+#    )
 
 def get_mafft_filtered_output(wildcards):
     checkpoint_output = checkpoints.extract_annotated_genes.get(**wildcards).output[0]

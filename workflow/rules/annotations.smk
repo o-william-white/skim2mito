@@ -1,7 +1,7 @@
 rule annotations:
     input:
         expand("resources/mitos_db/{refseq}", refseq=mitos_refseq),
-        fas="results/assembled_sequence/{sample}.fasta",
+        fasta="results/assembled_sequence/{sample}.fasta",
     params:
         refseq=mitos_refseq,
         code=mitos_code,
@@ -17,7 +17,7 @@ rule annotations:
         if [ $(grep circular -c {input.fasta}) -eq 1 ] ; then
             echo Treating mitochondrial seqeunce as circular &> {log}
             runmitos.py \
-                --input {input.fas} \
+                --input {input.fasta} \
                 --code {params.code} \
                 --outdir results/annotations/{wildcards.sample}/ \
                 --refseqver resources/mitos_db/{params.refseq} \
@@ -25,7 +25,7 @@ rule annotations:
         else
             echo Treating mitochndrial seqeunce as linear &> {log}
             runmitos.py \
-                --input {input.fas} \
+                --input {input.fasta} \
                 --code {params.code} \
                 --outdir results/annotations/{wildcards.sample}/ \
                 --refseqver resources/mitos_db/{params.refseq} \
