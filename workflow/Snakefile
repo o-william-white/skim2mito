@@ -25,7 +25,7 @@ include: "rules/alignment_trim.smk"
 include: "rules/iqtree.smk"
 include: "rules/root_iqtree.smk"
 include: "rules/plot_tree.smk"
-#include: "rules/final_log.smk"
+include: "rules/multiqc.smk"
 
 
 # one rule to rule them all :)
@@ -47,16 +47,12 @@ if go_reference == "go_fetch":
             expand(
                 "results/fastqc_qc/{sample}_R2.html", sample=sample_data.index.tolist()
             ),
-            get_seqkit_output,
-            get_blobtools_output,
-            get_assess_assembly_output,
-            get_assembled_samples,
-            get_annotated_samples,
-            get_mafft_output,
-            #"results/summary/summary_sample.txt",
-            #"results/summary/summary_contig.txt",
+            "results/multiqc/multiqc_report.html",
+            #get_assembled_samples,
+            #"results/summary/summary_samples.txt",
+            #"results/summary/summary_contigs.txt",
             #"results/summary/summary_gene_counts.txt",
-            #"results/snakemake.ok",
+            get_plot_tree_output,
 
 else:
     if go_reference == "custom":
@@ -79,12 +75,11 @@ else:
                     "results/fastqc_qc/{sample}_R2.html",
                     sample=sample_data.index.tolist(),
                 ),
-                get_seqkit_output,
-                get_blobtools_output,
-                get_assess_assembly_output,
-                get_assembled_samples,
-                get_annotated_samples,
-                get_mafft_output,
-                #"results/summary/summary_sample.txt",
-                #"results/summary/summary_contig.txt",
-                #"results/summary/summary_gene_counts.txt" "results/snakemake.ok",
+                "results/multiqc/multiqc_report.html",
+                #get_assembled_samples,
+                #"results/summary/summary_samples.txt",
+                #"results/summary/summary_contigs.txt",
+                #"results/summary/summary_gene_counts.txt",
+                get_plot_tree_output,
+                #get_mafft_output,
+

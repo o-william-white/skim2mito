@@ -102,12 +102,12 @@ def get_mafft_output(wildcards):
         i=glob_wildcards(os.path.join(checkpoint_output, "{i}.fasta")).i,
     )
 
-#def get_plot_tree_output(wildcards):
-#    checkpoint_output = checkpoints.assembled_sequence.get(**wildcards).output[0]
-#    return expand(
-#        rules.plot_tree.output,
-#        i=glob_wildcards(os.path.join(checkpoint_output, "{i}.fasta")).i,
-#    )
+def get_plot_tree_output(wildcards):
+    checkpoint_output = checkpoints.extract_annotated_genes.get(**wildcards).output[0]
+    return expand(
+        "results/plot_tree/{i}.png",
+        i=glob_wildcards(os.path.join(checkpoint_output, "{i}.fasta")).i,
+    )
 
 def get_mafft_filtered_output(wildcards):
     checkpoint_output = checkpoints.extract_annotated_genes.get(**wildcards).output[0]

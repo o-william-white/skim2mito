@@ -4,5 +4,6 @@ channels:
   - defaults
 dependencies:
   - r-base =4.3.2
-  - r-tidyverse
+  - r-jsonlite =1.8.8
+  - r-tidyverse =2.0.0
   - bioconductor-ggtree =3.8.0
