@@ -170,3 +170,6 @@ if go_reference == "custom":
     for i in sample_data["gene"].unique():
         if not os.path.exists(i):
             sys.exit(f"Error: gene database path '{i}' does not exist")
+
+wildcard_constraints:
+    sample=r"[^*/~]+",
