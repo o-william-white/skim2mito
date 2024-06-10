@@ -2,7 +2,6 @@ rule summarise:
     input:
         get_seqkit_output,
         get_blobtools_output,
-        get_annotated_samples,
         get_assess_assembly_output,
     output:
         table_sample="results/summary/summary_samples.txt",

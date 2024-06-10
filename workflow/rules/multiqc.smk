@@ -1,9 +1,5 @@
 rule multiqc:
     input:
-        get_seqkit_output,
-        get_blobtools_output,
-        get_annotated_samples,
-        get_assess_assembly_output,
         "results/summary/summary_samples.txt",
         "results/summary/summary_contigs.txt",
         "results/summary/summary_gene_counts.txt",
@@ -19,9 +15,9 @@ rule multiqc:
         sed -i -e 's/--in1/--i/g' results/fastp/*.json
         # change file endings 
         # change file endings to match multiqc
-        cp results/summary/summary_contigs.txt results/summary/summary_contigs_mqc.txt
-        cp results/summary/summary_samples.txt results/summary/summary_samples_mqc.txt
-        cp results/summary/summary_gene_counts.txt results/summary/summary_gene_counts_mqc.txt
+        cp {input[1]} results/summary/summary_contigs_mqc.txt
+        cp {input[0]} results/summary/summary_samples_mqc.txt
+        cp {input[2]} results/summary/summary_gene_counts_mqc.txt
         # multiqc
         multiqc \
             results/fastp \

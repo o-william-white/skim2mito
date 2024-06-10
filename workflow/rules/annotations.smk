@@ -7,15 +7,15 @@ rule annotations:
         code=mitos_code,
     output:
         directory("results/annotations/{sample}/"),
-        ok="results/annotations/{sample}/{sample}.ok",
     log:
         "logs/annotations/{sample}.log",
     conda:
         "../envs/annotations.yaml"
     shell:
         """
+        mkdir -p {output}
         if [ $(grep circular -c {input.fasta}) -eq 1 ] ; then
-            echo Treating mitochondrial seqeunce as circular &> {log}
+            echo Treating mitochondrial sequence as circular &> {log}
             runmitos.py \
                 --input {input.fasta} \
                 --code {params.code} \
@@ -23,7 +23,7 @@ rule annotations:
                 --refseqver resources/mitos_db/{params.refseq} \
                 --refdir . &>> {log}
         else
-            echo Treating mitochndrial seqeunce as linear &> {log}
+            echo Treating mitochndrial sequence as linear &> {log}
             runmitos.py \
                 --input {input.fasta} \
                 --code {params.code} \
@@ -32,5 +32,4 @@ rule annotations:
                 --refdir . \
                 --linear &>> {log}
         fi
-        touch {output.ok}
         """

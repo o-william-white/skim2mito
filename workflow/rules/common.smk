@@ -84,15 +84,18 @@ def get_assess_assembly_output(wildcards):
 def get_annotated_samples(wildcards):
     ck_output = checkpoints.assembled_sequence.get(**wildcards).output[0]
     return expand(
-        "results/annotations/{sample}/{sample}.ok",
+        rules.annotations.output,
         sample=glob_wildcards(os.path.join(ck_output, "{sample}.fasta")).sample,
     )
 
-def get_assembled_samples(wildcards):
-    ck_output = checkpoints.assembled_sequence.get(**wildcards).output[0]
+def get_sucessfully_annotated_samples(wildcards):
+    ck_output = checkpoints.extract_annotated_genes.get(**wildcards).output[1]
+    # get the unique values (before the "/" character) in the first column, exclude the header
+    annotated_samples = list(set(l.strip().split('\t')[0].split('/')[0]
+                                 for i, l in enumerate(open(ck_output).readlines()) if i != 0))
     return expand(
-        rules.seqkit.output,
-        sample=glob_wildcards(os.path.join(ck_output, "{sample}.fasta")).sample,
+        rules.annotations.output,
+        sample=annotated_samples,
     )
 
 def get_mafft_output(wildcards):

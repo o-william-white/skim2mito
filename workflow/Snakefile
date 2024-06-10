@@ -48,10 +48,6 @@ if go_reference == "go_fetch":
                 "results/fastqc_qc/{sample}_R2.html", sample=sample_data.index.tolist()
             ),
             "results/multiqc/multiqc_report.html",
-            #get_assembled_samples,
-            #"results/summary/summary_samples.txt",
-            #"results/summary/summary_contigs.txt",
-            #"results/summary/summary_gene_counts.txt",
             get_plot_tree_output,
 
 else:
@@ -76,10 +72,5 @@ else:
                     sample=sample_data.index.tolist(),
                 ),
                 "results/multiqc/multiqc_report.html",
-                #get_assembled_samples,
-                #"results/summary/summary_samples.txt",
-                #"results/summary/summary_contigs.txt",
-                #"results/summary/summary_gene_counts.txt",
                 get_plot_tree_output,
-                #get_mafft_output,
 

@@ -1,6 +1,6 @@
 rule assess_assembly:
     input:
-        "results/annotations/{sample}/{sample}.ok",
+        get_sucessfully_annotated_samples,
         fasta="results/assembled_sequence/{sample}.fasta",
         bam="results/minimap/{sample}.bam",
     output:

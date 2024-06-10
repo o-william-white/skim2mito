@@ -3,6 +3,7 @@ checkpoint extract_annotated_genes:
         get_annotated_samples,
     output:
         directory("results/annotated_genes/"),
+        summary="results/annotated_genes/summary.txt"
     log:
         "logs/annotated_genes/annotated_genes.log",
     conda:
