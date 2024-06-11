@@ -1,8 +1,8 @@
 rule multiqc:
     input:
-        "results/summary/summary_samples.txt",
-        "results/summary/summary_contigs.txt",
-        "results/summary/summary_gene_counts.txt",
+        "results/summary/summary_samples_mqc.txt",
+        "results/summary/summary_contigs_mqc.txt",
+        "results/summary/summary_gene_counts_mqc.txt",
     output:
         "results/multiqc/multiqc_report.html"
     log:
@@ -13,11 +13,6 @@ rule multiqc:
         """
         # https://github.com/MultiQC/MultiQC/issues/2138
         sed -i -e 's/--in1/--i/g' results/fastp/*.json
-        # change file endings 
-        # change file endings to match multiqc
-        cp {input[1]} results/summary/summary_contigs_mqc.txt
-        cp {input[0]} results/summary/summary_samples_mqc.txt
-        cp {input[2]} results/summary/summary_gene_counts_mqc.txt
         # multiqc
         multiqc \
             results/fastp \

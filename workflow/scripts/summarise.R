@@ -124,6 +124,6 @@ contigs_out [ is.na(contigs_out) ] <- "NA"
 ## write outputs
 
 dir.create("results/summary/", showWarnings = FALSE)
-write.table(samples_out, "results/summary/summary_samples.txt", sep = "\t", col.names = T, row.names = F, quote = F)
-write.table(contigs_out, "results/summary/summary_contigs.txt", sep = "\t", col.names = T, row.names = F, quote = F)
+write.table(samples_out, "results/summary/summary_samples_mqc.txt", sep = "\t", col.names = T, row.names = F, quote = F)
+write.table(contigs_out, "results/summary/summary_contigs_mqc.txt", sep = "\t", col.names = T, row.names = F, quote = F)
 

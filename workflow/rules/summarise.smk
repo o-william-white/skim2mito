@@ -4,8 +4,8 @@ rule summarise:
         get_blobtools_output,
         get_assess_assembly_output,
     output:
-        table_sample="results/summary/summary_samples.txt",
-        table_contig="results/summary/summary_contigs.txt",
+        table_sample="results/summary/summary_samples_mqc.txt",
+        table_contig="results/summary/summary_contigs_mqc.txt",
     log:
         "logs/summarise/summarise.log",
     conda:
