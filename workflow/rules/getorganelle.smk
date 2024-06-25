@@ -9,7 +9,7 @@ if go_reference == "go_fetch":
         params:
             taxid=get_taxid,
         output:
-            ok="results/getorganelle/{sample}/getorganelle.ok",
+            directory("results/getorganelle/{sample}/"),
         log:
             "logs/getorganelle/{sample}.log",
         conda:
@@ -27,7 +27,6 @@ if go_reference == "go_fetch":
                 --max-reads inf \
                 -R 20 \
                 --overwrite &> {log}
-            touch {output.ok}
             """
 
 else:
@@ -41,7 +40,7 @@ else:
                 seed=get_seed,
                 gene=get_gene,
             output:
-                ok="results/getorganelle/{sample}/getorganelle.ok",
+                directory("results/getorganelle/{sample}/"),
             log:
                 "logs/getorganelle/{sample}.log",
             conda:
@@ -59,5 +58,4 @@ else:
                     --max-reads inf \
                     -R 20 \
                     --overwrite &> {log}
-                touch {output.ok}
                 """

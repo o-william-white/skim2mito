@@ -1,21 +1,13 @@
 rule seqkit:
     input:
-        "results/assembled_sequence/{sample}.ok",
+        "results/assembled_sequence/{sample}.fasta",
     output:
-        ok="results/seqkit/{sample}.ok",
+        "results/seqkit/{sample}.txt",
     log:
         "logs/seqkit/{sample}.log",
     conda:
         "../envs/seqkit.yaml"
     shell:
         """
-        FAS=$(echo results/assembled_sequence/{wildcards.sample}.fasta)
-        OUT=$(echo results/seqkit/{wildcards.sample}.txt)
-        if [ -e $FAS ]; then
-            echo Running seqkit for {wildcards.sample} > {log}
-            seqkit stats -b $FAS > $OUT
-        else
-            echo No assembled sequence for {wildcards.sample} > {log}
-        fi
-        touch {output.ok}
+        seqkit stats -b {input} > {output} 2> {log}
         """
