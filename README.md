@@ -1,6 +1,6 @@
-# skim2mt
+# skim2mito
 
-**skim2mt** is a snakemake pipeline for the batch assembly, annotation, and phylogenetic analysis of mitochondrial genomes from low coverage genome skims. The pipeline was designed to work with sequence data from museum collections. However, it should also work with genome skims from recently collected samples.
+**skim2mito** is a snakemake pipeline for the batch assembly, annotation, and phylogenetic analysis of mitochondrial genomes from low coverage genome skims. The pipeline was designed to work with sequence data from museum collections. However, it should also work with genome skims from recently collected samples.
 
 ## Contents
  - [Setup](#setup)
@@ -23,19 +23,19 @@ Once conda is installed, you can pull the github repo and set up the base conda 
 
 ```
 # get github repo
-git clone https://github.com/o-william-white/skim2mt
+git clone https://github.com/o-william-white/skim2mito
 
 # change dir
-cd skim2mt
+cd skim2mito
 
 # setup conda env
-conda env create -n snakemake -f workflow/envs/conda_env.yaml
+conda env create -n skim2mito -f workflow/envs/conda_env.yaml
 conda config --set channel_priority flexible
 ```
 
 <br/>
 <div align="right">
-    <b><a href="#skim2mt">↥ back to top</a></b>
+    <b><a href="#skim2mito">↥ back to top</a></b>
 </div>
 <br/>
 
@@ -45,24 +45,16 @@ Before you run your own data, it is recommended to run the example datasets prov
 
 To run the example data, use the code below. **Note that you need to change the user email to your own address**. The email is required by the Bio Entrez package to fetch reference sequences. The first time you run the pipeline, it will take some time to install each of the conda environments, so it is a good time to take a tea break :).
 ```
-conda activate snakemake
+conda activate skim2mito
 
 snakemake --cores 4 --use-conda --config user_email=user@example_email.com
 ```
 
 <br/>
 <div align="right">
-    <b><a href="#skim2mt">↥ back to top</a></b>
+    <b><a href="#skim2mito">↥ back to top</a></b>
 </div>
 <br/>
-
-## Rule graph
-
-To visualise a rule graph use the command below. **Note that you need to change the user email to your own address**.
-
-```
-snakemake --rulegraph --config user_email=user@example_email.com | dot -Tsvg > rulegraph.svg
-```
 
 ## Input
 
@@ -144,7 +136,7 @@ Yoma_algina | .test/reads/Yoma_algina_1.fq.gz | .test/reads/Yoma_algina_2.fq.gz 
 
 <br/>
 <div align="right">
-    <b><a href="#skim2mt">↥ back to top</a></b>
+    <b><a href="#skim2mito">↥ back to top</a></b>
 </div>
 <br/>
 
@@ -176,7 +168,7 @@ All output files are saved to the `results` direcotry. Below is a table summaris
 
 <br/>
 <div align="right">
-    <b><a href="#skim2mt">↥ back to top</a></b>
+    <b><a href="#skim2mito">↥ back to top</a></b>
 </div>
 <br/>
 
@@ -199,7 +191,7 @@ python workflow/scripts/format_alignments.py  \
 
 <br/>
 <div align="right">
-    <b><a href="#skim2mt">↥ back to top</a></b>
+    <b><a href="#skim2mito">↥ back to top</a></b>
 </div>
 <br/>
 
@@ -212,7 +204,7 @@ snakemake --cores 4 --use-conda --config user_email=user@example_email.com --omi
 
 <br/>
 <div align="right">
-    <b><a href="#skim2mt">↥ back to top</a></b>
+    <b><a href="#skim2mito">↥ back to top</a></b>
 </div>
 <br/>
 
@@ -232,7 +224,7 @@ If you have any questions, please do get in touch in the issues or by email o.wi
 
 <br/>
 <div align="right">
-    <b><a href="#skim2mt">↥ back to top</a></b>
+    <b><a href="#skim2mito">↥ back to top</a></b>
 </div>
 <br/>
 
@@ -258,6 +250,6 @@ Since the pipeline is a wrapper for several other bioinformatic tools we also as
 
 <br/>
 <div align="right">
-    <b><a href="#skim2mt">↥ back to top</a></b>
+    <b><a href="#skim2mito">↥ back to top</a></b>
 </div>
 <br/>
