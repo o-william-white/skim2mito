@@ -29,8 +29,14 @@ git clone https://github.com/o-william-white/skim2mito
 cd skim2mito
 
 # setup conda env
-conda env create -n skim2mito -f workflow/envs/conda_env.yaml
+conda env create -n skim2mito_env -f workflow/envs/conda_env.yaml
 conda config --set channel_priority flexible
+```
+
+If you need to install the conda environment to a specific location, use the following example, where the prefix argument can be updated to include a specific path:
+
+```
+conda env create -n skim2mito_env --prefix /your_path/skim2mito_env -f workflow/envs/conda_env.yaml
 ```
 
 <br/>
@@ -45,9 +51,15 @@ Before you run your own data, it is recommended to run the example datasets prov
 
 To run the example data, use the code below. **Note that you need to change the user email to your own address**. The email is required by the Bio Entrez package to fetch reference sequences. The first time you run the pipeline, it will take some time to install each of the conda environments, so it is a good time to take a tea break :).
 ```
-conda activate skim2mito
+conda activate skim2mito_env
 
 snakemake --cores 4 --use-conda --config user_email=user@example_email.com
+```
+
+Once this has finished, you can generate a snakemake report using the following command. As above, you need to change the user email to your own address.
+
+```
+snakemake --cores 4 --use-conda --config user_email=user@example_email.com --report skim2mito_report.html
 ```
 
 <br/>
@@ -165,6 +177,7 @@ All output files are saved to the `results` direcotry. Below is a table summaris
 | alignment_trim        | Ambiguous parts of alignment removed using either gblocks or clipkit |
 | iqtree                | Iqtree phylogenetic analysis of annotated genes |
 | plot_tree             | Plots of phylogenetic trees |
+| multiqc               | Multiqc summary report |
 
 <br/>
 <div align="right">
@@ -247,6 +260,7 @@ Since the pipeline is a wrapper for several other bioinformatic tools we also as
  - Iqtree https://doi.org/10.1093/molbev/msu300
  - ete3 https://doi.org/10.1093/molbev/msw046
  - ggtree https://doi.org/10.1111/2041-210X.12628
+ - Multiqc https://doi.org/10.1093/bioinformatics/btw354
 
 <br/>
 <div align="right">

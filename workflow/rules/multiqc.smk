@@ -3,6 +3,7 @@ rule multiqc:
         "results/summary/summary_samples_mqc.txt",
         "results/summary/summary_contigs_mqc.txt",
         "results/summary/summary_gene_counts_mqc.txt",
+        get_plot_tree_output,
     output:
         "results/multiqc/multiqc_report.html"
     log:

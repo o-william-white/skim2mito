@@ -48,7 +48,6 @@ if go_reference == "go_fetch":
                 "results/fastqc_qc/{sample}_R2.html", sample=sample_data.index.tolist()
             ),
             "results/multiqc/multiqc_report.html",
-            get_plot_tree_output,
 
 else:
     if go_reference == "custom":
@@ -72,5 +71,4 @@ else:
                     sample=sample_data.index.tolist(),
                 ),
                 "results/multiqc/multiqc_report.html",
-                get_plot_tree_output,
 
