@@ -9,8 +9,6 @@ rule fastqc_qc_fwd:
     log:
         "logs/fastqc_qc/{sample}_R1.log",
     threads: 1
-    resources:
-        mem_mb=1024,
     wrapper:
         "v3.3.6/bio/fastqc"
 
@@ -26,7 +24,5 @@ rule fastqc_qc_rev:
     log:
         "logs/fastqc_qc/{sample}_R2.log",
     threads: 1
-    resources:
-        mem_mb=1024,
     wrapper:
         "v3.3.6/bio/fastqc"

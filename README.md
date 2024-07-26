@@ -1,6 +1,6 @@
-# skim2mt
+# skim2mito
 
-**skim2mt** is a snakemake pipeline for the batch assembly, annotation, and phylogenetic analysis of mitochondrial genomes from low coverage genome skims. The pipeline was designed to work with sequence data from museum collections. However, it should also work with genome skims from recently collected samples.
+**skim2mito** is a snakemake pipeline for the batch assembly, annotation, and phylogenetic analysis of mitochondrial genomes from low coverage genome skims. The pipeline was designed to work with sequence data from museum collections. However, it should also work with genome skims from recently collected samples.
 
 ## Contents
  - [Setup](#setup)
@@ -23,19 +23,25 @@ Once conda is installed, you can pull the github repo and set up the base conda 
 
 ```
 # get github repo
-git clone https://github.com/o-william-white/skim2mt
+git clone https://github.com/o-william-white/skim2mito
 
 # change dir
-cd skim2mt
+cd skim2mito
 
 # setup conda env
-conda env create -n snakemake -f workflow/envs/conda_env.yaml
+conda env create -n skim2mito_env -f workflow/envs/conda_env.yaml
 conda config --set channel_priority flexible
+```
+
+If you need to install the conda environment to a specific location, use the following example, where the prefix argument can be updated to include a specific path:
+
+```
+conda env create -n skim2mito_env --prefix /your_path/skim2mito_env -f workflow/envs/conda_env.yaml
 ```
 
 <br/>
 <div align="right">
-    <b><a href="#skim2mt">↥ back to top</a></b>
+    <b><a href="#skim2mito">↥ back to top</a></b>
 </div>
 <br/>
 
@@ -45,24 +51,22 @@ Before you run your own data, it is recommended to run the example datasets prov
 
 To run the example data, use the code below. **Note that you need to change the user email to your own address**. The email is required by the Bio Entrez package to fetch reference sequences. The first time you run the pipeline, it will take some time to install each of the conda environments, so it is a good time to take a tea break :).
 ```
-conda activate snakemake
+conda activate skim2mito_env
 
 snakemake --cores 4 --use-conda --config user_email=user@example_email.com
 ```
 
+Once this has finished, you can generate a snakemake report using the following command. As above, you need to change the user email to your own address.
+
+```
+snakemake --cores 4 --use-conda --config user_email=user@example_email.com --report skim2mito_report.html
+```
+
 <br/>
 <div align="right">
-    <b><a href="#skim2mt">↥ back to top</a></b>
+    <b><a href="#skim2mito">↥ back to top</a></b>
 </div>
 <br/>
-
-## Rule graph
-
-To visualise a rule graph use the command below. **Note that you need to change the user email to your own address**.
-
-```
-snakemake --rulegraph --config user_email=user@example_email.com | dot -Tsvg > rulegraph.svg
-```
 
 ## Input
 
@@ -144,7 +148,7 @@ Yoma_algina | .test/reads/Yoma_algina_1.fq.gz | .test/reads/Yoma_algina_2.fq.gz 
 
 <br/>
 <div align="right">
-    <b><a href="#skim2mt">↥ back to top</a></b>
+    <b><a href="#skim2mito">↥ back to top</a></b>
 </div>
 <br/>
 
@@ -173,10 +177,11 @@ All output files are saved to the `results` direcotry. Below is a table summaris
 | alignment_trim        | Ambiguous parts of alignment removed using either gblocks or clipkit |
 | iqtree                | Iqtree phylogenetic analysis of annotated genes |
 | plot_tree             | Plots of phylogenetic trees |
+| multiqc               | Multiqc summary report |
 
 <br/>
 <div align="right">
-    <b><a href="#skim2mt">↥ back to top</a></b>
+    <b><a href="#skim2mito">↥ back to top</a></b>
 </div>
 <br/>
 
@@ -199,7 +204,7 @@ python workflow/scripts/format_alignments.py  \
 
 <br/>
 <div align="right">
-    <b><a href="#skim2mt">↥ back to top</a></b>
+    <b><a href="#skim2mito">↥ back to top</a></b>
 </div>
 <br/>
 
@@ -212,7 +217,7 @@ snakemake --cores 4 --use-conda --config user_email=user@example_email.com --omi
 
 <br/>
 <div align="right">
-    <b><a href="#skim2mt">↥ back to top</a></b>
+    <b><a href="#skim2mito">↥ back to top</a></b>
 </div>
 <br/>
 
@@ -232,7 +237,7 @@ If you have any questions, please do get in touch in the issues or by email o.wi
 
 <br/>
 <div align="right">
-    <b><a href="#skim2mt">↥ back to top</a></b>
+    <b><a href="#skim2mito">↥ back to top</a></b>
 </div>
 <br/>
 
@@ -255,9 +260,10 @@ Since the pipeline is a wrapper for several other bioinformatic tools we also as
  - Iqtree https://doi.org/10.1093/molbev/msu300
  - ete3 https://doi.org/10.1093/molbev/msw046
  - ggtree https://doi.org/10.1111/2041-210X.12628
+ - Multiqc https://doi.org/10.1093/bioinformatics/btw354
 
 <br/>
 <div align="right">
-    <b><a href="#skim2mt">↥ back to top</a></b>
+    <b><a href="#skim2mito">↥ back to top</a></b>
 </div>
 <br/>

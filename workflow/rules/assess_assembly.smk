@@ -1,41 +1,37 @@
 rule assess_assembly:
     input:
-        "results/assembled_sequence/{sample}.ok",
-        "results/annotations/{sample}/{sample}.ok",
-        "results/minimap/{sample}.ok",
+        get_sucessfully_annotated_samples,
+        fasta="results/assembled_sequence/{sample}.fasta",
+        bam="results/minimap/{sample}.bam",
     output:
-        ok="results/assess_assembly/{sample}.ok",
+        directory("results/assess_assembly/{sample}"),
     log:
         "logs/assess_assembly/{sample}.log",
     conda:
         "../envs/assess_assembly.yaml"
     shell:
         """
-        FAS=$(echo results/assembled_sequence/{wildcards.sample}.fasta)
-        if [ -e $FAS ]; then
-            if [ $(grep -e "^>" -c $FAS) -eq 1 ] ; then
-                echo Single sequence found in fasta > {log}
-                python workflow/scripts/assess_assembly.py \
-                    --fasta results/assembled_sequence/{wildcards.sample}.fasta \
-                    --bam results/minimap/{wildcards.sample}.bam \
-                    --bed results/annotations/{wildcards.sample}/result.bed \
-                    --sample {wildcards.sample} \
-                    --output results/assess_assembly/
-            else
-                echo More than one sequence found in fasta > {log}
-                # mitos creates subdirectories for each contig
-                # find bed files and cat
-                find results/annotations/{wildcards.sample}/ -type f -name result.bed | while read line; do  cat $line; done > results/assess_assembly/{wildcards.sample}.bed
-
-                python workflow/scripts/assess_assembly.py \
-                    --fasta results/assembled_sequence/{wildcards.sample}.fasta \
-                    --bam results/minimap/{wildcards.sample}.bam \
-                    --bed results/assess_assembly/{wildcards.sample}.bed \
-                    --sample {wildcards.sample} \
-                    --output results/assess_assembly/
-            fi
+        if [ $(grep -e "^>" -c {input.fasta}) -eq 1 ] ; then
+            echo Single sequence found in fasta > {log}
+            python workflow/scripts/assess_assembly.py \
+                --fasta {input.fasta} \
+                --bam {input.bam} \
+                --bed results/annotations/{wildcards.sample}/result.bed \
+                --sample {wildcards.sample} \
+                --output results/assess_assembly/{wildcards.sample} &> {log}
         else
-            echo No assembled sequence for {wildcards.sample} > {log}
+            echo More than one sequence found in fasta > {log}
+            # mitos creates subdirectories for each contig
+            # find bed files and cat
+            mkdir -p results/assess_assembly/{wildcards.sample}
+            find results/annotations/{wildcards.sample}/ -type f -name result.bed | while read line; do 
+                cat $line
+            done > results/assess_assembly/{wildcards.sample}/{wildcards.sample}.bed
+            python workflow/scripts/assess_assembly.py \
+                --fasta {input.fasta} \
+                --bam {input.bam} \
+                --bed results/assess_assembly/{wildcards.sample}/{wildcards.sample}.bed \
+                --sample {wildcards.sample} \
+                --output results/assess_assembly/{wildcards.sample} &> {log}
         fi
-        touch {output.ok}
         """

@@ -1,3 +1,4 @@
+import os
 import argparse
 import pandas as pd
 import pysam
@@ -75,6 +76,10 @@ def gc_content(fas, chrom, start, end):
         return float(gc_count) / float(total_count)
 
 ### main
+
+# create output directory if not already present
+if not os.path.exists(args.output): 
+    os.makedirs(args.output)
 
 # open input files
 fas = pysam.FastaFile(args.fasta)
