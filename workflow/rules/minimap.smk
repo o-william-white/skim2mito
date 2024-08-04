@@ -1,8 +1,8 @@
 rule minimap:
     input:
         fas="results/assembled_sequence/{sample}.fasta",
-        fwd="results/fastp/{sample}_R1.fastq",
-        rev="results/fastp/{sample}_R2.fastq",
+        fwd="results/fastp/{sample}_R1.fq.gz",
+        rev="results/fastp/{sample}_R2.fq.gz",
     output:
         bam = "results/minimap/{sample}.bam",
         stats = "results/minimap/{sample}_stats.txt"
