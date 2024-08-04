@@ -1,6 +1,6 @@
 rule fastqc_qc_fwd:
     input:
-        "results/fastp/{sample}_R1.fastq",
+        "results/fastp/{sample}_R1.fq.gz",
     output:
         html="results/fastqc_qc/{sample}_R1.html",
         zip="results/fastqc_qc/{sample}_R1_fastqc.zip",
@@ -15,7 +15,7 @@ rule fastqc_qc_fwd:
 
 rule fastqc_qc_rev:
     input:
-        "results/fastp/{sample}_R2.fastq",
+        "results/fastp/{sample}_R2.fq.gz",
     output:
         html="results/fastqc_qc/{sample}_R2.html",
         zip="results/fastqc_qc/{sample}_R2_fastqc.zip",
