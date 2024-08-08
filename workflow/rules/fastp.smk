@@ -8,10 +8,10 @@ rule fastp:
     input:
         sample=get_fastq,
     output:
-        trimmed=["results/fastp/{sample}_R1.fastq", "results/fastp/{sample}_R2.fastq"],
-        unpaired1="results/fastp/{sample}_u1.fastq",
-        unpaired2="results/fastp/{sample}_u2.fastq",
-        failed="results/fastp/{sample}.failed.fastq",
+        trimmed=["results/fastp/{sample}_R1.fastq.gz", "results/fastp/{sample}_R2.fastq.gz"],
+        unpaired1="results/fastp/{sample}_u1.fastq.gz",
+        unpaired2="results/fastp/{sample}_u2.fastq.gz",
+        failed="results/fastp/{sample}.failed.fastq.gz",
         html="results/fastp/{sample}_fastp.html",
         json="results/fastp/{sample}_fastp.json",
     log:
@@ -23,6 +23,6 @@ rule fastp:
             rev=reverse_adapter,
         ),
         extra=extra_params,
-    threads: 1
+    threads: 2
     wrapper:
-        "v3.3.6/bio/fastp"
+        "v3.13.8/bio/fastp"

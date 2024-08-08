@@ -1,10 +1,12 @@
 library(tidyverse)
 library(jsonlite)
 
+args = commandArgs(trailingOnly=TRUE)
+
 ## samples
 
 # read sample names
-samples_dat <- read.csv("config/samples.csv", header = T) %>%
+samples_dat <- read.csv(args[1], header = T) %>%
   select(ID)
 
 ## fastp

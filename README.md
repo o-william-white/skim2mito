@@ -47,7 +47,7 @@ conda env create -n skim2mito_env --prefix /your_path/skim2mito_env -f workflow/
 
 ## Example data
 
-Before you run your own data, it is recommended to run the example datasets provided . This will confirm there are no user-specific issues with the setup and it also installs all the dependencies. The example data includes simulated mitochondrial data from 25 different butterfly species. 
+Before you run your own data, it is recommended to run the example datasets provided. This will confirm there are no user-specific issues with the setup and it also installs all the dependencies. The example data includes simulated mitochondrial data from 25 different butterfly species. 
 
 To run the example data, use the code below. **Note that you need to change the user email to your own address**. The email is required by the Bio Entrez package to fetch reference sequences. The first time you run the pipeline, it will take some time to install each of the conda environments, so it is a good time to take a tea break :).
 ```
