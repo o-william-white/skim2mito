@@ -18,6 +18,6 @@ rule go_fetch:
             --max 10 \
             --output results/go_fetch/{wildcards.taxids} \
             --getorganelle \
-            --email params.email \
+            --email {params.email} \
             --overwrite &> {log}
         """
