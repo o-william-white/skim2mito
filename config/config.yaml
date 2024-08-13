@@ -8,7 +8,7 @@ user_email: user@example_email.com
 go_reference: go_fetch
 
 # api for e-utilities 
-user_api: 82df5a6f5cf735302d3cf1fcf48b206cfe09
+user_api: None
 
 # forward adapter
 forward_adapter: AGATCGGAAGAGCACACGTCTGAACTCCAGTCA
