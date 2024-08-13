@@ -7,6 +7,9 @@ user_email: user@example_email.com
 # getorganelle reference (go_fetch, custom)
 go_reference: go_fetch
 
+# api for e-utilities 
+user_api: 82df5a6f5cf735302d3cf1fcf48b206cfe09
+
 # forward adapter
 forward_adapter: AGATCGGAAGAGCACACGTCTGAACTCCAGTCA
 

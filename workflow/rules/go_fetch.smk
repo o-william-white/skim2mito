@@ -1,6 +1,7 @@
 rule go_fetch:
     params:
         email=user_email,
+        api=user_api,
     output:
         "results/go_fetch/{taxids}/gene.fasta",
         "results/go_fetch/{taxids}/seed.fasta",
@@ -19,5 +20,6 @@ rule go_fetch:
             --output results/go_fetch/{wildcards.taxids} \
             --getorganelle \
             --email {params.email} \
+            --api {params.api} \
             --overwrite &> {log}
         """
