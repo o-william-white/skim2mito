@@ -2,9 +2,11 @@
 include: "rules/common.smk"
 if go_reference == "go_fetch":
     include: "rules/go_fetch.smk"
-include: "rules/fastqc_raw.smk"
+include: "rules/fastqc_raw_fwd.smk"
+include: "rules/fastqc_raw_rev.smk"
 include: "rules/fastp.smk"
-include: "rules/fastqc_qc.smk"
+include: "rules/fastqc_qc_fwd.smk"
+include: "rules/fastqc_qc_rev.smk"
 include: "rules/getorganelle.smk"
 include: "rules/assembled_sequence.smk"
 include: "rules/seqkit.smk"
