@@ -31,7 +31,7 @@ parser.add_argument("--output",       help="Output directory.", required=False)
 parser.add_argument("--overwrite",    help="Overwrite output directory.", action="store_true", required=False)
 parser.add_argument("--getorganelle", help="Format seed and gene database for get organelle.", action="store_true", required=False)
 parser.add_argument("--email",        help="Email for Entrez.", required=True)
-parser.add_argument("--api",          help="API for NCBI.", type=str, required=False)
+parser.add_argument("--api",          help="API for NCBI.", type=str, default="None", required=False)
 parser.add_argument("--version",      action="version", version='0.0.1')
 args = parser.parse_args()
 
@@ -67,7 +67,7 @@ Entrez.email = args.email
 
 
 ### set api if given
-if args.api != None:
+if args.api != "None":
     print(f"Using API key: {args.api}") 
     Entrez.api_key = args.api
 
