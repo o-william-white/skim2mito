@@ -17,7 +17,7 @@ fastp_files <- list.files("results/fastp/", pattern = ".json", full.names = T)
 # get read counts from json files
 fastp_list <- lapply(fastp_files, function(x) {
   fastp_json <- fromJSON(x, flatten = T)
-  sample_name <- gsub("fastp/|_fastp.json", "", x)
+  sample_name <- gsub("results/fastp//|_fastp.json", "", x)
   reads_before <- fastp_json$summary$before_filtering$total_reads
   reads_after  <- fastp_json$summary$after_filtering$total_reads
   return(data.frame(ID = sample_name, 
