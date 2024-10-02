@@ -16,7 +16,7 @@ rule multiqc:
         sed -i -e 's/--in1/--i/g' results/fastp/*.json
         # multiqc
         multiqc \
-            results/fastp \
+            results/fastqc_qc \
             results/minimap/ \
             results/summary/ \
             --force \
