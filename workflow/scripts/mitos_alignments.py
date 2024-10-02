@@ -39,11 +39,14 @@ def read_fasta(input_path):
 seq_list = []
 for fas in file_paths(mitos_dir, ".fas"):
     for i in read_fasta(fas):
-        seq_list.append(i)
+        # avoid attempting to add sequences from empty fasta files 
+        if i != (None, ""):
+            seq_list.append(i)
 
 # get a list of all possible genes in annotation 
 # note I ignored _1 _2 and -a -b to denote multiple copies or parts
 # I also removed annotations for OH, OL and trn
+
 genes = []
 for seq in seq_list:
     gene = seq[0].split(";")[3]
