@@ -1,7 +1,6 @@
 channels:
   - conda-forge
   - bioconda
-  - defaults
 dependencies:
   - getorganelle =1.7.7.0
   - trf
