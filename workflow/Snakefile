@@ -83,4 +83,5 @@ else:
                 ),
                 "results/summary/summary_sample.txt",
                 "results/summary/summary_contig.txt",
-                "results/summary/summary_gene_counts.txt" "results/snakemake.ok",
+                "results/summary/summary_gene_counts.txt",
+                "results/snakemake.ok",

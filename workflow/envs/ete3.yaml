@@ -5,3 +5,4 @@ channels:
 dependencies:
   - ete3 =3.1.1
   - xvfbwrapper =0.2.9
+  - python =3.11.10
