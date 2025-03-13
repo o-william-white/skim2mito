@@ -71,7 +71,7 @@ def get_seqkit_output(wildcards):
 def get_blobtools_output(wildcards):
     ck_output = checkpoints.assembled_sequence.get(**wildcards).output[0]
     return expand(
-        rules.blobtools.output,
+        rules.blobtools_filter.output,
         sample=glob_wildcards(os.path.join(ck_output, "{sample}.fasta")).sample,
     )
 
