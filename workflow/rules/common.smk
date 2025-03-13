@@ -2,6 +2,8 @@ import pandas as pd
 import sys
 from snakemake.utils import min_version
 
+
+# define min version
 min_version("8.4.12")
 
 
@@ -12,6 +14,7 @@ configfile: "config/config.yaml"
 # configfile parameters
 user_email = config["user_email"]
 go_reference = config["go_reference"]
+user_api = config["user_api"]
 forward_adapter = config["forward_adapter"]
 reverse_adapter = config["reverse_adapter"]
 fastp_dedup = config["fastp_dedup"]
@@ -30,7 +33,7 @@ else:
     sys.exit(f"Error: samples.csv file '{config['samples']}' does not exist")
 
 
-# functions to get forward and reverse reads from sample data
+# functions to get metadata sample list
 def get_forward(wildcards):
     return sample_data.loc[wildcards.sample, "forward"]
 
@@ -57,13 +60,58 @@ def get_gene(wildcards):
     return sample_data.loc[wildcards.sample, "gene"]
 
 
+# functions for checkpoints
+def get_seqkit_output(wildcards):
+    ck_output = checkpoints.assembled_sequence.get(**wildcards).output[0]
+    return expand(
+        rules.seqkit.output,
+        sample=glob_wildcards(os.path.join(ck_output, "{sample}.fasta")).sample,
+    )
+
+def get_blobtools_output(wildcards):
+    ck_output = checkpoints.assembled_sequence.get(**wildcards).output[0]
+    return expand(
+        rules.blobtools.output,
+        sample=glob_wildcards(os.path.join(ck_output, "{sample}.fasta")).sample,
+    )
+
+def get_assess_assembly_output(wildcards):
+    ck_output = checkpoints.assembled_sequence.get(**wildcards).output[0]
+    return expand(
+        rules.assess_assembly.output,
+        sample=glob_wildcards(os.path.join(ck_output, "{sample}.fasta")).sample,
+    )
+
+def get_annotated_samples(wildcards):
+    ck_output = checkpoints.assembled_sequence.get(**wildcards).output[0]
+    return expand(
+        rules.annotations.output,
+        sample=glob_wildcards(os.path.join(ck_output, "{sample}.fasta")).sample,
+    )
+
+def get_sucessfully_annotated_samples(wildcards):
+    ck_output = checkpoints.extract_annotated_genes.get(**wildcards).output[1]
+    # get the unique values (before the "/" character) in the first column, exclude the header
+    annotated_samples = list(set(l.strip().split('\t')[0].split('/')[0]
+                                 for i, l in enumerate(open(ck_output).readlines()) if i != 0))
+    return expand(
+        rules.annotations.output,
+        sample=annotated_samples,
+    )
+
+def get_mafft_output(wildcards):
+    checkpoint_output = checkpoints.extract_annotated_genes.get(**wildcards).output[0]
+    return expand(
+        "results/mafft/{i}.fasta",
+        i=glob_wildcards(os.path.join(checkpoint_output, "{i}.fasta")).i,
+    )
+
 def get_plot_tree_output(wildcards):
     checkpoint_output = checkpoints.extract_annotated_genes.get(**wildcards).output[0]
     return expand(
         "results/plot_tree/{i}.png",
         i=glob_wildcards(os.path.join(checkpoint_output, "{i}.fasta")).i,
     )
-
 
 def get_mafft_filtered_output(wildcards):
     checkpoint_output = checkpoints.extract_annotated_genes.get(**wildcards).output[0]
@@ -123,3 +171,6 @@ if go_reference == "custom":
     for i in sample_data["gene"].unique():
         if not os.path.exists(i):
             sys.exit(f"Error: gene database path '{i}' does not exist")
+
+wildcard_constraints:
+    sample=r"[^*/~]+",

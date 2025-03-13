@@ -6,7 +6,7 @@ import shutil
 import argparse
 from Bio import Entrez, SeqIO
 import time
-import urllib
+import urllib.error
 import subprocess
 from random import Random
 
@@ -31,7 +31,7 @@ parser.add_argument("--output",       help="Output directory.", required=False)
 parser.add_argument("--overwrite",    help="Overwrite output directory.", action="store_true", required=False)
 parser.add_argument("--getorganelle", help="Format seed and gene database for get organelle.", action="store_true", required=False)
 parser.add_argument("--email",        help="Email for Entrez.", required=True)
-parser.add_argument("--api",          help="API for NCBI.", type=str, required=False)
+parser.add_argument("--api",          help="API for NCBI.", type=str, default="None", required=False)
 parser.add_argument("--version",      action="version", version='0.0.1')
 args = parser.parse_args()
 
@@ -67,7 +67,7 @@ Entrez.email = args.email
 
 
 ### set api if given
-if args.api != None:
+if args.api != "None":
     print(f"Using API key: {args.api}") 
     Entrez.api_key = args.api
 
@@ -77,7 +77,7 @@ if args.api != None:
 # increase sleep time between tries
 Entrez.sleep_between_tries = 20
 # max tries 
-Entrez.max_tries = 20
+Entrez.max_tries = 30
 
 
 ### functions
@@ -95,19 +95,33 @@ def create_dir(dirpath, overwrite):
 
 # get taxonomic id from scientific name
 def get_taxonomic_id(taxonomy):
-    try:
-        handle = Entrez.esearch(db="Taxonomy", term=f"{taxonomy}[Scientific Name]")
-        record = Entrez.read(handle)
-    except urllib.error.HTTPError as e:
-        if e.code == 400:
-            print("HTTP Error 400: get_taxonomic_id bad request. Retrying in 10 seconds...")
-            time.sleep(10)  # Wait for 10 seconds
+    max_retries = 5
+    retry_delay = 20  # seconds
+
+    for attempt in range(max_retries):
+        try:
             handle = Entrez.esearch(db="Taxonomy", term=f"{taxonomy}[Scientific Name]")
             record = Entrez.read(handle)
-        else:
-            sys.exit(f"HTTP Error {e}: get_taxonomic_id bad request. Exiting.")
-    return str(record["IdList"][0])
-assert get_taxonomic_id("Arabidopsis thaliana") == "3702"
+            if 'IdList' in record and record['IdList']:
+                return str(record["IdList"][0])
+            else:
+                sys.exit("No taxonomic ID found. Exiting.")
+        except urllib.error.HTTPError as e:
+            if e.code == 400:
+                print("HTTP Error 400: get_taxonomic_id bad request. Retrying in 20 seconds...")
+            if e.code == 500:
+                print("HTTP Error 500: Server error. Retrying in 20 seconds...")
+            if e.code == 429:
+                print("HTTP Error 429: Server error. Retrying in 20 seconds...")
+            else:
+                sys.exit(f"HTTP Error {e.code}: get_taxonomic_id request failed. Exiting.")
+            time.sleep(retry_delay)
+        except Exception as e:
+            sys.exit(f"An error occurred: {e}")
+
+    sys.exit("Maximum retries reached. Exiting.")
+assert get_taxonomic_id("Arabidopsis thaliana") == "3702" # Validate the function
+
 
 # check if taxonomy id exists
 def taxid_exists(taxid):
@@ -163,24 +177,33 @@ def scientific_name_exists(taxonomy):
         return False
 assert scientific_name_exists("Arabidopsis") == True
 
+
 # get lineage from taxid
-def get_lineage(taxid):
-    try:
-        # efetch
-        handle = Entrez.efetch(db="Taxonomy", id=taxid, retmode="xml")
-        record = Entrez.read(handle)
-    except urllib.error.HTTPError as e:
-        if e.code == 400:
-            print("HTTP Error 400: get_lineage bad request. Retrying in 10 seconds...")
-            time.sleep(10)  # Wait for 10 seconds
+def get_lineage(taxid, retries=5):
+    for attempt in range(retries):
+        try:
             handle = Entrez.efetch(db="Taxonomy", id=taxid, retmode="xml")
             record = Entrez.read(handle)
-        else:
-            sys.exit(f"HTTP Error {e}: get_lineage bad request. Exiting.")
-    # get lineage
-    lineage = record[0]["Lineage"].split("; ")[::-1]
-    # return lineage
-    return lineage
+            #get lineage
+            lineage = record[0]["Lineage"].split("; ")[::-1]
+            return lineage
+        except urllib.error.HTTPError as e:
+            if e.code == 400:
+                print("HTTP Error 400: get_lineage bad request.")
+                time.sleep(10)  
+            elif e.code == 500:
+                print("HTTP Error 500: Server error. Retrying in 20 seconds...")
+                time.sleep(20)  
+            elif e.code == 429:
+                print("HTTP Error 429: Too many requests. Retrying in 30 seconds...")
+                time.sleep(30) 
+            else:
+                print(f"HTTP Error {e.code}: get_lineage encountered an error. Exiting.")
+                break
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}. Exiting.")
+            break
+    return None
 
 #assert get_lineage(3701) == ["Camelineae", "Brassicaceae", "Brassicales", "malvids", "rosids", "Pentapetalae", "Gunneridae", "eudicotyledons", "Mesangiospermae", "Magnoliopsida", "Spermatophyta", "Euphyllophyta", "Tracheophyta", "Embryophyta", "Streptophytina", "Streptophyta", "Viridiplantae", "Eukaryota", "cellular organisms"]
 
@@ -523,5 +546,3 @@ if args.getorganelle:
     format_gene(args.output, args.target)
 
 print("\ngo_fetch complete!")
-
-

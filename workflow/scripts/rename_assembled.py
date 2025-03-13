@@ -1,65 +1,67 @@
 import os
-import argparse
+import logging
 
 # simple python script to rename assembled sequence
 # a two column table is written with new and old names
 
-# argparse
-parser = argparse.ArgumentParser()
-parser.add_argument("--input",     help = "Input fasta",      required=True)
-parser.add_argument("--sample",    help = "Sample name",      required=True)
-parser.add_argument("--output",    help = "Output directory", required=True)
-args = parser.parse_args()
+logger = logging.getLogger('logging')
+fh = logging.FileHandler(str(snakemake.log[0]))
+fh.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+fh.setFormatter(formatter)
+logger.addHandler(fh)
 
-# function to parse a fasta file
+
 def read_fasta(filename):
-    name, seq = None,""
-    fasta = open(filename)
-    for line in fasta:
-        if line.startswith('>') and name == None:
-            name = line.rstrip('\n').replace('>','')
-        else:
-            if line.startswith('>') and name != None:
-                yield [name, seq]
-                name = line.rstrip('\n').replace('>','')
-                seq = ''
+    name, seq = None, ""
+    with open(filename) as fasta:
+        for line in fasta:
+            if line.startswith('>') and name is None:
+                name = line.rstrip('\n').replace('>', '')
             else:
-                seq = seq + line.rstrip('\n')
-    yield [name, seq]
-    fasta.close()
+                if line.startswith('>') and name is not None:
+                    yield name, seq
+                    name = line.rstrip('\n').replace('>', '')
+                    seq = ''
+                else:
+                    seq = seq + line.rstrip('\n')
+        yield name, seq
 
-# function to write a remaned fasta and summary of name changes 
+
+# function to write a renamed fasta and summary of name changes
 def rename_fasta(fasta, sample_name, output_prefix):
     # open output files
-    new_fasta = open(f"{output_prefix}.fasta", "w")
-    new_names = open(f"{output_prefix}.txt",   "w")
-    # set contig number to iterate over  
-    contig_number = 0
-    # iterate through fasta
-    for i in fasta:
-        name, sequence = i[0], i[1]
-        if "circular" in name:
-            # define short name if sequence circular
-            short_name = f"{sample_name}_circular"
-        else: 
-            # define short name if contig
-            short_name = f"{sample_name}_contig{contig_number}"
-        # write to output files
-        new_fasta.write(f">{short_name}\n{sequence}\n")
-        new_names.write(f"{short_name}\t{name}\n")
-        # increase contig iterator
-        contig_number += 1
-    # close output files
-    new_fasta.close()
-    new_names.close()
+    with (open(f"{output_prefix}.fasta", "w") as new_fasta,
+          open(os.path.join(snakemake.output[0], "rename.txt"), "a+") as name_file):
+        # iterate through fasta
+        for contig_number, (name, sequence) in enumerate(fasta):
+            if "circular" in name:
+                # define short name if sequence circular
+                short_name = f"{sample_name}_circular"
+            else:
+                # define short name if contig
+                short_name = f"{sample_name}_contig{contig_number}"
+            # write to output files
+            new_fasta.write(f">{short_name}\n{sequence}\n")
+            name_file.write(f"{short_name}\t{name}\n")
 
-# make output dir if not already present
-if not os.path.exists(args.output):
-    os.mkdir(args.output)
 
-# read fasta
-fas = read_fasta(args.input)
+try:
+    # make output dir if not already present
+    if not os.path.exists(snakemake.output[0]):
+        os.mkdir(snakemake.output[0])
 
-# rename and write fasta and summary file
-rename_fasta(fas, args.sample, f"{args.output}/{args.sample}")
+    for getorganelle_output in snakemake.input:
+        sample = os.path.basename(getorganelle_output)
+        path_sequences = [os.path.join(getorganelle_output, f)
+                          for f in os.listdir(getorganelle_output) if "path_sequence" in f]
+        if len(path_sequences) != 0:
+            # read fasta
+            fas = read_fasta(path_sequences[0])  # only read the first file
+            # rename and write fasta and summary file
+            rename_fasta(fas, sample, os.path.join(snakemake.output[0], sample))
 
+except Exception as e:
+    print(e)
+    logger.error(e, exc_info=True)
+    exit(1)

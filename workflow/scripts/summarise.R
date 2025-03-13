@@ -1,141 +1,131 @@
-#!/bin/Rscript
+library(tidyverse)
+library(jsonlite)
+
 args = commandArgs(trailingOnly=TRUE)
 
-# get output dir and output_path from arguments
-output_dir <- args[1]
-output_type <- args[2] # mitos or barrnap
-output_path <- args[3]
+## samples
 
-library(tidyverse)
+# read sample names
+samples_dat <- read.csv(args[1], header = T) %>%
+  select(ID)
 
-# get list of samples
-sample_list <- list.files(path = paste0(output_dir, "/blobtools/"))
+## fastp
 
-dat_list <- lapply(sample_list, function(sample) {
-  
-  # test 
-  # sample <- "Bath_M299691"
-  
-  # check blobtools file exists
-  if(file.exists(paste0(output_dir, "/blobtools/", sample, "/table.tsv"))) {
-    
-    # set column names 
-    column_names <- c("index","identifiers","gc","length","cov","superkingdom","kingdom","phylum","class","order","family","species")
-    
-    # read blobtools output 
-    blobtools <- read.table(paste0(output_dir, "/blobtools/", sample, "/table.tsv"), header = T, sep = "\t", col.names = column_names)
-    
-    # add column for sample name
-    blobtools <- cbind(sample = sample, blobtools)
-    
-    # create lineage as comma separated string
-    blobtools <- mutate(blobtools, lineage = paste(superkingdom,
-                                                   kingdom,
-                                                   phylum,
-                                                   class,
-                                                   order,
-                                                   family,
-                                                   species, sep = ",")) 
-    
-    # select columns 
-    blobtools <-  select(blobtools, 
-                         index,
-                         identifiers,
-                         gc,
-                         length,
-                         cov, 
-                         lineage)
+# get fastp json paths
+fastp_files <- list.files("results/fastp/", pattern = ".json", full.names = T)
 
-    # one sequence 
-    if(nrow(blobtools) == 1) {
-
-      if(output_type == "mitos") {
-
-        df <- read.table(paste0(output_dir, "/annotations/", sample, "/result.bed"),
-                       col.names = c("identifiers", "start", "stop", "name", "score", "orientation"))
-
-        df <- filter(df, !str_detect(name, "OH|OL|trn"))
-
-        df <- arrange(df, name)
-
-        gene_names <- paste0(df$name, collapse = ",")
-
-      } else {
-
-        if(output_type == "barrnap"){
-
-          df <- read.table(paste0(output_dir, "/annotations/", sample, "/result.gff"), 
-                  sep = "\t", col.names = c("sequence", "source", "feature", "start", "end", "score", "strand", "frame", "attribute"))
-
-          df <- arrange(df, attribute)
-
-          df <- mutate(df, gene = gsub("Name=", "", str_split_i(attribute, ";", 1)))
-
-          gene_names <- paste0(df$gene, collapse = ",")
-
-        }
-
-      }
-        
-      blobtools$annotations <- gene_names
-    
-    # more than one sequence
-    } else {
-    
-      list_bed <- sapply(blobtools$index, function(x) {
-        
-        if(output_type == "mitos") {
-
-          df <- read.table(paste0(output_dir, "/annotations/", sample, "/", x, "/result.bed"), 
-                         col.names = c("identifiers", "start", "stop", "name", "score", "orientation"))
-
-          df <- filter(df, !str_detect(name, "OH|OL|trn"))
-
-          df <- arrange(df, name)
-
-          gene_names <- paste0(df$name, collapse = ",")
-          
-        } else {
-
-          if(output_type == "barrnap"){
-
-            df <- read.table(paste0(output_dir, "/annotations/", sample, "/result.gff"),
-                           sep = "\t", col.names = c("sequence", "source", "feature", "start", "end", "score", "strand", "frame", "attribute"))
-
-            df <- arrange(df, attribute)
-
-            df <- mutate(df, gene = gsub("Name=", "", str_split_i(attribute, ";", 1)))
-
-            gene_names <- paste0(df$gene, collapse = ",")
-
-          }
-
-        }
-        
-        gene_names
-        
-      })
-      
-      df2 <- data.frame(index = blobtools$index, annotations = list_bed)
-      
-      blobtools <- left_join(blobtools, df2, by = "index")
-    
-      } 
-  
-    # remove sample name from column names
-    colnames(blobtools) <- gsub(paste0(sample, "_"), "", colnames(blobtools))
-    
-    # return blobtools output
-    return(blobtools)
-    
-  }
-  
+# get read counts from json files
+fastp_list <- lapply(fastp_files, function(x) {
+  fastp_json <- fromJSON(x, flatten = T)
+  sample_name <- gsub("results/fastp//|_fastp.json", "", x)
+  reads_before <- fastp_json$summary$before_filtering$total_reads
+  reads_after  <- fastp_json$summary$after_filtering$total_reads
+  return(data.frame(ID = sample_name, 
+                    reads_raw = reads_before, 
+                    reads_qc = reads_after))
 })
 
-# rbind to dataframe
-dat <- do.call("rbind", dat_list)
+# rbind list
+fastp_dat <- do.call("rbind", fastp_list)
 
-# write output
-write.table(dat, output_path, sep = "\t", quote = F, col.names = T, row.names = F)
+## seqkit
 
+# get seqkit file paths
+seqkit_files <- list.files("results/seqkit/", pattern = ".txt", full.names = T)
+
+# read as list
+seqkit_list <- lapply(seqkit_files, function(x) read.table(x, header = T))
+
+# rbind list
+seqkit_dat <- do.call("rbind", seqkit_list)
+
+# remove commas
+seqkit_dat[] <- lapply(seqkit_dat, function(x) {
+  gsub(",","", x)
+})
+
+# format seqkit data
+seqkit_dat <- seqkit_dat %>%
+  mutate(file = gsub("results/seqkit/|\\.fasta", "", file)) %>%
+  select(file, num_seqs, sum_len, min_len, avg_len, max_len) %>%
+  rename("ID" = "file", 
+         "N seqs" = "num_seqs", 
+         "Sum length" = "sum_len", 
+         "Min. length" = "min_len", 
+         "Avg. length" = "avg_len",
+         "Max. length" = "max_len")
+
+## blobtools
+
+# get blobtools paths
+blobtools_files <- list.files("results/blobtools/", recursive = T, pattern = "table.tsv", full.names = T)
+
+# read as list
+blobtools_list <- lapply(blobtools_files, function(x) {
+  read.table(x, header = T, sep = "\t", 
+             col.names = c("Index","Contig","GC","Length","Coverage",
+                           "Superkingdom","Kingdom","Phylum","Class",
+                           "Order","Family","Species"))
+  })
+
+# rbind list
+blobtools_dat <- do.call("rbind", blobtools_list)
+
+# add sample names
+blobtools_dat <- cbind(ID = gsub("_circular$|_contig\\d*$","", blobtools_dat$Contig), 
+      blobtools_dat)
+
+## annotations
+
+# get annotations file paths
+annotations_files <- list.files("results/annotations/", recursive = T, pattern = "result.bed", full.names = T)
+
+# read as list
+annotations_list <- lapply(annotations_files, function(x) {
+  read.table(x, header = F, sep = "\t", 
+             col.names =c("identifiers", "start", "stop", "name", "score", "orientation") )
+})
+
+# rbind list
+annotations_dat <- do.call("rbind", annotations_list)
+
+# add sample names
+annotations_dat <- cbind(ID = gsub("_circular$|_contig\\d*$","", annotations_dat$identifiers), 
+                       annotations_dat)
+
+# remove OH, OL and trn* annotations
+annotations_dat <- annotations_dat %>% 
+  filter(!str_detect(name, "OH|OL|trn")) %>% 
+  arrange(ID, name)
+
+# summarise annotations per contig
+annotations_dat <- annotations_dat %>%
+  group_by(identifiers) %>%
+  summarise(genes = n(), 
+            cox1 = sum(name == "cox1"), 
+            genes_list = paste0(name, collapse = ",")) %>%
+  rename("Contig" = "identifiers", 
+         "N. genes" = "genes", 
+         "Cox1" = "cox1", 
+         "Genes list" = "genes_list")
+
+## join 
+
+samples_out <- left_join(samples_dat, fastp_dat, by = "ID") %>%
+  rename("Reads raw" = "reads_raw", 
+         "Reads QC" = "reads_qc") %>%
+  left_join(., seqkit_dat, by = "ID")
+
+samples_out [ is.na(samples_out) ] <- "NA"
+
+contigs_out <- left_join(samples_dat, blobtools_dat, by = "ID") %>%
+  left_join(., annotations_dat, by = "Contig") 
+
+contigs_out [ is.na(contigs_out) ] <- "NA"
+
+## write outputs
+
+dir.create("results/summary/", showWarnings = FALSE)
+write.table(samples_out, "results/summary/summary_samples_mqc.txt", sep = "\t", col.names = T, row.names = F, quote = F)
+write.table(contigs_out, "results/summary/summary_contigs_mqc.txt", sep = "\t", col.names = T, row.names = F, quote = F)
 

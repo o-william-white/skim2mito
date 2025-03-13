@@ -1,9 +1,12 @@
 # load rules
 include: "rules/common.smk"
-include: "rules/go_fetch.smk"
-include: "rules/fastqc_raw.smk"
+if go_reference == "go_fetch":
+    include: "rules/go_fetch.smk"
+include: "rules/fastqc_raw_fwd.smk"
+include: "rules/fastqc_raw_rev.smk"
 include: "rules/fastp.smk"
-include: "rules/fastqc_qc.smk"
+include: "rules/fastqc_qc_fwd.smk"
+include: "rules/fastqc_qc_rev.smk"
 include: "rules/getorganelle.smk"
 include: "rules/assembled_sequence.smk"
 include: "rules/seqkit.smk"
@@ -25,7 +28,7 @@ include: "rules/alignment_trim.smk"
 include: "rules/iqtree.smk"
 include: "rules/root_iqtree.smk"
 include: "rules/plot_tree.smk"
-include: "rules/final_log.smk"
+include: "rules/multiqc.smk"
 
 
 # one rule to rule them all :)
@@ -33,14 +36,6 @@ if go_reference == "go_fetch":
 
     rule all:
         input:
-            expand(
-                "results/go_fetch/{taxids}/gene.fasta",
-                taxids=list(set(sample_data["taxid"])),
-            ),
-            expand(
-                "results/go_fetch/{taxids}/seed.fasta",
-                taxids=list(set(sample_data["taxid"])),
-            ),
             expand(
                 "results/fastqc_raw/{sample}_R1.html",
                 sample=sample_data.index.tolist(),
@@ -55,10 +50,7 @@ if go_reference == "go_fetch":
             expand(
                 "results/fastqc_qc/{sample}_R2.html", sample=sample_data.index.tolist()
             ),
-            "results/summary/summary_sample.txt",
-            "results/summary/summary_contig.txt",
-            "results/summary/summary_gene_counts.txt",
-            "results/snakemake.ok",
+            "results/multiqc/multiqc_report.html",
 
 else:
     if go_reference == "custom":
@@ -81,7 +73,12 @@ else:
                     "results/fastqc_qc/{sample}_R2.html",
                     sample=sample_data.index.tolist(),
                 ),
+<<<<<<< HEAD
                 "results/summary/summary_sample.txt",
                 "results/summary/summary_contig.txt",
                 "results/summary/summary_gene_counts.txt",
                 "results/snakemake.ok",
+=======
+                "results/multiqc/multiqc_report.html",
+
+>>>>>>> main

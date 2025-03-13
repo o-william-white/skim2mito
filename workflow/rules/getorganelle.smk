@@ -2,12 +2,14 @@ if go_reference == "go_fetch":
 
     rule getorganelle:
         input:
-            fwd="results/fastp/{sample}_R1.fastq",
-            rev="results/fastp/{sample}_R2.fastq",
+            expand("results/go_fetch/{taxids}/gene.fasta", taxids=list(set(sample_data["taxid"]))),
+            expand("results/go_fetch/{taxids}/seed.fasta", taxids=list(set(sample_data["taxid"]))),
+            fwd="results/fastp/{sample}_R1.fastq.gz",
+            rev="results/fastp/{sample}_R2.fastq.gz",
         params:
             taxid=get_taxid,
         output:
-            ok="results/getorganelle/{sample}/getorganelle.ok",
+            directory("results/getorganelle/{sample}/"),
         log:
             "logs/getorganelle/{sample}.log",
         conda:
@@ -25,7 +27,6 @@ if go_reference == "go_fetch":
                 --max-reads inf \
                 -R 20 \
                 --overwrite &> {log}
-            touch {output.ok}
             """
 
 else:
@@ -33,13 +34,13 @@ else:
 
         rule getorganelle:
             input:
-                fwd="results/fastp/{sample}_R1.fastq",
-                rev="results/fastp/{sample}_R2.fastq",
+                fwd="results/fastp/{sample}_R1.fastq.gz",
+                rev="results/fastp/{sample}_R2.fastq.gz",
             params:
                 seed=get_seed,
                 gene=get_gene,
             output:
-                ok="results/getorganelle/{sample}/getorganelle.ok",
+                directory("results/getorganelle/{sample}/"),
             log:
                 "logs/getorganelle/{sample}.log",
             conda:
@@ -57,5 +58,4 @@ else:
                     --max-reads inf \
                     -R 20 \
                     --overwrite &> {log}
-                touch {output.ok}
                 """

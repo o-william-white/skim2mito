@@ -1,27 +1,19 @@
 rule minimap:
     input:
-        "results/assembled_sequence/{sample}.ok",
-        fwd="results/fastp/{sample}_R1.fastq",
-        rev="results/fastp/{sample}_R2.fastq",
+        fas="results/assembled_sequence/{sample}.fasta",
+        fwd="results/fastp/{sample}_R1.fastq.gz",
+        rev="results/fastp/{sample}_R2.fastq.gz",
     output:
-        ok="results/minimap/{sample}.ok",
+        bam = "results/minimap/{sample}.bam",
+        stats = "results/minimap/{sample}_stats.txt"
     log:
         "logs/minimap/{sample}.log",
     conda:
         "../envs/minimap2.yaml"
     shell:
         """
-        FAS=$(echo results/assembled_sequence/{wildcards.sample}.fasta)
-        OUT=$(echo results/minimap/{wildcards.sample}.bam)
-        STA=$(echo results/minimap/{wildcards.sample}_stats.txt)
-        if [ -e $FAS ]; then
-            echo Running minimap for {wildcards.sample} > {log}
-            minimap2 -ax sr $FAS {input.fwd} {input.rev} 2> {log} | samtools view -b -F 4 | samtools sort -O BAM -o $OUT - 2>> {log}
-            samtools index $OUT 2>> {log}
-            samtools index -c $OUT 2>> {log}
-            samtools stats $OUT > $STA
-        else
-            echo No assembled sequence for {wildcards.sample} > {log}
-        fi
-        touch {output.ok}
+        minimap2 -ax sr {input.fas} {input.fwd} {input.rev} 2> {log} | samtools view -b -F 4 | samtools sort -O BAM -o {output.bam} - 2>> {log}
+        samtools index {output.bam} 2>> {log}
+        samtools index -c {output.bam} 2>> {log}
+        samtools stats {output.bam} > {output.stats}
         """

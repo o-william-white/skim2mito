@@ -89,7 +89,7 @@ sample_names.sort()
 out = open(args.output, "w")
 
 # define column names
-column_names = ["sample"]
+column_names = ["ID"]
 column_names.extend(list(dict_genes_sorted.keys()))
 
 # write column names
