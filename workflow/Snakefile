@@ -73,12 +73,6 @@ else:
                     "results/fastqc_qc/{sample}_R2.html",
                     sample=sample_data.index.tolist(),
                 ),
-<<<<<<< HEAD
-                "results/summary/summary_sample.txt",
-                "results/summary/summary_contig.txt",
-                "results/summary/summary_gene_counts.txt",
-                "results/snakemake.ok",
-=======
                 "results/multiqc/multiqc_report.html",
 
->>>>>>> main
+
