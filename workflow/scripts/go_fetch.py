@@ -6,7 +6,7 @@ import shutil
 import argparse
 from Bio import Entrez, SeqIO
 import time
-import urllib.error
+import urllib
 import subprocess
 from random import Random
 
@@ -31,8 +31,8 @@ parser.add_argument("--output",       help="Output directory.", required=False)
 parser.add_argument("--overwrite",    help="Overwrite output directory.", action="store_true", required=False)
 parser.add_argument("--getorganelle", help="Format seed and gene database for get organelle.", action="store_true", required=False)
 parser.add_argument("--email",        help="Email for Entrez.", required=True)
-parser.add_argument("--api",          help="API for NCBI.", type=str, default="None", required=False)
-parser.add_argument("--version",      action="version", version='0.0.1')
+parser.add_argument("--api",          help="API for NCBI.", type=str, required=False)
+parser.add_argument("--version",      action="version", version='1.0.0')
 args = parser.parse_args()
 
 ### additional checks
@@ -67,7 +67,7 @@ Entrez.email = args.email
 
 
 ### set api if given
-if args.api != "None":
+if args.api != None:
     print(f"Using API key: {args.api}") 
     Entrez.api_key = args.api
 
@@ -77,7 +77,7 @@ if args.api != "None":
 # increase sleep time between tries
 Entrez.sleep_between_tries = 20
 # max tries 
-Entrez.max_tries = 30
+Entrez.max_tries = 20
 
 
 ### functions
@@ -95,33 +95,19 @@ def create_dir(dirpath, overwrite):
 
 # get taxonomic id from scientific name
 def get_taxonomic_id(taxonomy):
-    max_retries = 5
-    retry_delay = 20  # seconds
-
-    for attempt in range(max_retries):
-        try:
+    try:
+        handle = Entrez.esearch(db="Taxonomy", term=f"{taxonomy}[Scientific Name]")
+        record = Entrez.read(handle)
+    except urllib.error.HTTPError as e:
+        if e.code == 400:
+            print("HTTP Error 400: get_taxonomic_id bad request. Retrying in 10 seconds...")
+            time.sleep(10)  # Wait for 10 seconds
             handle = Entrez.esearch(db="Taxonomy", term=f"{taxonomy}[Scientific Name]")
             record = Entrez.read(handle)
-            if 'IdList' in record and record['IdList']:
-                return str(record["IdList"][0])
-            else:
-                sys.exit("No taxonomic ID found. Exiting.")
-        except urllib.error.HTTPError as e:
-            if e.code == 400:
-                print("HTTP Error 400: get_taxonomic_id bad request. Retrying in 20 seconds...")
-            if e.code == 500:
-                print("HTTP Error 500: Server error. Retrying in 20 seconds...")
-            if e.code == 429:
-                print("HTTP Error 429: Server error. Retrying in 20 seconds...")
-            else:
-                sys.exit(f"HTTP Error {e.code}: get_taxonomic_id request failed. Exiting.")
-            time.sleep(retry_delay)
-        except Exception as e:
-            sys.exit(f"An error occurred: {e}")
-
-    sys.exit("Maximum retries reached. Exiting.")
-assert get_taxonomic_id("Arabidopsis thaliana") == "3702" # Validate the function
-
+        else:
+            sys.exit(f"HTTP Error {e}: get_taxonomic_id bad request. Exiting.")
+    return str(record["IdList"][0])
+assert get_taxonomic_id("Arabidopsis thaliana") == "3702"
 
 # check if taxonomy id exists
 def taxid_exists(taxid):
@@ -177,33 +163,41 @@ def scientific_name_exists(taxonomy):
         return False
 assert scientific_name_exists("Arabidopsis") == True
 
-
-# get lineage from taxid
-def get_lineage(taxid, retries=5):
-    for attempt in range(retries):
-        try:
+# get rank from taxid
+def get_rank(taxid):
+    try:
+        # efetch
+        handle = Entrez.efetch(db="Taxonomy", id=taxid, retmode="xml")
+        record = Entrez.read(handle)
+    except urllib.error.HTTPError as e:
+        if e.code == 400:
+            print("HTTP Error 400: get_rank bad request. Retrying in 10 seconds...")
+            time.sleep(10)  # Wait for 10 seconds
             handle = Entrez.efetch(db="Taxonomy", id=taxid, retmode="xml")
             record = Entrez.read(handle)
-            #get lineage
-            lineage = record[0]["Lineage"].split("; ")[::-1]
-            return lineage
-        except urllib.error.HTTPError as e:
-            if e.code == 400:
-                print("HTTP Error 400: get_lineage bad request.")
-                time.sleep(10)  
-            elif e.code == 500:
-                print("HTTP Error 500: Server error. Retrying in 20 seconds...")
-                time.sleep(20)  
-            elif e.code == 429:
-                print("HTTP Error 429: Too many requests. Retrying in 30 seconds...")
-                time.sleep(30) 
-            else:
-                print(f"HTTP Error {e.code}: get_lineage encountered an error. Exiting.")
-                break
-        except Exception as e:
-            print(f"An unexpected error occurred: {e}. Exiting.")
-            break
-    return None
+        else:
+            sys.exit(f"HTTP Error {e}: get_rank bad request. Exiting.")
+    rank = record[0]["Rank"]
+    return rank
+
+# get lineage from taxid
+def get_lineage(taxid):
+    try:
+        # efetch
+        handle = Entrez.efetch(db="Taxonomy", id=taxid, retmode="xml")
+        record = Entrez.read(handle)
+    except urllib.error.HTTPError as e:
+        if e.code == 400:
+            print("HTTP Error 400: get_lineage bad request. Retrying in 10 seconds...")
+            time.sleep(10)  # Wait for 10 seconds
+            handle = Entrez.efetch(db="Taxonomy", id=taxid, retmode="xml")
+            record = Entrez.read(handle)
+        else:
+            sys.exit(f"HTTP Error {e}: get_lineage bad request. Exiting.")
+    # get lineage
+    lineage = record[0]["Lineage"].split("; ")[::-1]
+    # return lineage
+    return lineage
 
 #assert get_lineage(3701) == ["Camelineae", "Brassicaceae", "Brassicales", "malvids", "rosids", "Pentapetalae", "Gunneridae", "eudicotyledons", "Mesangiospermae", "Magnoliopsida", "Spermatophyta", "Euphyllophyta", "Tracheophyta", "Embryophyta", "Streptophytina", "Streptophyta", "Viridiplantae", "Eukaryota", "cellular organisms"]
 
@@ -350,22 +344,38 @@ def recursive_search(taxonomy, lineage, target, db, min_th, max_th, idlist):
                 entrez_efetch(i, "fasta", f"{args.output}/fasta")
                 entrez_efetch(i, "gb",    f"{args.output}/genbank")
 
-
         # if maximum exceeded, download subsample
         else:
+
             # get subsample number required
             count_idlist_subsample = max_th - count_idlist_input
+
+            # get taxonomic id
+            taxid = get_taxonomic_id(taxonomy)
+
+            # get taxonomic rank
+            rank = get_rank(taxid)
 
             print(f"Maximum threshold exceeded. Subsampling {count_idlist_subsample} sequences from children\n")
 
             # get children
             children = get_children(taxonomy)
-            
-            if len(children) == 0: 
+
+            if len(children) == 0 or rank == "species": 
                 
-                print("No children lineages. Must be a terminal rank. i.e species or subspecies\n")
-                
-                print(f"Downloading the first {count_idlist_subsample} sequences\n")
+                if len(children) == 0:
+
+                    print("No children lineages. Must be a terminal rank, i.e species\n")
+
+                if rank == "species":
+                    # note that a entrez search term with a subspecies taxonomy e.g. "Lutra lutra chinensis" does not return any results
+                    # avoid searching below species rank
+                    print("No children linages at species rank or above.\n")
+
+                    if len(children) >= 1: 
+                        print_phylogeny([taxonomy], children)
+
+                print(f"\nDownloading the first {count_idlist_subsample} sequences\n")
 
                 print("Creating output directory")
                 create_dir(args.output, args.overwrite)
@@ -390,7 +400,6 @@ def recursive_search(taxonomy, lineage, target, db, min_th, max_th, idlist):
 
                     if c != "environmental samples":
 
-                        # define search term
                         term = search_term(c, target, db)
 
                         # esearch using term and return idlist of matching accessions
@@ -546,3 +555,5 @@ if args.getorganelle:
     format_gene(args.output, args.target)
 
 print("\ngo_fetch complete!")
+
+
