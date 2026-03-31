@@ -1,9 +1,9 @@
 rule fastqc_qc_fwd:
     input:
-        "results/fastp/{sample}_R1.fastq.gz",
+        f"{results_dir}/fastp/{{sample}}_R1.fastq.gz",
     output:
-        html="results/fastqc_qc/{sample}_R1.html",
-        zip="results/fastqc_qc/{sample}_R1_fastqc.zip",
+        html=f"{results_dir}/fastqc_qc/{{sample}}_R1.html",
+        zip=f"{results_dir}/fastqc_qc/{{sample}}_R1_fastqc.zip",
     params:
         extra="--quiet",
     log:

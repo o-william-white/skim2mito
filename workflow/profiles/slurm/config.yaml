@@ -4,7 +4,7 @@
 executor: slurm
 
 # maximum number of jobs
-jobs: 50
+jobs: 20
 
 # use conda environments
 use-conda: true
@@ -12,17 +12,20 @@ use-conda: true
 # rerun incomplete jobs
 rerun-incomplete: true
 
+# Sets how long snakemake waits for output files after job completion (in seconds). Recommended for networked file systems.
+latency-wait: 60
+
 # default resources for all rules
 default-resources:
-    mem_mb: 4000
-    runtime: 360
+    mem_mb: 8000
+    runtime: 6h
     threads: 4
 
 # specific resources for certain rules
 set-resources:
     getorganelle:
-        mem_mb: 64000
-        runtime: 1440
-        threads: 6
+        mem_mb: 50000
+        runtime: 24h
+        threads: 4
     blobtools_create:
-        mem_mb: 8000
+        mem_mb: 16000

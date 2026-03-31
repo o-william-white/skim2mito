@@ -1,11 +1,11 @@
 rule plot_tree:
     input:
-        tree="results/iqtree/{dataset}.treefile.rooted.newick",
+        tree=f"{results_dir}/iqtree/{{dataset}}.treefile.rooted.newick",
     params:
         height=plot_height,
         width=plot_width,
     output:
-        png="results/plot_tree/{dataset}.png",
+        png=f"{results_dir}/plot_tree/{{dataset}}.png",
     log:
         "logs/plot_tree/{dataset}.log",
     conda:

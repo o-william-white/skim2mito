@@ -1,8 +1,8 @@
 rule seqkit:
     input:
-        "results/assembled_sequence/{sample}.fasta",
+        f"{results_dir}/assembled_sequence/{{sample}}.fasta",
     output:
-        "results/seqkit/{sample}.txt",
+        f"{results_dir}/seqkit/{{sample}}.txt",
     log:
         "logs/seqkit/{sample}.log",
     conda:

@@ -1,11 +1,11 @@
 rule minimap:
     input:
-        fas="results/assembled_sequence/{sample}.fasta",
-        fwd="results/fastp/{sample}_R1.fastq.gz",
-        rev="results/fastp/{sample}_R2.fastq.gz",
+        fas=f"{results_dir}/assembled_sequence/{{sample}}.fasta",
+        fwd=f"{results_dir}/fastp/{{sample}}_R1.fastq.gz",
+        rev=f"{results_dir}/fastp/{{sample}}_R2.fastq.gz",
     output:
-        bam = "results/minimap/{sample}.bam",
-        stats = "results/minimap/{sample}_stats.txt"
+        bam = f"{results_dir}/minimap/{{sample}}.bam",
+        stats = f"{results_dir}/minimap/{{sample}}_stats.txt"
     log:
         "logs/minimap/{sample}.log",
     conda:

@@ -1,12 +1,13 @@
 rule annotations:
     input:
         expand("resources/mitos_db/{refseq}", refseq=mitos_refseq),
-        fasta="results/assembled_sequence/{sample}.fasta",
+        fasta=f"{results_dir}/assembled_sequence/{{sample}}.fasta",
     params:
         refseq=mitos_refseq,
         code=mitos_code,
+        results_dir=results_dir,
     output:
-        directory("results/annotations/{sample}/"),
+        directory(f"{results_dir}/annotations/{{sample}}/"),
     log:
         "logs/annotations/{sample}.log",
     conda:
@@ -24,7 +25,7 @@ rule annotations:
             runmitos.py \
                 --input {input.fasta} \
                 --code {params.code} \
-                --outdir results/annotations/{wildcards.sample}/ \
+                --outdir {params.results_dir}/annotations/{wildcards.sample}/ \
                 --refseqver resources/mitos_db/{params.refseq} \
                 --refdir . \
                 --noplots &>> {log}
@@ -33,7 +34,7 @@ rule annotations:
             runmitos.py \
                 --input {input.fasta} \
                 --code {params.code} \
-                --outdir results/annotations/{wildcards.sample}/ \
+                --outdir {params.results_dir}/annotations/{wildcards.sample}/ \
                 --refseqver resources/mitos_db/{params.refseq} \
                 --refdir . \
                 --linear \

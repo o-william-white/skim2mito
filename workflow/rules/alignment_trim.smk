@@ -1,11 +1,11 @@
 rule alignment_trim:
     input:
-        fasta="results/mafft_filtered/{dataset}.fasta",
+        fasta=f"{results_dir}/mafft_filtered/{{dataset}}.fasta",
     params:
         trim=alignment_trim,
-        tmp="results/alignment_trim/{dataset}_tmp.fasta",
+        tmp=f"{results_dir}/alignment_trim/{{dataset}}_tmp.fasta",
     output:
-        fasta="results/alignment_trim/{dataset}.fasta",
+        fasta=f"{results_dir}/alignment_trim/{{dataset}}.fasta",
     log:
         "logs/alignment_trim/{dataset}.log",
     conda:

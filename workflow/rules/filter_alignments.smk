@@ -1,10 +1,10 @@
 rule filter_alignments:
     input:
-        "results/mafft/{dataset}.fasta",
+        f"{results_dir}/mafft/{{dataset}}.fasta",
     params:
         threshold=missing_threshold,
     output:
-        "results/mafft_filtered/{dataset}.fasta",
+        f"{results_dir}/mafft_filtered/{{dataset}}.fasta",
     log:
         "logs/mafft_filtered/{dataset}.log",
     conda:

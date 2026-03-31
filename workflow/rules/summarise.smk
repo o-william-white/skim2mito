@@ -6,8 +6,8 @@ rule summarise:
     params:
         config = config["samples"]
     output:
-        table_sample="results/summary/summary_samples_mqc.txt",
-        table_contig="results/summary/summary_contigs_mqc.txt",
+        table_sample=f"{results_dir}/summary/summary_samples_mqc.txt",
+        table_contig=f"{results_dir}/summary/summary_contigs_mqc.txt",
     log:
         "logs/summarise/summarise.log",
     conda:

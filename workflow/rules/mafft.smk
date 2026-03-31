@@ -1,8 +1,8 @@
 rule mafft:
     input:
-        "results/annotated_genes/{dataset}.fasta",
+        f"{results_dir}/annotated_genes/{{dataset}}.fasta",
     output:
-        "results/mafft/{dataset}.fasta",
+        f"{results_dir}/mafft/{{dataset}}.fasta",
     log:
         "logs/mafft/{dataset}.log",
     conda:

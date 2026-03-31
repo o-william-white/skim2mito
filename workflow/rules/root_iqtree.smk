@@ -1,10 +1,10 @@
 rule root_iqtree:
     input:
-        tree="results/iqtree/{dataset}.treefile",
+        tree=f"{results_dir}/iqtree/{{dataset}}.treefile",
     params:
         outgroup=outgroup,
     output:
-        tree="results/iqtree/{dataset}.treefile.rooted.newick",
+        tree=f"{results_dir}/iqtree/{{dataset}}.treefile.rooted.newick",
     log:
         "logs/root_iqtree/{dataset}.txt",
     conda:

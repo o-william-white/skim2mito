@@ -16,16 +16,22 @@ configfile: "config/config.yaml"
 user_email = config["user_email"]
 go_reference = config["go_reference"]
 user_api = config["user_api"]
+gf_min = config["gf_min"]
+gf_max = config["gf_max"]
 forward_adapter = config["forward_adapter"]
 reverse_adapter = config["reverse_adapter"]
 fastp_dedup = config["fastp_dedup"]
 mitos_refseq = config["mitos_refseq"]
 mitos_code = config["mitos_code"]
+kmer_vals = config["kmer_vals"]
 alignment_trim = config["alignment_trim"]
 missing_threshold = config["missing_threshold"]
 outgroup = config["outgroup"]
 plot_height = config["plot_height"]
 plot_width = config["plot_width"]
+
+# output directory
+results_dir = config.get("results_dir", "results")
 
 # read sample data
 if os.path.exists(config["samples"]):
@@ -110,21 +116,21 @@ def get_sucessfully_annotated_samples(wildcards):
 def get_mafft_output(wildcards):
     checkpoint_output = checkpoints.extract_annotated_genes.get(**wildcards).output[0]
     return expand(
-        "results/mafft/{i}.fasta",
+        f"{results_dir}/mafft/{{i}}.fasta",
         i=glob_wildcards(os.path.join(checkpoint_output, "{i}.fasta")).i,
     )
 
 def get_plot_tree_output(wildcards):
     checkpoint_output = checkpoints.extract_annotated_genes.get(**wildcards).output[0]
     return expand(
-        "results/plot_tree/{i}.png",
+        f"{results_dir}/plot_tree/{{i}}.png",
         i=glob_wildcards(os.path.join(checkpoint_output, "{i}.fasta")).i,
     )
 
 def get_mafft_filtered_output(wildcards):
     checkpoint_output = checkpoints.extract_annotated_genes.get(**wildcards).output[0]
     return expand(
-        "results/mafft_filtered/{i}.fasta",
+        f"{results_dir}/mafft_filtered/{{i}}.fasta",
         i=glob_wildcards(os.path.join(checkpoint_output, "{i}.fasta")).i,
     )
 
@@ -159,8 +165,8 @@ if mitos_refseq not in [
     sys.exit(
         "Error: mitos_refseq must be one of 'refseq39', 'refseq63f', 'refseq63m', 'refseq63o', 'refseq89f', 'refseq89m', 'refseq89o'"
     )
-if mitos_code not in [2, 4, 5, 9, 13, 14]:
-    sys.exit("Error: mitos_code must be one of 2, 4, 5, 9, 13, 14")
+if mitos_code not in [2, 4, 5, 9, 13, 14, 16]:
+    sys.exit("Error: mitos_code must be one of 2, 4, 5, 9, 13, 14, 16")
 if (
     not isinstance(missing_threshold, float)
     or missing_threshold < 0.0

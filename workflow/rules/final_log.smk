@@ -3,7 +3,7 @@ rule final_log:
     input:
         get_plot_tree_output,
     output:
-        "results/snakemake.ok",
+        f"{results_dir}/snakemake.ok",
     conda:
         "../envs/conda_env.yaml"
     log:

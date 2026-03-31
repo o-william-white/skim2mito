@@ -1,29 +1,26 @@
 rule multiqc:
     input:
         expand(
-           "results/fastqc_qc/{sample}_R1.html",
+           f"{results_dir}/fastqc_qc/{{sample}}_R1.html",
            sample=sample_data.index.tolist(),
         ),
         expand(
-            "results/fastqc_qc/{sample}_R2.html",
+            f"{results_dir}/fastqc_qc/{{sample}}_R2.html",
             sample=sample_data.index.tolist(),
         ),
         expand(
-            "results/fastp/{sample}_fastp.json",
+            f"{results_dir}/fastp/{{sample}}_fastp.json",
             sample=sample_data.index.tolist(),
         ),
         get_minimap_output,
-        #"results/fastp/",
-        #"results/fastqc_qc/"
-        #"results/minimap/",
-        "results/summary/summary_samples_mqc.txt",
-        "results/summary/summary_contigs_mqc.txt",
-        "results/summary/summary_gene_counts_mqc.txt",
+        f"{results_dir}/summary/summary_samples_mqc.txt",
+        f"{results_dir}/summary/summary_contigs_mqc.txt",
+        f"{results_dir}/summary/summary_gene_counts_mqc.txt",
         get_plot_tree_output,
         config="config/config_multiqc.yaml",
     output:
-        "results/multiqc/multiqc_report.html",
-        directory("results/multiqc_data/"),
+        f"{results_dir}/multiqc/multiqc_report.html",
+        directory(f"{results_dir}/multiqc_data/"),
     params:
         extra="--verbose",  # Optional: extra parameters for multiqc.
     log:

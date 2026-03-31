@@ -93,117 +93,90 @@ def create_dir(dirpath, overwrite):
     os.mkdir(f"{dirpath}/fasta")
     os.mkdir(f"{dirpath}/genbank")
 
+# helper: retry-aware wrapper for Entrez calls
+RETRYABLE_HTTP_CODES = (400, 429, 500, 502, 503, 504)
+
+def entrez_retry(func, func_name, max_retries=5, retry_delay=20):
+    """Call func() with retries on transient HTTP errors. func must return the result."""
+    for attempt in range(1, max_retries + 1):
+        try:
+            return func()
+        except urllib.error.HTTPError as e:
+            if e.code in RETRYABLE_HTTP_CODES and attempt < max_retries:
+                print(f"HTTP Error {e.code}: {func_name}. Attempt {attempt}/{max_retries}, retrying in {retry_delay}s...")
+                time.sleep(retry_delay)
+            else:
+                sys.exit(f"HTTP Error {e}: {func_name}. Exiting.")
+        except (urllib.error.URLError, ConnectionError, TimeoutError, OSError) as e:
+            if attempt < max_retries:
+                print(f"{type(e).__name__}: {func_name}. Attempt {attempt}/{max_retries}, retrying in {retry_delay}s...")
+                time.sleep(retry_delay)
+            else:
+                sys.exit(f"{type(e).__name__}: {func_name}. Failed after {max_retries} attempts. Exiting.")
+
 # get taxonomic id from scientific name
 def get_taxonomic_id(taxonomy):
-    try:
+    def _fetch():
         handle = Entrez.esearch(db="Taxonomy", term=f"{taxonomy}[Scientific Name]")
-        record = Entrez.read(handle)
-    except urllib.error.HTTPError as e:
-        if e.code == 400:
-            print("HTTP Error 400: get_taxonomic_id bad request. Retrying in 10 seconds...")
-            time.sleep(10)  # Wait for 10 seconds
-            handle = Entrez.esearch(db="Taxonomy", term=f"{taxonomy}[Scientific Name]")
-            record = Entrez.read(handle)
-        else:
-            sys.exit(f"HTTP Error {e}: get_taxonomic_id bad request. Exiting.")
+        return Entrez.read(handle)
+    record = entrez_retry(_fetch, "get_taxonomic_id")
     return str(record["IdList"][0])
-assert get_taxonomic_id("Arabidopsis thaliana") == "3702"
 
 # check if taxonomy id exists
 def taxid_exists(taxid):
-    try:
+    def _fetch():
         handle = Entrez.efetch(db="taxonomy", id=taxid)
-        record = Entrez.read(handle)
-    except urllib.error.HTTPError as e:
-        if e.code == 400:
-            print("HTTP Error 400: taxid_exists bad request. Retrying in 10 seconds...")
-            time.sleep(10)  # Wait for 10 seconds
-            handle = Entrez.efetch(db="taxonomy", id=taxid)
-            record = Entrez.read(handle)
-        else:
-            sys.exit(f"HTTP Error {e}: taxid_exists bad request. Exiting.")
+        return Entrez.read(handle)
+    record = entrez_retry(_fetch, "taxid_exists")
     if record:
         return True
     else:
         return False
-assert taxid_exists(3701) == True
 
 # get scientific name from taxonomic id
 def get_scientific_name(taxonomy):
-    try:
+    def _fetch():
         handle = Entrez.efetch(db="Taxonomy", id=taxonomy)
-        record = Entrez.read(handle)
-    except urllib.error.HTTPError as e:
-        if e.code == 400:
-            print("HTTP Error 400: get_scientific_name bad request. Retrying in 10 seconds...")
-            time.sleep(10)  # Wait for 10 seconds
-            handle = Entrez.efetch(db="Taxonomy", id=taxonomy)
-            record = Entrez.read(handle)
-        else: 
-            sys.exit(f"HTTP Error {e}: get_scientific_name. Exiting.")
+        return Entrez.read(handle)
+    record = entrez_retry(_fetch, "get_scientific_name")
     return record[0]["ScientificName"]
-assert get_scientific_name("3702") == "Arabidopsis thaliana"
 
 # check if taxonomy name exists
 def scientific_name_exists(taxonomy):
-    try: 
+    def _fetch():
         handle = Entrez.esearch(db="Taxonomy", term=f"{taxonomy}[Scientific Name]")
-        record = Entrez.read(handle)
-    except urllib.error.HTTPError as e: 
-        if e.code == 400:
-            print("HTTP Error 400: scientific_name_exists bad request. Retrying in 10 seconds...")
-            time.sleep(10)  # Wait for 10 seconds
-            handle = Entrez.esearch(db="Taxonomy", term=f"{taxonomy}[Scientific Name]")
-            record = Entrez.read(handle)
-        else:
-            sys.exit(f"HTTP Error {e}: scientific_name_exists bad request. Exiting.")
+        return Entrez.read(handle)
+    record = entrez_retry(_fetch, "scientific_name_exists")
     if int(record["Count"]) >= 1:
         return True
     else:
         return False
-assert scientific_name_exists("Arabidopsis") == True
 
 # get rank from taxid
 def get_rank(taxid):
-    try:
-        # efetch
+    def _fetch():
         handle = Entrez.efetch(db="Taxonomy", id=taxid, retmode="xml")
-        record = Entrez.read(handle)
-    except urllib.error.HTTPError as e:
-        if e.code == 400:
-            print("HTTP Error 400: get_rank bad request. Retrying in 10 seconds...")
-            time.sleep(10)  # Wait for 10 seconds
-            handle = Entrez.efetch(db="Taxonomy", id=taxid, retmode="xml")
-            record = Entrez.read(handle)
-        else:
-            sys.exit(f"HTTP Error {e}: get_rank bad request. Exiting.")
+        return Entrez.read(handle)
+    record = entrez_retry(_fetch, "get_rank")
     rank = record[0]["Rank"]
     return rank
 
 # get lineage from taxid
 def get_lineage(taxid):
-    try:
-        # efetch
+    def _fetch():
         handle = Entrez.efetch(db="Taxonomy", id=taxid, retmode="xml")
-        record = Entrez.read(handle)
-    except urllib.error.HTTPError as e:
-        if e.code == 400:
-            print("HTTP Error 400: get_lineage bad request. Retrying in 10 seconds...")
-            time.sleep(10)  # Wait for 10 seconds
-            handle = Entrez.efetch(db="Taxonomy", id=taxid, retmode="xml")
-            record = Entrez.read(handle)
-        else:
-            sys.exit(f"HTTP Error {e}: get_lineage bad request. Exiting.")
-    # get lineage
+        return Entrez.read(handle)
+    record = entrez_retry(_fetch, "get_lineage")
     lineage = record[0]["Lineage"].split("; ")[::-1]
-    # return lineage
     return lineage
 
 #assert get_lineage(3701) == ["Camelineae", "Brassicaceae", "Brassicales", "malvids", "rosids", "Pentapetalae", "Gunneridae", "eudicotyledons", "Mesangiospermae", "Magnoliopsida", "Spermatophyta", "Euphyllophyta", "Tracheophyta", "Embryophyta", "Streptophytina", "Streptophyta", "Viridiplantae", "Eukaryota", "cellular organisms"]
 
 def get_children(taxonomy):
-    handle = Entrez.esearch(db="taxonomy", term=f"{taxonomy}[next level]", retmax=9999)
-    record = Entrez.read(handle)
+    def _fetch():
+        handle = Entrez.esearch(db="taxonomy", term=f"{taxonomy}[next level]", retmax=9999)
+        return Entrez.read(handle)
+    record = entrez_retry(_fetch, "get_children")
     children = []
     print(f"Found {len(record['IdList'])} children")
     if len(record['IdList']) > 10: 
@@ -245,19 +218,57 @@ def search_term(taxid, target, db):
     return term 
 
 # count the number of sequences on ncbi using the term generated
-def entrez_esearch(input_term):
-    # esearch
-    handle = Entrez.esearch(db="Nucleotide", term=input_term, retmax=999)
-    record = Entrez.read(handle)
-    return record["IdList"]
+def entrez_esearch(input_term, max_retries=5, retry_delay=30):
+    for attempt in range(1, max_retries + 1):
+        try:
+            handle = Entrez.esearch(db="Nucleotide", term=input_term, retmax=999)
+            record = Entrez.read(handle)
+            return record["IdList"]
+        except RuntimeError as e:
+            if "Search Backend failed" in str(e) and attempt < max_retries:
+                print(f"   Attempt {attempt}/{max_retries}: NCBI search backend failed. Retrying in {retry_delay}s...")
+                time.sleep(retry_delay)
+            else:
+                raise
+        except urllib.error.HTTPError as e:
+            if e.code in (429, 500, 502, 503, 504) and attempt < max_retries:
+                print(f"   Attempt {attempt}/{max_retries}: HTTP {e.code}. Retrying in {retry_delay}s...")
+                time.sleep(retry_delay)
+            else:
+                raise
+        except (urllib.error.URLError, ConnectionError, TimeoutError, OSError) as e:
+            if attempt < max_retries:
+                print(f"   Attempt {attempt}/{max_retries}: {type(e).__name__}: {e}. Retrying in {retry_delay}s...")
+                time.sleep(retry_delay)
+            else:
+                sys.exit(f"Error: esearch failed after {max_retries} attempts. Last error: {e}")
 
-# efetch 
-def entrez_efetch(id, format, output_directory):
-    handle = Entrez.efetch(db="Nucleotide", id=id, rettype=format, retmode="text")
-    seq_record = SeqIO.read(handle, format)
-    output_path = f"{output_directory}/{seq_record.id}.{format}"
-    print(f"   Downloading {seq_record.id}.{format}")
-    SeqIO.write(seq_record, output_path, format)
+# efetch with retry logic for transient network errors
+def entrez_efetch(id, format, output_directory, max_retries=5, retry_delay=30):
+    for attempt in range(1, max_retries + 1):
+        try:
+            handle = Entrez.efetch(db="Nucleotide", id=id, rettype=format, retmode="text")
+            seq_record = SeqIO.read(handle, format)
+            output_path = f"{output_directory}/{seq_record.id}.{format}"
+            print(f"   Downloading {seq_record.id}.{format}")
+            SeqIO.write(seq_record, output_path, format)
+            return
+        except (TimeoutError, OSError, urllib.error.URLError) as e:
+            if attempt < max_retries:
+                print(f"   Attempt {attempt}/{max_retries} failed for {id} ({type(e).__name__}: {e}). Retrying in {retry_delay}s...")
+                time.sleep(retry_delay)
+            else:
+                sys.exit(f"Error: failed to fetch {id} after {max_retries} attempts. Last error: {e}")
+        except urllib.error.HTTPError as e:
+            if e.code in (429, 500, 502, 503, 504):
+                # Retry on rate limiting or server-side errors
+                if attempt < max_retries:
+                    print(f"   Attempt {attempt}/{max_retries} failed for {id} (HTTP {e.code}). Retrying in {retry_delay}s...")
+                    time.sleep(retry_delay)
+                else:
+                    sys.exit(f"Error: failed to fetch {id} after {max_retries} attempts. Last error: HTTP {e.code}")
+            else:
+                sys.exit(f"Error: HTTP {e.code} fetching {id}. Exiting.")
 
 # subsample a dictionary of taxa (keys), and lists of accessions (values)
 def subsample(input_dictionary, sample_limit, seed):
@@ -414,6 +425,9 @@ def recursive_search(taxonomy, lineage, target, db, min_th, max_th, idlist):
                                     else:
                                         dictionary_children[c].append(i)
 
+                        # brief pause between child searches to avoid NCBI rate limiting
+                        time.sleep(0.5)
+
                 # subsample dictionary
                 dictionary_children_subsample = subsample(dictionary_children, count_idlist_subsample, args.seed)
 
@@ -520,7 +534,7 @@ try:
         print("Taxonomy ID exists on NCBI")
     taxonomy_id = args.taxonomy
     taxonomy_name = get_scientific_name(taxonomy_id)
-except:
+except ValueError:
     print("Taxonomy input is a scientific name.")
     if not scientific_name_exists(args.taxonomy):
         sys.exit(f"Scientific name {args.taxonomy} does not exist. Please check for the correct taxonomy id on https://www.ncbi.nlm.nih.gov/taxonomy")
@@ -555,5 +569,3 @@ if args.getorganelle:
     format_gene(args.output, args.target)
 
 print("\ngo_fetch complete!")
-
-

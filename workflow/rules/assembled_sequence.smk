@@ -1,8 +1,8 @@
 checkpoint assembled_sequence:
     input:
-        expand("results/getorganelle/{sample}/", sample=sample_data["ID"]),
+        expand(f"{results_dir}/getorganelle/{{sample}}/", sample=sample_data["ID"]),
     output:
-        directory("results/assembled_sequence/"),
+        directory(f"{results_dir}/assembled_sequence/"),
     log:
         "logs/assembled_sequence.log",
     conda:

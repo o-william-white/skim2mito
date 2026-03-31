@@ -1,21 +1,15 @@
-# skim2mito
+# skim2mito (with modifications for museomics)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![DOI](https://img.shields.io/badge/DOI-10.1101%2F2023.08.11.552985-blue)](https://doi.org/10.1111/1755-0998.14036)
 
-**skim2mito** is a snakemake pipeline for the batch assembly, annotation, and phylogenetic analysis of mitochondrial genomes from low coverage genome skims. The pipeline was designed to work with sequence data from museum collections. However, it should also work with genome skims from recently collected samples.
+**skim2mito** is a snakemake pipeline for the batch assembly, annotation, and phylogenetic analysis of mitochondrial genomes from low-coverage genome skims. The pipeline was designed to work with sequence data from museum collections. This fork includes numerous QoL, configurability, and museomics enhancements. It also contains a supplementary `filter_mitogenes.py` script that can be run after the pipeline to extract and validate gene annotations to ensure high quality.
 
 ## Contents
  - [Setup](#setup)
  - [Example data](#example-data)
- - [Example data with SLURM](#example-data-with-slurm)
- - [Example data with go_fetch](#example-data-with-go_fetch)
  - [Input](#input)
  - [Output](#output)
- - [Filtering contaminants](#filtering-contaminants)
- - [Assembly and annotation only](#assembly-and-annotation-only)
  - [Running your own data](#running-your-own-data)
- - [Getting help](#getting-help)
  - [Citations](#citations)
 
 ## Setup
@@ -28,22 +22,13 @@ Once conda is installed, you can pull the github repo and set up the base conda 
 
 ```bash
 # get github repo
-git clone https://github.com/o-william-white/skim2mito
+git clone https://github.com/SchistoDan/skim2mito
 
 # change dir
 cd skim2mito
 
 # setup conda env
-conda env create -n skim2mito_env -f workflow/envs/conda_env.yaml
-
-# set channel priority to avoid warning messages from snakemake
-conda config --set channel_priority strict
-```
-
-If you need to install the conda environment to a specific location, use the following example, where the prefix argument can be updated to include a specific path:
-
-```bash
-conda env create -n skim2mito_env --prefix /your_path/skim2mito_env -f workflow/envs/conda_env.yaml
+conda env create -n skim2mito -f skim2mito.yaml
 ```
 
 <br/>
@@ -58,92 +43,18 @@ Before you run your own data, it is recommended to run the example datasets prov
 
 To run the example data, use the code below. The first time you run the pipeline, it will take some time to install each of the conda environments, so it is a good time to take a tea break :).
 ```bash
-conda activate skim2mito_env
+conda activate skim2mito
 
 snakemake --profile workflow/profiles/test
 ```
 
 The resources requested for the test data can be found in the snakemake profile `workflow/profiles/test/config.yaml`. This requires 16G of memory and 4 cores, with the analysis taking approximately three hours. I have purposely tried to keep the memory requirements low so it can be run on most systems. However, the runtime can be improved by adjusting the profile to allow more memory and cores.
 
-## Example data with SLURM
-
-If you have access to High Performance Computing Facilities (HPC) with a job scheduler, you can submit jobs that each rule is submitted as a separate job with resources you can specify. The advantage of this approach is that you often have access to a larger computational resources and many jobs can be run simultaneously. For example, you can submit the test data to a SLURM job scheduler with the following code and it completes in approximately one hour.
-
-```bash
-snakemake --profile workflow/profiles/slurm
-```
-
-<br/>
-<div align="right">
-    <b><a href="#skim2mito">↥ back to top</a></b>
-</div>
-<br/>
-
-## Example data with go_fetch
-
-The example data above uses mitochondrial references provided with the test dataset. However, skim2mito can also identify and download reference data using go_fetch.py (https://github.com/o-william-white/go_fetch), a python script which searches NCBI for mitochondrial references and downloads them in the correct format for getorganelle.
-
-To rerun the test data using the go_fetch.py option to download references, run the example below. **Note that you need to change the user email and API key**. The email and API key is required by the Bio Entrez package to fetch reference sequences from NCBI. It is only necessary to provide the user email and API key if the go_fetch step is used to get reference sequences from NCBI. If you use a custom reference, it is not necessary.  
-
-You can find how to get an API key for NCBI here https://support.nlm.nih.gov/kbArticle/?pn=KA-05317
-
-```
-conda activate skim2mito_env
-
-snakemake --cores 4 --use-conda \
-   --config go_reference=go_fetch \
-            user_email=user@example_email.com \
-            user_api=api_key
-```
-
 ## Input
 
 Snakemake requires a `config.yaml` and `samples.csv` to define input parameters and sequence data for each sample. 
 
-For the example data provided, the config file is located here `config/config.yaml` and it looks like this:
-```yaml
-# path to sample sheet csv with columns for ID,forward,reverse,taxid,seed,gene
-samples: config/samples.csv
-
-# getorganelle reference (go_fetch, custom)
-go_reference: custom
-
-# user email (required if go_reference is go_fetch)
-user_email: user@example_email.com
-
-# api for e-utilities (required if go_reference is go_fetch)
-user_api: api_key
-
-# forward adapter
-forward_adapter: AGATCGGAAGAGCACACGTCTGAACTCCAGTCA
-
-# reverse adapter
-reverse_adapter: AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT
-
-# fastp deduplication (True/False)
-fastp_dedup: True
-
-# mitos refseq database (refseq39, refseq63f, refseq63m, refseq63o, refseq89f, refseq89m, refseq89o)
-mitos_refseq: refseq39
-
-# mito code (2 = Vertebrate, 4 = Mold, 5 = Invertebrate, 9 = Echinoderm, 13 = Ascidian, 14 = Alternative flatworm)
-mitos_code: 5
-
-# alignment trimming method to use (gblocks or clipkit)
-alignment_trim: gblocks
-
-# alignment missing data threshold for alignment (0.0 - 1.0)
-missing_threshold: 0.5
-
-# name of outgroup sample (optional)
-# use "NA" if there is no obvious outgroup
-# if more than one outgroup use a comma separated list i.e. "sampleA,sampleB"
-outgroup: Eurema_blanda
-
-# plot dimensions (cm)
-plot_height: 20
-plot_width: 20
-```
+The config file is located here `config/config.yaml`
 
 The example samples.csv file is located here `config/samples.csv` and it looks like this (note that the seed and gene columns are only required if the custom getorganelle database option is specified in the config file):
 
@@ -216,66 +127,19 @@ All output files are saved to the `results` directory. Below is a table summaris
 </div>
 <br/>
 
-## Filtering contaminants
-
-If you are working with museum collections, it is possible that you may assemble and annotate sequences from contaminant/non-target species. *Contaminant sequences can be identified based on the blast search output or unusual placement in the phylogenetic trees* (see blobtools and plot_tree outputs). 
-
-A supplementary python script `format_alignments.py` is provided to remove putative contaminants from alignments, and format the alignments for downstream phylogenetic analysis.
-
-For example, let's say we wanted to remove all sequences from the sample "Kallima_paralekta" and atp6 gene sequences, you could run the script as shown below. The script works by identifying and removing sequences that have names with  `Kallima_paralekta` or `atp6` in the sequence names. The filtered alignments are written to a new output directory `filter_alignments_output`.
-
-```bash
-python workflow/scripts/format_alignments.py  \
-   --input results/mafft_filtered/ \
-   --cont Kallima_paralekta atp6 \
-   --output filter_alignments_output
-```
-
-*Note that the output fasta files have been reformatted so each alignment file is named after the gene and each sequence is named after the sample.* This is useful if you would like to run our related pipeline **gene2phylo** for further phylogenetic analyses.
-
-<br/>
-<div align="right">
-    <b><a href="#skim2mito">↥ back to top</a></b>
-</div>
-<br/>
-
-## Assembly and annotation only
-
-If you are only interested in the assembly of mitochondrial sequences and annotation of genes without the phylogenetic analysis, you can stop the pipeline from running the gene alignment and phylogenetic analyses using the `--omit-from` parameter.
-
-```bash
-snakemake --cores 4 --use-conda --config user_email=user@example_email.com --omit-from mafft
-```
-
-<br/>
-<div align="right">
-    <b><a href="#skim2mito">↥ back to top</a></b>
-</div>
-<br/>
 
 ## Running your own data
 
 The first thing you need to do is generate your own config.yaml and samples.csv files, using the files provided as a template.
 
-GetOrganelle requires reference data in the format of seed and gene reference fasta files. You can generate these files yourself, or use go_fetch.py https://github.com/o-william-white/go_fetch to download and format reference data formatted for GetOrganelle.
-
-go_fetch.py works by searching NCBI based on the NCBI taxonomy specified by the taxid column in the samples.csv file. Note that the seed and gene columns in the samples.csv file are only required if you want to provide your own custom GetOrganelle seed and gene reference databases. 
+GetOrganelle requires reference data in the format of seed and gene reference fasta files. You can generate these files yourself, or use go_fetch.py to download and format reference data formatted for GetOrganelle. go_fetch.py works by searching NCBI based on the NCBI taxonomy specified by the taxid column in the samples.csv file. Note that the seed and gene columns in the samples.csv file are only required if you want to provide your own custom GetOrganelle seed and gene reference databases. 
 
 You can use the default reference data for GetOrganelle, but I would recommend using custom reference databases where possible. See here for details of how to set up your own databases https://github.com/Kinggerm/GetOrganelle/wiki/FAQ#how-to-assemble-a-target-organelle-genome-using-my-own-reference
 
-## Getting help
-
-If you have any questions, please do get in touch in the issues or by email o.william.white@gmail.com
-
-<br/>
-<div align="right">
-    <b><a href="#skim2mito">↥ back to top</a></b>
-</div>
-<br/>
 
 ## Citations
 
-If you use the pipeline, please cite our bioarxiv preprint: https://doi.org/10.1101/2023.08.11.552985
+If you use the pipeline, please cite the paper: 10.1111/1755-0998.14036
 
 Since the pipeline is a wrapper for several other bioinformatic tools we also ask that you cite the tools used by the pipeline:
  - Fastqc https://github.com/s-andrews/FastQC

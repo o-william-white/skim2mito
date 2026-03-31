@@ -13,9 +13,9 @@ rule blastn:
             ".ntf",
             ".nto",
         ),
-        fas="results/assembled_sequence/{sample}.fasta",
+        fas=f"{results_dir}/assembled_sequence/{{sample}}.fasta",
     output:
-        "results/blastn/{sample}.txt",
+        f"{results_dir}/blastn/{{sample}}.txt",
     log:
         "logs/blastn/{sample}.log",
     conda:

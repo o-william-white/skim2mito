@@ -1,9 +1,11 @@
 rule iqtree:
     input:
-        fasta="results/alignment_trim/{dataset}.fasta",
+        fasta=f"{results_dir}/alignment_trim/{{dataset}}.fasta",
     output:
-        tree="results/iqtree/{dataset}.treefile",
-        fasta_renamed="results/iqtree/{dataset}.fasta",
+        tree=f"{results_dir}/iqtree/{{dataset}}.treefile",
+        fasta_renamed=f"{results_dir}/iqtree/{{dataset}}.fasta",
+    params:
+        results_dir=results_dir,
     log:
         "logs/iqtree/{dataset}.log",
     conda:
@@ -18,6 +20,6 @@ rule iqtree:
         if [ $(grep -c "^>" {input.fasta}) -lt "5" ] || [ $(grep -e "^>" -v {input.fasta} | sort | uniq | wc -l)  -lt 5 ] ; then
             touch {output.tree}
         else
-            iqtree -s {output.fasta_renamed} -B 1000 --prefix results/iqtree/{wildcards.dataset} -redo &> {log}
+            iqtree -s {output.fasta_renamed} -B 1000 --prefix {params.results_dir}/iqtree/{wildcards.dataset} -redo &> {log}
         fi
         """

@@ -29,50 +29,43 @@ include: "rules/iqtree.smk"
 include: "rules/root_iqtree.smk"
 include: "rules/plot_tree.smk"
 include: "rules/multiqc.smk"
-
-
 # one rule to rule them all :)
 if go_reference == "go_fetch":
-
     rule all:
         input:
             expand(
-                "results/fastqc_raw/{sample}_R1.html",
+                f"{results_dir}/fastqc_raw/{{sample}}_R1.html",
                 sample=sample_data.index.tolist(),
             ),
             expand(
-                "results/fastqc_raw/{sample}_R2.html",
+                f"{results_dir}/fastqc_raw/{{sample}}_R2.html",
                 sample=sample_data.index.tolist(),
             ),
             expand(
-                "results/fastqc_qc/{sample}_R1.html", sample=sample_data.index.tolist()
+                f"{results_dir}/fastqc_qc/{{sample}}_R1.html", sample=sample_data.index.tolist()
             ),
             expand(
-                "results/fastqc_qc/{sample}_R2.html", sample=sample_data.index.tolist()
+                f"{results_dir}/fastqc_qc/{{sample}}_R2.html", sample=sample_data.index.tolist()
             ),
-            "results/multiqc/multiqc_report.html",
-
+            f"{results_dir}/multiqc/multiqc_report.html",
 else:
     if go_reference == "custom":
-
         rule all:
             input:
                 expand(
-                    "results/fastqc_raw/{sample}_R1.html",
+                    f"{results_dir}/fastqc_raw/{{sample}}_R1.html",
                     sample=sample_data.index.tolist(),
                 ),
                 expand(
-                    "results/fastqc_raw/{sample}_R2.html",
+                    f"{results_dir}/fastqc_raw/{{sample}}_R2.html",
                     sample=sample_data.index.tolist(),
                 ),
                 expand(
-                    "results/fastqc_qc/{sample}_R1.html",
+                    f"{results_dir}/fastqc_qc/{{sample}}_R1.html",
                     sample=sample_data.index.tolist(),
                 ),
                 expand(
-                    "results/fastqc_qc/{sample}_R2.html",
+                    f"{results_dir}/fastqc_qc/{{sample}}_R2.html",
                     sample=sample_data.index.tolist(),
                 ),
-                "results/multiqc/multiqc_report.html",
-
-
+                f"{results_dir}/multiqc/multiqc_report.html",
