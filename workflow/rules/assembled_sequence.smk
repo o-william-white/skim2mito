@@ -5,7 +5,5 @@ checkpoint assembled_sequence:
         directory(f"{results_dir}/assembled_sequence/"),
     log:
         "logs/assembled_sequence.log",
-    conda:
-        "../envs/conda_env.yaml"
     script:
         "../scripts/rename_assembled.py"
