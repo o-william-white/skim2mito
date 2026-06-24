@@ -17,9 +17,9 @@ conda activate skim2mito
 
 ## Snakemake run
 # Unlock
-snakemake --cores 8 --use-conda --unlock --profile workflow/profiles/slurm
+snakemake --cores 8 --use-conda --unlock --profile workflow/profiles/slurm --rerun-incomplete
 
 # Run
-snakemake --cores 8 --use-conda --profile workflow/profiles/slurm
+snakemake --cores 8 --use-conda --profile workflow/profiles/slurm --rerun-incomplete
 
 
