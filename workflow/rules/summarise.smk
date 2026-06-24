@@ -4,7 +4,8 @@ rule summarise:
         get_blobtools_output,
         get_assess_assembly_output,
     params:
-        config = config["samples"]
+        config = config["samples"],
+        results_dir = results_dir
     output:
         table_sample=f"{results_dir}/summary/summary_samples_mqc.txt",
         table_contig=f"{results_dir}/summary/summary_contigs_mqc.txt",
@@ -14,5 +15,5 @@ rule summarise:
         "../envs/r_env.yaml"
     shell:
         """
-        Rscript workflow/scripts/summarise.R {params.config} &> {log}
+        Rscript workflow/scripts/summarise.R {params.config} {params.results_dir} &> {log}
         """
